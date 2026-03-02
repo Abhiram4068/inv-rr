@@ -9,9 +9,9 @@ const Dashboard = () => {
           <i className="fa fa-search text-[#808080]"></i>
           <input type="text" placeholder="Search dashboard..." className="bg-transparent border-none text-white ml-3 w-full outline-none text-sm" />
         </div>
-        <button className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-[10px]">
-          <i className="fa fa-plus"></i> New Document
-        </button>
+       <a href="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-[10px]">
+  <i className="fa fa-plus"></i> New Document
+</a>
       </div>
 
       {/* Stats Grid */}

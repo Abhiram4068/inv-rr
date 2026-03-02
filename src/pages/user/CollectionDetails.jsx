@@ -88,8 +88,83 @@ const CollectionDetails = () => {
         </div>
       </main>
 
-      {/* MODALS (Manage/Delete remain the same) */}
-      {/* ... (Your existing modal code) ... */}
+    {isManageOpen && (
+  <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]">
+    <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8 rounded-2xl w-full max-w-md">
+
+      <h3 className="text-white text-lg font-semibold mb-6">
+        Manage Collection
+      </h3>
+
+      <div className="space-y-4 mb-6">
+        <input
+          type="text"
+          value={collectionInfo.name}
+          onChange={(e) =>
+            setCollectionInfo({ ...collectionInfo, name: e.target.value })
+          }
+          className="w-full bg-black border border-[#1a1a1a] p-3 rounded-lg text-white text-sm"
+        />
+
+        <textarea
+          value={collectionInfo.description}
+          onChange={(e) =>
+            setCollectionInfo({ ...collectionInfo, description: e.target.value })
+          }
+          className="w-full bg-black border border-[#1a1a1a] p-3 rounded-lg text-white text-sm"
+        />
+      </div>
+
+      <div className="flex gap-3 justify-end">
+        <button
+          onClick={() => setIsManageOpen(false)}
+          className="px-4 py-2 rounded-lg border border-[#1a1a1a]"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleSave}
+          className="px-4 py-2 rounded-lg bg-blue-600"
+        >
+          Save
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+{isDeleteOpen && (
+  <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]">
+    <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8 rounded-2xl w-full max-w-sm text-center">
+
+      <h3 className="text-lg font-bold text-white mb-3">
+        Delete Collection?
+      </h3>
+
+      <p className="text-sm text-gray-500 mb-6">
+        This action cannot be undone.
+      </p>
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => setIsDeleteOpen(false)}
+          className="flex-1 py-2 border border-[#1a1a1a] rounded-lg"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => setIsDeleteOpen(false)}
+          className="flex-1 py-2 bg-red-600 rounded-lg"
+        >
+          Delete
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
 
     </div>
   );

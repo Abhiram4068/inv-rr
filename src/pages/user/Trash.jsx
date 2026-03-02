@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 
 const Trash = () => {
-  const [isModalOpen, setModalOpen] = useState(false);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isRestoreModalOpen, setRestoreModalOpen] = useState(false);
+  const [isClearAllModalOpen, setClearAllModalOpen] = useState(false); // New state
   const [selectedFile, setSelectedFile] = useState(null);
 
   const trashFiles = [
@@ -9,9 +11,14 @@ const Trash = () => {
     { id: 2, name: "blurred_photo.jpg", type: "image", deletedDate: "Feb 18, 2026", color: "#808080", icon: "fa-image" },
   ];
 
-  const handleOpenModal = (file) => {
+  const handleOpenDeleteModal = (file) => {
     setSelectedFile(file);
-    setModalOpen(true);
+    setDeleteModalOpen(true);
+  };
+
+  const handleOpenRestoreModal = (file) => {
+    setSelectedFile(file);
+    setRestoreModalOpen(true);
   };
 
   return (
@@ -24,7 +31,6 @@ const Trash = () => {
             <h1 className="text-xl font-bold text-white">Trash Management</h1>
             <div className="text-neutral-500 text-sm">{trashFiles.length} items</div>
           </div>
-          {/* REQUESTED MESSAGE */}
           <p className="text-neutral-500 text-sm mt-2 leading-relaxed">
             Items in the trash will be permanently deleted after 30 days. 
             Restoring a file will move it back to its original location.
@@ -59,11 +65,14 @@ const Trash = () => {
                   </td>
                   <td className="py-5 text-sm text-right">
                     <div className="flex justify-end gap-4">
-                        <button className="text-emerald-500 hover:underline font-medium">
+                        <button 
+                            onClick={() => handleOpenRestoreModal(file)}
+                            className="text-emerald-500 hover:underline font-medium"
+                        >
                             Restore
                         </button>
                         <button 
-                            onClick={() => handleOpenModal(file)}
+                            onClick={() => handleOpenDeleteModal(file)}
                             className="text-red-500 hover:underline font-medium"
                         >
                             Delete Forever
@@ -76,17 +85,20 @@ const Trash = () => {
           </table>
         </div>
 
-        {/* BOTTOM DIVIDER / VIEW ALL */}
+        {/* BOTTOM DIVIDER / CLEAR ALL */}
         <div className="mt-2 py-4 border-t border-neutral-900">
-           <button className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors">
+           <button 
+             onClick={() => setClearAllModalOpen(true)}
+             className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
+            >
              <span>Clear All Trash</span>
              <i className="fa-solid fa-trash-can text-[10px]"></i>
            </button>
         </div>
       </div>
 
-      {/* MODAL (Fixed Overlay) */}
-      {isModalOpen && (
+      {/* DELETE MODAL */}
+      {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
           <div className="bg-[#0a0a0a] border border-neutral-800 p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl">
             <h3 className="text-lg font-bold text-white mb-2">Delete Permanently?</h3>
@@ -96,15 +108,67 @@ const Trash = () => {
             <div className="flex gap-3">
               <button 
                 className="flex-1 py-3 rounded-xl bg-neutral-800 text-white text-sm font-bold hover:bg-neutral-700 transition-colors"
-                onClick={() => setModalOpen(false)}
+                onClick={() => setDeleteModalOpen(false)}
               >
                 Cancel
               </button>
               <button 
                 className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-colors"
-                onClick={() => setModalOpen(false)}
+                onClick={() => setDeleteModalOpen(false)}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RESTORE MODAL */}
+      {isRestoreModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
+          <div className="bg-[#0a0a0a] border border-neutral-800 p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">Restore File?</h3>
+            <p className="text-sm text-neutral-500 mb-8">
+              Are you sure you want to restore <span className="text-white">{selectedFile?.name}</span> to its original location?
+            </p>
+            <div className="flex gap-3">
+              <button 
+                className="flex-1 py-3 rounded-xl bg-neutral-800 text-white text-sm font-bold hover:bg-neutral-700 transition-colors"
+                onClick={() => setRestoreModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500 transition-colors"
+                onClick={() => setRestoreModalOpen(false)}
+              >
+                Restore
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CLEAR ALL MODAL */}
+      {isClearAllModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
+          <div className="bg-[#0a0a0a] border border-neutral-800 p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">Clear All Trash?</h3>
+            <p className="text-sm text-neutral-500 mb-8">
+              All <span className="text-white">{trashFiles.length} items</span> will be permanently removed. This action is irreversible.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                className="flex-1 py-3 rounded-xl bg-neutral-800 text-white text-sm font-bold hover:bg-neutral-700 transition-colors"
+                onClick={() => setClearAllModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-colors"
+                onClick={() => setClearAllModalOpen(false)}
+              >
+                Clear All
               </button>
             </div>
           </div>

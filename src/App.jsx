@@ -17,7 +17,7 @@ import CollectionDetails from "./pages/user/CollectionDetails";
 import Trash from "./pages/user/Trash";
 import UploadFilesMain from "./pages/user/UploadFile";
 import UserProfile from "./pages/profile/UserProfile";
-import AccountSettings from "./pages/profile/profilesettings";
+import AccountSettings from "./pages/profile/Profilesettings";
 
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
