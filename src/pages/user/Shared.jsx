@@ -66,10 +66,13 @@ const Shared = () => {
 
         {/* VIEW ALL LINK */}
         <div className="mt-2 py-4 border-t border-neutral-900">
-           <button className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors">
-             <span>View All Shared Files</span>
-             <i className="fa-solid fa-chevron-right text-[8px]"></i>
-           </button>
+                    <a 
+            href="/viewallshares"
+            className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
+          >
+            <span>View All Shared Files</span>
+            <i className="fa-solid fa-chevron-right text-[8px]"></i>
+          </a>
         </div>
 
         {/* SECTION 2: RECENTLY SHARED WITH */}
@@ -115,10 +118,13 @@ const Shared = () => {
         </div>
          {/* VIEW ALL LINK */}
         <div className="mt-2 py-4 border-t border-neutral-900">
-           <button className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors">
-             <span>View All Shared Files</span>
-             <i className="fa-solid fa-chevron-right text-[8px]"></i>
-           </button>
+          <a 
+          href="/viewallshares"
+          className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
+        >
+          <span>View All Shared Files</span>
+          <i className="fa-solid fa-chevron-right text-[8px]"></i>
+        </a>
         </div>
       </div>
 

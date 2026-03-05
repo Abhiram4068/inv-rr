@@ -5,9 +5,6 @@ const FileDetails = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [isStarred, setIsStarred] = useState(false);
   
-  // NEW: State for dynamic recipient list
-  const [recipients, setRecipients] = useState(['']);
-  
   // State for File Data
   const [fileData, setFileData] = useState({
     name: "Project_Proposal_2024.pdf",
@@ -16,22 +13,6 @@ const FileDetails = () => {
 
   const [tempName, setTempName] = useState(fileData.name);
   const [tempDesc, setTempDesc] = useState(fileData.description);
-
-  // Handlers for dynamic recipients
-  const addRecipient = () => {
-    setRecipients([...recipients, '']);
-  };
-
-  const removeRecipient = (index) => {
-    const updated = recipients.filter((_, i) => i !== index);
-    setRecipients(updated.length ? updated : ['']);
-  };
-
-  const handleEmailChange = (index, value) => {
-    const updated = [...recipients];
-    updated[index] = value;
-    setRecipients(updated);
-  };
 
   const saveDetails = () => {
     setFileData({ name: tempName, description: tempDesc });
@@ -139,44 +120,42 @@ const FileDetails = () => {
 
       {/* --- MODALS --- */}
 
-      {/* Share Modal - DYNAMIC RECIPIENTS ENABLED */}
+      {/* Share Modal - INCREASED SIZE & PREVIEW */}
       {activeModal === 'share' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all">
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] w-full max-w-[800px] rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] w-full max-w-[800px] rounded-l overflow-hidden shadow-2xl flex flex-col md:flex-row">
             
             {/* Left Side: Form */}
-            <div className="flex-1 p-8 border-b md:border-b-0 md:border-r border-[#1a1a1a] max-h-[80vh] overflow-y-auto no-scrollbar">
+            <div className="flex-1 p-8 border-b md:border-b-0 md:border-r border-[#1a1a1a]">
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-xl font-bold">Share Document</h2>
               </div>
 
               <div className="space-y-6">
-                {/* Dynamic Recipient Input Section */}
+                {/* Recipient Input */}
                 <div>
-                  <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Recipient Emails</label>
-                  <div className="space-y-3">
+                  <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Recipient Email</label>
+           <div className="space-y-3">
                     {recipients.map((email, index) => (
-                      <div key={index} className="flex gap-2 animate-in fade-in slide-in-from-top-1">
+                      <div key={index} className="flex gap-2 group">
                         <input 
                           value={email}
-                          onChange={(e) => handleEmailChange(index, e.target.value)}
-                          placeholder="Enter email address..." 
+                          onChange={(e) => updateRecipient(index, e.target.value)}
+                          placeholder="email@example.com" 
                           type="email" 
-                          className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-[#333]" 
+                          className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-[#333] outline-none transition-all text-white placeholder:text-[#222]" 
                         />
                         {index === recipients.length - 1 ? (
                           <button 
                             onClick={addRecipient}
-                            className="bg-blue-600/10 border border-blue-500/30 w-[46px] h-[46px] rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all"
-                            title="Add recipient"
+                            className="bg-[#111] border border-[#1a1a1a] w-[46px] h-[46px] rounded-xl flex items-center justify-center text-white hover:bg-blue-600 hover:border-blue-600 transition-all shadow-lg"
                           >
                             <i className="fa-solid fa-plus"></i>
                           </button>
                         ) : (
                           <button 
                             onClick={() => removeRecipient(index)}
-                            className="bg-[#111] border border-[#1a1a1a] w-[46px] h-[46px] rounded-xl flex items-center justify-center text-[#444] hover:text-red-500 hover:border-red-500/30 transition-all"
-                            title="Remove"
+                            className="bg-[#111] border border-[#1a1a1a] w-[46px] h-[46px] rounded-xl flex items-center justify-center text-[#444] hover:text-red-500 hover:bg-red-500/10 transition-all"
                           >
                             <i className="fa-solid fa-trash-can text-xs"></i>
                           </button>
@@ -189,41 +168,38 @@ const FileDetails = () => {
                 {/* Message Input */}
                 <div>
                   <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Message</label>
-                  <textarea placeholder="Write a note..." rows="4" className="w-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-[#333] outline-none transition-all text-white placeholder:text-[#333] resize-none"></textarea>
+                  <textarea placeholder="Write a note..." rows="4" className="w-full bg-[#050505] border border-[#1a1a1a] rounded-l p-3 text-sm focus:border-[#333] outline-none transition-all text-white placeholder:text-[#333] resize-none"></textarea>
                 </div>
 
                 {/* Settings */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Expiry</label>
-                    <div className="relative">
-                      <select className="w-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm outline-none text-[#808080] cursor-pointer appearance-none">
-                        <option>7 Days</option>
-                        <option>24 Hours</option>
-                        <option>Never</option>
-                      </select>
-                      <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#444] pointer-events-none"></i>
-                    </div>
+                    <select className="w-full bg-[#050505] border border-[#1a1a1a] rounded-l p-3 text-sm outline-none text-[#808080] cursor-pointer appearance-none">
+                      <option>7 Days</option>
+                      <option>24 Hours</option>
+                      <option>Never</option>
+                    </select>
                   </div>
-                  <div>
+                  {/* <div>
                     <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Access</label>
-                    <div className="h-[46px] flex items-center px-4 bg-[#111] border border-[#1a1a1a] rounded-xl text-xs text-[#606060] font-bold">
-                      <i className="fa-solid fa-lock mr-2 text-blue-500"></i> VIEW ONLY
+                    <div className="h-[46px] flex items-center px-4 bg-[#111] border border-[#1a1a1a] rounded-xl text-xs text-[#606060]">
+                      <i className="fa-solid fa-lock mr-2"></i> View Only
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
               <div className="flex gap-3 mt-10">
-                <button onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-[#1a1a1a] rounded-xl font-bold text-xs hover:bg-[#111] transition-colors text-[#808080]">Cancel</button>
-                <button className="flex-1 py-3 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20">Send Invites</button>
+                <button onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-[#1a1a1a] rounded-l font-bold text-xs hover:bg-[#111] transition-colors text-[#808080]">Cancel</button>
+                <button className="flex-1 py-3 bg-[#3b82f6] text-white rounded-l font-bold text-xs hover:opacity-90 transition-opacity">Send Link</button>
               </div>
             </div>
 
             {/* Right Side: Preview Panel */}
             <div className="w-full md:w-[320px] bg-[#050505] p-8 flex flex-col">
                 <div className="text-[10px] uppercase text-[#444] font-bold tracking-widest mb-6">Recipient Preview</div>
-                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-[#1a1a1a] rounded-2xl p-6 bg-[#0a0a0a]/50">
+                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-[#1a1a1a] rounded-xl p-6 bg-[#0a0a0a]/50">
                     <div className="w-16 h-16 bg-blue-600/20 text-blue-500 rounded-2xl flex items-center justify-center text-2xl mb-4 border border-blue-500/20">
                         <i className="fa-solid fa-file-pdf"></i>
                     </div>
@@ -235,9 +211,9 @@ const FileDetails = () => {
                         <span className="text-[9px] text-[#808080] font-mono uppercase tracking-tighter">Encryption Active</span>
                     </div>
                 </div>
-                <div className="mt-6 text-center">
+                <div className="mt-6">
                     <p className="text-[10px] text-[#444] leading-relaxed italic">
-                        "Multiple recipients will receive separate secure access notifications."
+                        "Recipients will see a secure download page with your branding and custom message."
                     </p>
                 </div>
             </div>
@@ -306,3 +282,4 @@ const FileDetails = () => {
 };
 
 export default FileDetails;
+

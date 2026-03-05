@@ -7,7 +7,7 @@ const Dashboard = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="w-full max-w-[450px] bg-[#0a0a0a] border border-[#1a1a1a] p-[10px_16px] rounded-xl flex items-center">
           <i className="fa fa-search text-[#808080]"></i>
-          <input type="text" placeholder="Search dashboard..." className="bg-transparent border-none text-white ml-3 w-full outline-none text-sm" />
+          <input type="text" placeholder="Search files, folders, links..." className="bg-transparent border-none text-white ml-3 w-full outline-none text-sm" />
         </div>
        <a href="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-[10px]">
   <i className="fa fa-plus"></i> New Document

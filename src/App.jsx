@@ -8,6 +8,8 @@ import CollectionLayout from "./layouts/CollectionLayout";
 
 import Dashboard from "./pages/user/Dashboard";
 import PaginatedFiles from "./pages/user/PaginatedFiles";
+import ViewAllShares from "./pages/user/ViewAllShares";
+import NotFound from "./pages/public/NotFound";
 import FileDetails from "./pages/user/FileDetails";
 import RecentFiles from "./pages/user/RecentFiles";
 import Starred from "./pages/user/Starred";
@@ -21,6 +23,8 @@ import AccountSettings from "./pages/profile/Profilesettings";
 
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
+import ExternalShareView from "./pages/public/PublicView";
+
 
 function App() {
   return (
@@ -38,7 +42,7 @@ function App() {
         <Route path="/collections" element={<Collections />} />
         <Route path="/trash" element={<Trash />} />
         <Route path="/upload-file" element={<UploadFilesMain />} />
-
+        <Route path="/viewallshares" element={<ViewAllShares />} />
         <Route path="/myprofile" element={<UserProfile />} />
         <Route path="/settings" element={<AccountSettings />} />
 
@@ -53,7 +57,8 @@ function App() {
       </Route>
  
 
-
+<Route path="/404" element={<NotFound />} />
+<Route path="/downloadpage" element={<ExternalShareView />} />  
     </Routes>
   );
 }

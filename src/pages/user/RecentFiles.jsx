@@ -78,7 +78,7 @@ const RecentActivityMain = () => {
         {/* SECTION: Recently Shared With You */}
         <div className="mt-12">
           <div className="flex justify-between items-center mb-2">
-            <div className="text-[18px] md:text-[20px] font-semibold text-white">Recently Shared With You</div>
+            <div className="text-[18px] md:text-[20px] font-semibold text-white">Added Last Week</div>
             <div className="text-[#3b82f6] text-xs cursor-pointer hover:underline">View All</div>
           </div>
           <hr className="border-0 border-t border-[#1a1a1a] mb-6" />
