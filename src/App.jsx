@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 
 import UserLayout from "./layouts/UserLayout";
+import StorageLayout from "./layouts/StorageManagement";
 import RecentLayout from "./layouts/RecentLayout";
 import CollectionLayout from "./layouts/CollectionLayout";
 
@@ -18,6 +19,8 @@ import Collections from "./pages/user/Collections";
 import CollectionDetails from "./pages/user/CollectionDetails";
 import Trash from "./pages/user/Trash";
 import UploadFilesMain from "./pages/user/UploadFile";
+import StorageDashboard from "./pages/user/StorageDashboard";
+
 import UserProfile from "./pages/profile/UserProfile";
 import AccountSettings from "./pages/profile/Profilesettings";
 
@@ -25,6 +28,10 @@ import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
 import ExternalShareView from "./pages/public/PublicView";
 
+
+import ManageStorage from "./pages/user/storage/ManageStorage"
+import ViewDuplicates from "./pages/user/storage/ViewDuplicates";
+import ViewOldFiles from "./pages/user/storage/ViewOldFiles";
 
 function App() {
   return (
@@ -45,9 +52,16 @@ function App() {
         <Route path="/viewallshares" element={<ViewAllShares />} />
         <Route path="/myprofile" element={<UserProfile />} />
         <Route path="/settings" element={<AccountSettings />} />
+        <Route path="/storage" element={<StorageDashboard />} />
+
 
       </Route>
-
+      <Route element={<StorageLayout />}>
+         <Route path="/storage/storage-cleanup" element={<ManageStorage />} />
+          <Route path="/storage/view-duplicates" element={<ViewDuplicates />} />
+          <Route path="/storage/view-oldfiles" element={<ViewOldFiles />} />
+      </Route>
+       
 
       <Route element={<RecentLayout />}>
       <Route path="/recent" element={<RecentFiles />} />
@@ -56,9 +70,12 @@ function App() {
       <Route path="/viewcollection" element={<CollectionDetails />} />
       </Route>
  
+      <Route path="/downloadpage" element={<ExternalShareView />} />  
+      <Route path="*" element={<NotFound />} />
 
-<Route path="/404" element={<NotFound />} />
-<Route path="/downloadpage" element={<ExternalShareView />} />  
+
+
+
     </Routes>
   );
 }

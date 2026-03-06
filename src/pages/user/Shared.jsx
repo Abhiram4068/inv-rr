@@ -16,7 +16,7 @@ const Shared = () => {
   return (
     /* Use w-full and flex-1 to ensure it fills the space between sidebars */
     <div className="flex-1 min-w-0 bg-black overflow-y-auto no-scrollbar">
-      <div className="p-6 lg:p-10 max-w-5xl">
+      <div className="py-10 px-12 lg:px-24 max-w-[1600px] mx-auto">
         
         {/* PAGE HEADER */}
         <div className="flex justify-between items-center mb-10">
@@ -29,16 +29,16 @@ const Shared = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="text-[10px] uppercase tracking-widest text-neutral-500 border-b border-neutral-900">
-                <th className="pb-4 font-medium">File Name</th>
+                <th className="pb-4 pl-4 font-medium">File Name</th>
                 <th className="pb-4 font-medium">Shared With</th>
                 <th className="pb-4 font-medium">View Status</th>
-                <th className="pb-4 font-medium text-right">Manage</th>
+                <th className="pb-4 pr-4 font-medium text-right">Manage</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-900">
               {sharedFiles.map((file) => (
                 <tr key={file.id} className="group hover:bg-neutral-900/30 transition-colors">
-                  <td className="py-5 text-sm text-white">
+                  <td className="py-5 pl-4 text-sm text-white">
                     <div className="flex items-center gap-3">
                       <i className={`fa-solid ${file.icon}`} style={{ color: file.color }}></i>
                       <span className="truncate max-w-[200px]">{file.name}</span>
@@ -50,7 +50,7 @@ const Shared = () => {
                       {file.views}
                     </span>
                   </td>
-                  <td className="py-5 text-sm text-right">
+                  <td className="py-5 pr-4 text-sm text-right">
                     <button 
                       onClick={() => setModalOpen(true)}
                       className="text-blue-500 hover:underline font-medium"
@@ -85,7 +85,7 @@ const Shared = () => {
             <thead>
               <tr className="text-[10px] uppercase tracking-widest text-neutral-500 border-b border-neutral-900">
                 <th className="pb-4 font-medium">Email ID</th>
-                <th className="pb-4 font-medium">File Name</th>
+                <th className="pb-4 pl-4 font-medium">File Name</th>
                 <th className="pb-4 font-medium">Status</th>
                 <th className="pb-4 font-medium text-right">Action</th>
               </tr>
@@ -94,7 +94,7 @@ const Shared = () => {
               {recentShares.map((share) => (
                 <tr key={share.id} className="group hover:bg-neutral-900/30 transition-colors">
                   <td className="py-5 text-sm text-blue-500 truncate max-w-[200px]">{share.email}</td>
-                  <td className="py-5 text-sm text-white">{share.file}</td>
+                  <td className="py-5 pl-4 text-sm text-white">{share.file}</td>
                   <td className="py-5 text-sm">
                     <span 
                       className="text-[10px] px-2 py-0.5 rounded" 
@@ -103,7 +103,7 @@ const Shared = () => {
                       {share.status}
                     </span>
                   </td>
-                  <td className="py-5 text-sm text-right">
+                  <td className="py-5 pr-4 text-sm text-right">
                     <button 
                       onClick={() => setModalOpen(true)}
                       className="text-blue-500 hover:underline font-medium"

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from "react-router-dom";
 
 const StarredItems = () => {
   return (
@@ -97,31 +98,31 @@ const StarredItems = () => {
           <hr className="border-0 border-t border-[#1a1a1a] mb-6" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4 flex items-center justify-between hover:border-[#333] transition-all cursor-pointer group">
-              <div className="flex items-center gap-3">
-                <i className="fa-solid fa-folder text-2xl text-[#3b82f6]"></i>
-                <div>
-                  <div className="text-sm font-medium text-white">Project Assets</div>
-                  <div className="text-[11px] text-[#808080]">24 items</div>
-                </div>
-              </div>
-              <i className="fa-solid fa-star text-[#f59e0b] text-xs"></i>
-            </div>
-
-            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4 flex items-center justify-between hover:border-[#333] transition-all cursor-pointer group">
-              <div className="flex items-center gap-3">
-                <i className="fa-solid fa-folder text-2xl text-[#3b82f6]"></i>
-                <div>
-                  <div className="text-sm font-medium text-white">Client Documents</div>
-                  <div className="text-[11px] text-[#808080]">102 items</div>
-                </div>
-              </div>
-              <i className="fa-solid fa-star text-[#f59e0b] text-xs"></i>
-            </div>
-
-            <div className="border-2 border-dashed border-[#1a1a1a] rounded-lg flex flex-col items-center justify-center text-[#808080] py-4">
-              <span className="text-xs">Add more favorites</span>
-            </div>
+            <Link to="/viewcollection">
+  <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4 flex items-center justify-between hover:border-[#333] transition-all cursor-pointer group">
+    <div className="flex items-center gap-3">
+      <i className="fa-solid fa-folder text-2xl text-[#3b82f6]"></i>
+      <div>
+        <div className="text-sm font-medium text-white">Project Assets</div>
+        <div className="text-[11px] text-[#808080]">24 item(s)</div>
+      </div>
+    </div>
+    <i className="fa-solid fa-star text-[#f59e0b] text-xs"></i>
+  </div>
+</Link>
+            <Link to="/viewcollection">
+  <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4 flex items-center justify-between hover:border-[#333] transition-all cursor-pointer group">
+    <div className="flex items-center gap-3">
+      <i className="fa-solid fa-folder text-2xl text-[#3b82f6]"></i>
+      <div>
+        <div className="text-sm font-medium text-white">Client Documents</div>
+        <div className="text-[11px] text-[#808080]">0 item(s)</div>
+      </div>
+    </div>
+    <i className="fa-solid fa-star text-[#f59e0b] text-xs"></i>
+  </div>
+</Link>
+       
           </div>
         </div>
       </main>

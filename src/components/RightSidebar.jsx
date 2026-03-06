@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from "react-router-dom";
 
 const RightSidebar = () => {
+  const navigate = useNavigate();
   return (
     <aside className="hidden lg:block w-[320px] p-[24px_20px] border-l border-[#1a1a1a] overflow-y-auto bg-black">
       <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-5 mb-4 text-white">
@@ -30,7 +32,12 @@ const RightSidebar = () => {
           <div className="w-[93%] h-full bg-[#ff4444]"></div>
         </div>
         <p className="text-[12px] text-[#808080] m-0">14.08 GB of 15 GB used (93%)</p>
-        <p className="text-[11px] text-[#3b82f6] mt-[10px] cursor-pointer hover:underline">Upgrade Storage Plan</p>
+       <p
+  onClick={() => navigate("/storage")}
+  className="text-[11px] text-[#3b82f6] mt-[10px] cursor-pointer hover:underline"
+>
+  Manage Storage
+</p>
       </div>
     </aside>
   );

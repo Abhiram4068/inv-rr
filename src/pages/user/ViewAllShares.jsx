@@ -12,6 +12,11 @@ const ViewAllShares = () => {
     { id: 4, name: "Branding_Guidelines.zip", type: "zip", sharedWith: "Public Link", views: "156 Views", date: "Oct 05, 2023", color: "#ffa900", icon: "fa-file-zipper" },
     { id: 5, name: "User_Research_Video.mp4", type: "video", sharedWith: "marketing@team.com", views: "24 Views", date: "Sep 28, 2023", color: "#ff3547", icon: "fa-file-video" },
     { id: 6, name: "API_Documentation.md", type: "code", sharedWith: "dev-group@internal.com", views: "91 Views", date: "Sep 22, 2023", color: "#a66efa", icon: "fa-file-code" },
+    { id: 6, name: "API_Documentation.md", type: "code", sharedWith: "dev-group@internal.com", views: "91 Views", date: "Sep 22, 2023", color: "#a66efa", icon: "fa-file-code" },
+  { id: 6, name: "API_Documentation.md", type: "code", sharedWith: "dev-group@internal.com", views: "91 Views", date: "Sep 22, 2023", color: "#a66efa", icon: "fa-file-code" },
+  
+  { id: 6, name: "API_Documentation.md", type: "code", sharedWith: "dev-group@internal.com", views: "91 Views", date: "Sep 22, 2023", color: "#a66efa", icon: "fa-file-code" },
+  
   ];
 
   const filteredFiles = allSharedFiles.filter(file => 
@@ -53,17 +58,17 @@ const ViewAllShares = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-[10px] uppercase tracking-[0.15em] text-neutral-500 border-b border-neutral-900">
-                <th className="pb-4 font-semibold">File Name</th>
+                <th className="pb-4 pl-4 font-semibold">File Name</th>
                 <th className="pb-4 font-semibold">Recipient</th>
                 <th className="pb-4 font-semibold">Shared Date</th>
                 <th className="pb-4 font-semibold">Analytics</th>
-                <th className="pb-4 font-semibold text-right">Actions</th>
+                <th className="pb-4 pr-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-900">
               {filteredFiles.map((file) => (
                 <tr key={file.id} className="group hover:bg-neutral-900/40 transition-colors">
-                  <td className="py-5 text-sm text-white">
+                  <td className="py-5 pl-4 text-sm text-white">
                     <div className="flex items-center gap-4">
                       <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center">
                         <i className={`fa-solid ${file.icon} text-base`} style={{ color: file.color }}></i>
@@ -85,7 +90,7 @@ const ViewAllShares = () => {
                       {file.views}
                     </span>
                   </td>
-                  <td className="py-5 text-sm text-right">
+                  <td className="py-5 pr-4 text-sm text-right">
                     <div className="flex justify-end gap-4">
                       <button className="text-neutral-500 hover:text-white transition-colors">
                         <i className="fa-solid fa-link text-xs"></i>

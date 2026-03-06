@@ -10,6 +10,9 @@ const CollectionDetails = () => {
     description: "All the employee details"
   });
 
+  // State to track if the folder is starred
+  const [isStarred, setIsStarred] = useState(false);
+
   const files = [
     { name: "Final_Pitch_Deck.pdf", size: "4.2 MB", time: "2h ago", icon: "fa-file-pdf", path: "/uploads/Final_Pitch_Deck.pdf" },
     { name: "Meeting_Notes_Feb.docx", size: "1.1 MB", time: "Yesterday", icon: "fa-file-word", path: "/uploads/Meeting_Notes_Feb.docx" },
@@ -42,9 +45,25 @@ const CollectionDetails = () => {
               style={{ background: 'transparent', border: 'none', color: 'white', marginLeft: '12px', width: '100%', outline: 'none', fontSize: '14px' }} 
             />
           </div>
-           <a href="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-2">
-          <i className="fa fa-plus"></i> Upload Files
-        </a>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Star Folder Toggle */}
+                        <button 
+              onClick={() => setIsStarred(!isStarred)}
+              className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${
+                isStarred 
+              ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
+                : 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] hover:text-white hover:border-[#333]'
+              }`}
+              title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              <i className={`${isStarred ? 'fa-solid' : 'fa-regular'} fa-star text-sm`}></i>
+            </button>
+
+            <a href="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-2">
+              <i className="fa-solid fa-plus"></i> Upload Files
+            </a>
+          </div>
         </div>
 
         {/* Title Area */}

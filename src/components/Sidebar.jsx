@@ -34,6 +34,10 @@ const Sidebar = ({ isOpen }) => {
     <i className="fa-solid fa-folder w-5 mr-3 text-base"></i> Collections
   </NavLink>
 
+  <NavLink to="/collections" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
+    <i className="fa-solid fa-box-archive w-5 mr-3 text-base"></i> Archives
+  </NavLink>
+
   <NavLink to="/trash" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
     <i className="fa-solid fa-trash w-5 mr-3 text-base"></i> Trash
   </NavLink>
