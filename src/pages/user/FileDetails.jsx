@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const FileDetails = () => {
   // State for Modal visibility
   const [activeModal, setActiveModal] = useState(null);
   const [isStarred, setIsStarred] = useState(false);
+  
+  // Toast State
+  const [toast, setToast] = useState({ visible: false, message: '' });
   
   // NEW: State for dynamic recipient list
   const [recipients, setRecipients] = useState(['']);
@@ -16,6 +19,19 @@ const FileDetails = () => {
 
   const [tempName, setTempName] = useState(fileData.name);
   const [tempDesc, setTempDesc] = useState(fileData.description);
+
+  // Toast Helper
+  const showToast = (msg) => {
+    setToast({ visible: true, message: msg });
+  };
+
+  // Auto-hide toast
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => setToast({ ...toast, visible: false }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
 
   // Handlers for dynamic recipients
   const addRecipient = () => {
@@ -36,10 +52,36 @@ const FileDetails = () => {
   const saveDetails = () => {
     setFileData({ name: tempName, description: tempDesc });
     setActiveModal(null);
+    showToast("File details updated successfully");
+  };
+
+  const handleShare = () => {
+    setActiveModal(null);
+    showToast(`File shared with ${recipients.filter(r => r !== '').length} recipients`);
+  };
+
+  const handleArchive = () => {
+    setActiveModal(null);
+    showToast("File moved to archive");
+  };
+
+  const handleDelete = () => {
+    setActiveModal(null);
+    showToast("File moved to trash");
   };
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-black text-white font-sans">
+    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-black text-white font-sans relative">
+      {/* Toast Notification */}
+{toast.visible && (
+  <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="bg-white text-black px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3">
+      <i className="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+      {toast.message}
+    </div>
+  </div>
+)}
+
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto no-scrollbar p-6 lg:p-10 flex flex-col gap-8">
         
@@ -55,17 +97,21 @@ const FileDetails = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setIsStarred(!isStarred)}
-              className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${
-                isStarred 
-              ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
-                : 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] hover:text-white hover:border-[#333]'
-              }`}
-              title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
-            >
-              <i className={`${isStarred ? 'fa-solid' : 'fa-regular'} fa-star text-sm`}></i>
-            </button>
+ <button 
+  onClick={() => {
+    const newStarredState = !isStarred;
+    setIsStarred(newStarredState);
+    showToast(newStarredState ? "Added to Favorites" : "Removed from Favorites");
+  }}
+  className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${
+    isStarred 
+      ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
+      : 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] hover:text-white hover:border-[#333]'
+  }`}
+  title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
+>
+  <i className={`${isStarred ? 'fa-solid' : 'fa-regular'} fa-star text-sm`}></i>
+</button>
             <button 
               onClick={() => setActiveModal('share')}
               className="flex-1 md:flex-none px-5 py-2.5 bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#111] transition-all"
@@ -110,8 +156,18 @@ const FileDetails = () => {
             </div>
 
             <div className="flex flex-col gap-2">
-              <button className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"><i className="fa-solid fa-eye text-[#444]"></i> Open File</button>
-              <button className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"><i className="fa-solid fa-download text-[#444]"></i> Download</button>
+              <button 
+    onClick={() => showToast("Opening file...")}
+    className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"
+  >
+    <i className="fa-solid fa-eye text-[#444]"></i> Open File
+  </button>
+             <button 
+    onClick={() => showToast("Downloading file...")}
+    className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"
+  >
+    <i className="fa-solid fa-download text-[#444]"></i> Download
+  </button>
               <button onClick={() => setActiveModal('edit')} className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"><i className="fa-solid fa-pen text-[#444]"></i> Edit Details</button>
               <button onClick={() => setActiveModal('archive')} className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3 text-blue-500"><i className="fa-solid fa-box-archive"></i> Archive</button>
               <button onClick={() => setActiveModal('delete')} className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3 text-red-500"><i className="fa-solid fa-trash"></i> Move to Trash</button>
@@ -139,60 +195,33 @@ const FileDetails = () => {
 
       {/* --- MODALS --- */}
 
-      {/* Share Modal - DYNAMIC RECIPIENTS ENABLED */}
       {activeModal === 'share' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all">
           <div className="bg-[#0a0a0a] border border-[#1a1a1a] w-full max-w-[800px] rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
-            
-            {/* Left Side: Form */}
             <div className="flex-1 p-8 border-b md:border-b-0 md:border-r border-[#1a1a1a] max-h-[80vh] overflow-y-auto no-scrollbar">
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-xl font-bold">Share Document</h2>
               </div>
-
               <div className="space-y-6">
-                {/* Dynamic Recipient Input Section */}
                 <div>
                   <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Recipient Emails</label>
                   <div className="space-y-3">
                     {recipients.map((email, index) => (
                       <div key={index} className="flex gap-2 animate-in fade-in slide-in-from-top-1">
-                        <input 
-                          value={email}
-                          onChange={(e) => handleEmailChange(index, e.target.value)}
-                          placeholder="Enter email address..." 
-                          type="email" 
-                          className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-[#333]" 
-                        />
+                        <input value={email} onChange={(e) => handleEmailChange(index, e.target.value)} placeholder="Enter email address..." type="email" className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-[#333]" />
                         {index === recipients.length - 1 ? (
-                          <button 
-                            onClick={addRecipient}
-                            className="bg-blue-600/10 border border-blue-500/30 w-[46px] h-[46px] rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all"
-                            title="Add recipient"
-                          >
-                            <i className="fa-solid fa-plus"></i>
-                          </button>
+                          <button onClick={addRecipient} className="bg-blue-600/10 border border-blue-500/30 w-[46px] h-[46px] rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all"><i className="fa-solid fa-plus"></i></button>
                         ) : (
-                          <button 
-                            onClick={() => removeRecipient(index)}
-                            className="bg-[#111] border border-[#1a1a1a] w-[46px] h-[46px] rounded-xl flex items-center justify-center text-[#444] hover:text-red-500 hover:border-red-500/30 transition-all"
-                            title="Remove"
-                          >
-                            <i className="fa-solid fa-trash-can text-xs"></i>
-                          </button>
+                          <button onClick={() => removeRecipient(index)} className="bg-[#111] border border-[#1a1a1a] w-[46px] h-[46px] rounded-xl flex items-center justify-center text-[#444] hover:text-red-500 hover:border-red-500/30 transition-all"><i className="fa-solid fa-trash-can text-xs"></i></button>
                         )}
                       </div>
                     ))}
                   </div>
                 </div>
-
-                {/* Message Input */}
                 <div>
                   <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Message</label>
                   <textarea placeholder="Write a note..." rows="4" className="w-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-[#333] outline-none transition-all text-white placeholder:text-[#333] resize-none"></textarea>
                 </div>
-
-                {/* Settings */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Expiry</label>
@@ -213,14 +242,11 @@ const FileDetails = () => {
                   </div>
                 </div>
               </div>
-
               <div className="flex gap-3 mt-10">
                 <button onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-[#1a1a1a] rounded-xl font-bold text-xs hover:bg-[#111] transition-colors text-[#808080]">Cancel</button>
-                <button className="flex-1 py-3 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20">Send Invites</button>
+                <button onClick={handleShare} className="flex-1 py-3 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20">Send Invites</button>
               </div>
             </div>
-
-            {/* Right Side: Preview Panel */}
             <div className="w-full md:w-[320px] bg-[#050505] p-8 flex flex-col">
                 <div className="text-[10px] uppercase text-[#444] font-bold tracking-widest mb-6">Recipient Preview</div>
                 <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-[#1a1a1a] rounded-2xl p-6 bg-[#0a0a0a]/50">
@@ -229,23 +255,16 @@ const FileDetails = () => {
                     </div>
                     <p className="text-xs font-bold text-center mb-1 truncate w-full">{fileData.name}</p>
                     <p className="text-[10px] text-[#444] mb-6">4.2 MB • Secure Link</p>
-                    
                     <div className="w-full h-[32px] bg-[#111] rounded-lg border border-[#1a1a1a] flex items-center px-3 gap-2">
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                         <span className="text-[9px] text-[#808080] font-mono uppercase tracking-tighter">Encryption Active</span>
                     </div>
-                </div>
-                <div className="mt-6 text-center">
-                    <p className="text-[10px] text-[#444] leading-relaxed italic">
-                        "Multiple recipients will receive separate secure access notifications."
-                    </p>
                 </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
       {activeModal === 'edit' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85">
           <div className="bg-[#0a0a0a] border border-[#1a1a1a] w-full max-w-[450px] rounded-xl p-8 shadow-2xl">
@@ -268,7 +287,6 @@ const FileDetails = () => {
         </div>
       )}
 
-      {/* Archive Modal */}
       {activeModal === 'archive' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85">
           <div className="bg-[#0a0a0a] border border-[#1a1a1a] w-full max-w-[400px] rounded-xl p-8 shadow-2xl text-center">
@@ -279,13 +297,12 @@ const FileDetails = () => {
             <p className="text-[#808080] text-sm mb-8">This will move the file to read-only mode.</p>
             <div className="flex gap-3">
               <button onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-[#1a1a1a] rounded-xl font-bold text-xs hover:bg-[#111] transition-colors">Cancel</button>
-              <button onClick={() => setActiveModal(null)} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-colors">Archive</button>
+              <button onClick={handleArchive} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-colors">Archive</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Modal */}
       {activeModal === 'delete' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85">
           <div className="bg-[#0a0a0a] border border-[#1a1a1a] w-full max-w-[400px] rounded-xl p-8 shadow-2xl text-center">
@@ -296,7 +313,7 @@ const FileDetails = () => {
             <p className="text-[#808080] text-sm mb-8">Items are deleted after 30 days.</p>
             <div className="flex gap-3">
               <button onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-[#1a1a1a] rounded-xl font-bold text-xs hover:bg-[#111] transition-colors">Cancel</button>
-              <button onClick={() => setActiveModal(null)} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-xs hover:bg-red-700 transition-colors">Delete</button>
+              <button onClick={handleDelete} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-xs hover:bg-red-700 transition-colors">Delete</button>
             </div>
           </div>
         </div>

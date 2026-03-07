@@ -1,26 +1,22 @@
 import React, { useState } from 'react';
 
-const ViewDuplicates = () => {
+const DuplicateManager = () => {
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // Dataset structured to show grouped duplicates
-  const duplicateGroups = [
-    { id: 1, groupId: "G1", name: "Project_Final_v1.pdf", location: "/Documents", size: "4.2 MB", date: "Oct 12, 2023", color: "#ff4444", icon: "fa-file-pdf", isOriginal: true },
-    { id: 2, groupId: "G1", name: "Project_Final_v1 (1).pdf", location: "/Downloads", size: "4.2 MB", date: "Oct 15, 2023", color: "#ff4444", icon: "fa-file-pdf", isOriginal: false },
-    
-    { id: 3, groupId: "G2", name: "Company_Logo_HighRes.png", location: "/Assets/Branding", size: "12.5 MB", date: "Sep 05, 2023", color: "#10b981", icon: "fa-file-image", isOriginal: true },
-    { id: 4, groupId: "G2", name: "logo-backup.png", location: "/Desktop/Old", size: "12.5 MB", date: "Sep 10, 2023", color: "#10b981", icon: "fa-file-image", isOriginal: false },
-    { id: 5, groupId: "G2", name: "Copy of Company_Logo.png", location: "/Downloads", size: "12.5 MB", date: "Sep 12, 2023", color: "#10b981", icon: "fa-file-image", isOriginal: false },
-
-    { id: 6, groupId: "G3", name: "Quarterly_Report_Q3.xlsx", location: "/Finance/2023", size: "1.2 MB", date: "Oct 01, 2023", color: "#3b82f6", icon: "fa-file-excel", isOriginal: true },
-    { id: 7, groupId: "G3", name: "Quarterly_Report_Q3_Duplicate.xlsx", location: "/Shared/Finance", size: "1.2 MB", date: "Oct 02, 2023", color: "#3b82f6", icon: "fa-file-excel", isOriginal: false },
+  // Mock Data focused on duplicate files
+  const duplicateFiles = [
+    { id: 1, name: "Logo_Final_v2_COPY.png", type: "image", size: "12 MB", category: "Duplicate", date: "Sep 05, 2023", color: "#10b981", icon: "fa-file-image", original: "Logo_Final_v2.png" },
+    { id: 2, name: "Presentation_Backup_2.pptx", type: "document", size: "45 MB", category: "Duplicate", date: "Nov 12, 2023", color: "#f59e0b", icon: "fa-file-powerpoint", original: "Presentation.pptx" },
+    { id: 3, name: "Hero_Video_Draft_1.mp4", type: "video", size: "1.2 GB", category: "Duplicate", date: "Jan 10, 2024", color: "#3b82f6", icon: "fa-file-video", original: "Hero_Video_Final.mp4" },
+    { id: 4, name: "Database_Dump (1).sql", type: "database", size: "850 MB", category: "Duplicate", date: "Feb 22, 2024", color: "#808080", icon: "fa-database", original: "Database_Dump.sql" },
+    { id: 5, name: "Archive_v2.zip", type: "archive", size: "420 MB", category: "Duplicate", date: "Mar 01, 2024", color: "#ffa900", icon: "fa-file-zipper", original: "Archive.zip" },
   ];
 
-  const filteredFiles = duplicateGroups.filter(file => 
+  const filteredFiles = duplicateFiles.filter(file => 
     file.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    file.location.toLowerCase().includes(searchQuery.toLowerCase())
+    file.original.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleDeleteClick = (file) => {
@@ -29,124 +25,119 @@ const ViewDuplicates = () => {
   };
 
   return (
-    <div className="flex-1 min-w-0 bg-black overflow-y-auto no-scrollbar min-h-screen">
-      <div className="p-6 lg:p-10 max-w-6xl mx-auto">
-        
-        {/* BREADCRUMB / BACK NAVIGATION */}
+    <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar bg-black text-white min-h-screen">
+      
+      {/* Breadcrumb & Navigation - Matched to StorageDashboard Hierarchy */}
+      <div className="flex items-center gap-4 mb-6">
         <button 
           onClick={() => window.history.back()} 
-          className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors mb-6 text-sm group bg-transparent border-none cursor-pointer"
+          className="w-8 h-8 flex items-center justify-center hover:bg-[#111] transition-colors"
         >
-          <i className="fa-solid fa-arrow-left text-[10px] group-hover:-translate-x-1 transition-transform"></i>
-          <span>Back to Storage Overview</span>
+          <i className="fa-solid fa-arrow-left text-sm text-[#808080]"></i>
         </button>
+        <nav className="flex items-center gap-2 text-sm">
+          <span className="text-[#808080] hover:text-white cursor-pointer">Home</span>
+          <i className="fa-solid fa-chevron-right text-[10px] text-[#333]"></i>
+          <span className="text-[#808080] hover:text-white cursor-pointer">Storage Management</span>
+          <i className="fa-solid fa-chevron-right text-[10px] text-[#333]"></i>
+          <span className="font-semibold text-white">Duplicate Files</span>
+        </nav>
+      </div>
 
-        {/* HEADER & SEARCH */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Duplicate Files</h1>
-            <p className="text-neutral-500 text-sm mt-1">Found {duplicateGroups.length} redundant files across {new Set(duplicateGroups.map(f => f.groupId)).size} groups</p>
-          </div>
-          
-          <div className="relative group">
-            <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600 text-xs group-focus-within:text-blue-500 transition-colors"></i>
+      {/* Header & Search Area */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold">Duplicate Finder</h1>
+          <p className="text-sm text-[#808080]">Review and remove identical files to save space</p>
+        </div>
+        <div className="flex gap-3 w-full md:w-auto">
+          <div className="flex-1 md:w-[300px] bg-[#0a0a0a] border border-[#1a1a1a] p-[10px_16px] rounded-xl flex items-center">
+            <i className="fa fa-search text-[#808080]"></i>
             <input 
               type="text" 
-              placeholder="Search file names or folders..."
+              placeholder="Search duplicates..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-neutral-900/50 border border-neutral-800 text-white text-sm rounded-full py-2.5 pl-10 pr-6 w-full md:w-80 focus:outline-none focus:border-neutral-600 focus:bg-neutral-900 transition-all"
+              className="bg-transparent border-none text-white ml-3 w-full outline-none text-sm" 
             />
           </div>
         </div>
+      </div>
 
-        {/* DATA TABLE */}
+      {/* Content Area - Data Table */}
+      <div className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] uppercase tracking-[0.15em] text-neutral-500 border-b border-neutral-900">
-                <th className="pb-4 font-semibold">File Name</th>
-                <th className="pb-4 font-semibold">Folder Path</th>
-                <th className="pb-4 font-semibold">Status</th>
-                <th className="pb-4 font-semibold text-right">Size</th>
-                <th className="pb-4 font-semibold text-right pl-4">Actions</th>
+              <tr className="text-[10px] uppercase tracking-[0.15em] text-[#808080] border-b border-[#1a1a1a]">
+                <th className="p-6 font-semibold">Duplicate File</th>
+                <th className="p-6 font-semibold">Original File</th>
+                <th className="p-6 font-semibold">Size</th>
+                <th className="p-6 font-semibold text-center">View</th>
+                <th className="p-6 font-semibold text-right">Manage</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-900">
-              {filteredFiles.map((file, index) => {
-                // Determine if this is the start of a new group for visual spacing
-                const isNewGroup = index > 0 && filteredFiles[index - 1].groupId !== file.groupId;
-                
-                return (
-                  <tr key={file.id} className={`group hover:bg-neutral-900/40 transition-colors ${isNewGroup ? 'border-t-2 border-neutral-800' : ''}`}>
-                    <td className="py-5 text-sm text-white">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center">
-                          <i className={`fa-solid ${file.icon} text-base`} style={{ color: file.color }}></i>
-                        </div>
+            <tbody>
+              {filteredFiles.map((file) => (
+                <tr 
+                  key={file.id} 
+                  className="group hover:bg-[#111] transition-all duration-200 border-b border-[#111] last:border-none"
+                >
+                  <td className="p-4 text-sm text-white">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-[#111] flex items-center justify-center group-hover:bg-[#1a1a1a] transition-colors">
+                        <i className={`fa-solid ${file.icon} text-base`} style={{ color: file.color }}></i>
+                      </div>
+                      <div className="flex flex-col">
                         <span className="font-medium truncate max-w-[200px]">{file.name}</span>
+                        <span className="text-[10px] text-[#808080]">{file.date}</span>
                       </div>
-                    </td>
-                    <td className="py-5 text-sm text-neutral-500 font-mono text-[12px]">
-                      {file.location}
-                    </td>
-                    <td className="py-5 text-sm">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                          file.isOriginal 
-                          ? 'bg-blue-500/5 text-blue-500 border-blue-500/20' 
-                          : 'bg-amber-500/5 text-amber-500 border-amber-500/20'
-                      }`}>
-                        {file.isOriginal ? 'Original' : 'Duplicate'}
-                      </span>
-                    </td>
-                    <td className="py-5 text-sm text-right">
-                      <span className="text-white font-semibold">
-                        {file.size}
-                      </span>
-                    </td>
-                    <td className="py-5 text-sm text-right">
-                      <div className="flex justify-end gap-4">
-                        {!file.isOriginal && (
-                          <button 
-                            onClick={() => handleDeleteClick(file)}
-                            className="text-red-500 hover:text-red-400 font-semibold text-xs"
-                          >
-                            Remove
-                          </button>
-                        )}
-                        {file.isOriginal && (
-                          <span className="text-neutral-700 text-xs italic">Keep</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                  <td className="p-4 text-sm text-[#808080] italic">
+                    <i className="fa-solid fa-link text-[10px] mr-2"></i>
+                    {file.original}
+                  </td>
+                  <td className="p-4 text-sm font-semibold text-white">{file.size}</td>
+                  <td className="p-4 text-sm text-center">
+                    <button className="text-[#808080] hover:text-white transition-colors bg-[#111] hover:bg-[#1a1a1a] p-2 rounded-lg">
+                      <i className="fa-solid fa-eye text-xs"></i>
+                    </button>
+                  </td>
+                  <td className="p-4 text-sm text-right">
+                    <button 
+                      onClick={() => handleDeleteClick(file)}
+                      className="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
           
           {filteredFiles.length === 0 && (
             <div className="py-20 text-center">
-              <i className="fa-solid fa-copy text-neutral-800 text-4xl mb-4"></i>
-              <p className="text-neutral-500 text-sm">No duplicate files found.</p>
+              <i className="fa-solid fa-clone text-[#333] text-4xl mb-4"></i>
+              <p className="text-[#808080] text-sm">No duplicates found. Your storage is clean!</p>
             </div>
           )}
         </div>
+      </div>
 
-        {/* FOOTER STATS */}
-        <div className="mt-8 pt-6 border-t border-neutral-900 flex items-center justify-between">
-          <p className="text-[10px] text-neutral-600 uppercase tracking-widest">
-            Showing {filteredFiles.length} files in duplicate sets
-          </p>
-          <div className="flex gap-6 items-center">
-            <div className="text-right">
-              <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Wasted Space</p>
-              <p className="text-white font-bold">29.2 MB</p>
-            </div>
-            <button className="px-6 py-2.5 text-[10px] uppercase tracking-widest text-white font-bold bg-blue-600 rounded hover:bg-blue-500 transition-colors shadow-lg">
-              Auto-Clean Duplicates
-            </button>
-          </div>
+      {/* Footer Stats */}
+      <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p className="text-[10px] text-[#808080] uppercase tracking-widest font-medium">
+          {filteredFiles.length} duplicate pairs identified
+        </p>
+        <div className="flex gap-6 items-center">
+          <span className="text-[10px] text-[#808080] uppercase tracking-widest">
+            Wasted Space: <span className="text-white font-bold ml-1">2.54 GB</span>
+          </span>
+          <button className="px-5 py-2.5 text-[10px] uppercase tracking-widest text-white border border-[#1a1a1a] rounded-lg bg-[#0a0a0a] hover:bg-[#111] transition-colors font-bold">
+            Refresh Scan
+          </button>
         </div>
       </div>
 
@@ -155,31 +146,31 @@ const ViewDuplicates = () => {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
           <div className="bg-[#0a0a0a] border border-neutral-800 p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl">
             <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-               <i className="fa-solid fa-clone text-xl"></i>
+               <i className="fa-solid fa-trash-can text-xl"></i>
             </div>
             <h3 className="text-lg font-bold text-white mb-2">Delete Duplicate?</h3>
-            <p className="text-sm text-neutral-500 mb-8">
-              You are removing the copy at <span className="text-white">{selectedFile?.location}</span>. The original file will remain safe.
+            <p className="text-sm text-[#808080] mb-8 leading-relaxed">
+              You are removing the copy <span className="text-white font-medium">{selectedFile?.name}</span>. The original version will remain safe.
             </p>
             <div className="flex gap-3">
               <button 
-                className="flex-1 py-3 rounded-xl bg-neutral-800 text-white text-sm font-bold hover:bg-neutral-700 transition-colors"
+                className="flex-1 py-3.5 rounded-xl bg-[#1a1a1a] text-white text-sm font-bold hover:bg-[#222] transition-colors"
                 onClick={() => setDeleteModalOpen(false)}
               >
                 Cancel
               </button>
               <button 
-                className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-colors"
+                className="flex-1 py-3.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-colors"
                 onClick={() => setDeleteModalOpen(false)}
               >
-                Confirm Delete
+                Delete
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 };
 
-export default ViewDuplicates;
+export default DuplicateManager;

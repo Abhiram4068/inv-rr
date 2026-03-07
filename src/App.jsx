@@ -17,7 +17,7 @@ import Starred from "./pages/user/Starred";
 import Shared from "./pages/user/Shared";
 import Collections from "./pages/user/Collections";
 import CollectionDetails from "./pages/user/CollectionDetails";
-import Trash from "./pages/user/Trash";
+import TrashManagement from "./pages/user/storage/Trash";
 import UploadFilesMain from "./pages/user/UploadFile";
 import StorageDashboard from "./pages/user/StorageDashboard";
 
@@ -30,8 +30,8 @@ import ExternalShareView from "./pages/public/PublicView";
 
 
 import ManageStorage from "./pages/user/storage/ManageStorage"
-import ViewDuplicates from "./pages/user/storage/ViewDuplicates";
-import ViewOldFiles from "./pages/user/storage/ViewOldFiles";
+import DuplicateManager from "./pages/user/storage/ViewDuplicates";
+import OldFilesManager from "./pages/user/storage/ViewOldFiles";
 
 function App() {
   return (
@@ -47,7 +47,7 @@ function App() {
         <Route path="/starred" element={<Starred />} />
         <Route path="/shared" element={<Shared />} />
         <Route path="/collections" element={<Collections />} />
-        <Route path="/trash" element={<Trash />} />
+        
         <Route path="/upload-file" element={<UploadFilesMain />} />
         <Route path="/viewallshares" element={<ViewAllShares />} />
         <Route path="/myprofile" element={<UserProfile />} />
@@ -58,8 +58,9 @@ function App() {
       </Route>
       <Route element={<StorageLayout />}>
          <Route path="/storage/storage-cleanup" element={<ManageStorage />} />
-          <Route path="/storage/view-duplicates" element={<ViewDuplicates />} />
-          <Route path="/storage/view-oldfiles" element={<ViewOldFiles />} />
+          <Route path="/storage/view-duplicates" element={<DuplicateManager />} />
+          <Route path="/storage/trash" element={<TrashManagement />} />
+          <Route path="/storage/view-oldfiles" element={<OldFilesManager />} />
       </Route>
        
 

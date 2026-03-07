@@ -31,13 +31,14 @@ const RightSidebar = () => {
         <div className="h-1 bg-[#222] rounded-full my-3">
           <div className="w-[93%] h-full bg-[#ff4444]"></div>
         </div>
-        <p className="text-[12px] text-[#808080] m-0">14.08 GB of 15 GB used (93%)</p>
-       <p
-  onClick={() => navigate("/storage")}
-  className="text-[11px] text-[#3b82f6] mt-[10px] cursor-pointer hover:underline"
+        <p className="text-[12px] text-[#808080] mb-5">14.08 GB of 15 GB used (93%)</p>
+
+        <a 
+  href="/storage"
+ className="block w-full p-2.5  text-white rounded-[20px] font-semibold text-center text-sm mb-3 "
 >
-  Manage Storage
-</p>
+  View Storage
+</a>
       </div>
     </aside>
   );
