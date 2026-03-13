@@ -102,11 +102,9 @@ const SchedulesList = () => {
             </div>
 
             <div className="p-4 bg-[#0d0d0d] border-t border-[#1a1a1a] flex gap-3">
-              <button className="flex-1 py-3 bg-[#1a1a1a] hover:bg-[#222] text-white text-xs font-bold rounded-xl transition-all border border-[#333]">
-                Edit Sync
-              </button>
-              <button className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-900/20">
-                Send Now
+       
+              <button className="flex-1 py-3 bg-red-500 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-900/20">
+                Cancel Schedule
               </button>
             </div>
           </div>
@@ -279,9 +277,7 @@ const SchedulesList = () => {
                     </div>
                   )}
 
-                  <button className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full bg-blue-600/20 text-blue-500 border border-blue-500/30 flex items-center justify-center text-[10px] hover:bg-blue-600 hover:text-white">
-                    <i className="fa-solid fa-plus"></i>
-                  </button>
+                 
                 </div>
               );
             })}
