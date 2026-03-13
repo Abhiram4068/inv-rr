@@ -32,6 +32,9 @@ import ExternalShareView from "./pages/public/PublicView";
 import ManageStorage from "./pages/user/storage/ManageStorage"
 import DuplicateManager from "./pages/user/storage/ViewDuplicates";
 import OldFilesManager from "./pages/user/storage/ViewOldFiles";
+import ScheduleMail from "./pages/user/ScheduleMail";
+import SchedulesList from "./pages/user/SchedulesList";
+import ManagerReports from "./pages/user/ManagerReports";
 
 function App() {
   return (
@@ -53,7 +56,10 @@ function App() {
         <Route path="/myprofile" element={<UserProfile />} />
         <Route path="/settings" element={<AccountSettings />} />
         <Route path="/storage" element={<StorageDashboard />} />
-
+        <Route path="/schedule-mail" element={<ScheduleMail/>} />
+        <Route path="/schedules" element={<SchedulesList/>} />
+        <Route path="/reports" element={<ManagerReports/>} />
+        
 
       </Route>
       <Route element={<StorageLayout />}>
