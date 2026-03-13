@@ -3,7 +3,7 @@ import React from 'react';
 const FileCard = ({ title, size, time, iconClass, isLink = false }) => {
   const Content = (
     <>
-      <div className="h-[140px] bg-[#111] flex items-center justify-center relative border-b border-[#1a1a1a]">
+      <div className="h-[140px] bg-[#111] flex items-center justify-center relative border-b border-[#555]">
         <i className={`fa-solid ${iconClass} text-[40px] text-[#808080] absolute z-10 group-hover:scale-110 transition-transform`}></i>
         <img src="https://via.placeholder.com/300x140/111/111" alt="preview" className="w-full h-full object-cover opacity-40" />
       </div>

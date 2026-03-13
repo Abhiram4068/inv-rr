@@ -5,7 +5,7 @@ import { NavLink } from "react-router-dom";
 
 const Sidebar = ({ isOpen }) => {
   return (
-   <aside className={`${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static fixed inset-y-0 left-0 w-[260px] bg-black border-r border-[#1a1a1a] flex flex-col z-40 transition-transform duration-300 ease-in-out p-[24px_16px] overflow-y-auto custom-scrollbar`}>
+   <aside className={`${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static fixed inset-y-0 left-0 w-[260px] bg-black border-r border-[#555] flex flex-col z-40 transition-transform duration-300 ease-in-out p-[24px_16px] overflow-y-auto custom-scrollbar`}>
   <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px]">Main Feed</div>
 
   <NavLink to="/" className="flex items-center p-[10px_12px] rounded-lg text-white no-underline text-sm bg-[#111]">
@@ -47,13 +47,13 @@ const Sidebar = ({ isOpen }) => {
   <div className="space-y-1">
     {['abhiram@innovature...', 'demo@innovature...'].map((email, i) => (
       <div key={i} className="flex items-center p-[8px_12px] gap-3 cursor-pointer rounded-lg hover:bg-[#111]">
-        <div className="w-7 h-7 shrink-0 flex items-center justify-center text-[11px] rounded-full bg-[#1a1a1a] text-white">{i + 1}</div>
+        <div className="w-7 h-7 shrink-0 flex items-center justify-center text-[11px] rounded-full bg-[#555] text-white">{i + 1}</div>
         <span className="text-[13px] font-medium text-white truncate">{email}</span>
       </div>
     ))}
   </div>
 
-  <NavLink to="/all-shares" className="mt-auto pt-4 flex justify-between items-center text-[#808080] text-[12px] uppercase tracking-wider hover:text-white border-t border-[#1a1a1a]">
+  <NavLink to="/all-shares" className="mt-auto pt-4 flex justify-between items-center text-[#808080] text-[12px] uppercase tracking-wider hover:text-white border-t border-[#555]">
     <span>View All Shares</span>
     <i className="fa-solid fa-chevron-right text-[10px]"></i>
   </NavLink>

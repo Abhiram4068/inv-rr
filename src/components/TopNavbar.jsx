@@ -4,7 +4,7 @@ const TopNavbar = ({ toggleSidebar }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
-    <nav className="h-[60px] flex items-center justify-between px-4 md:px-6 border-b border-[#1a1a1a] shrink-0 bg-black z-50">
+    <nav className="h-[60px] flex items-center justify-between px-4 md:px-6 border-b border-[#555] shrink-0 bg-black z-50">
       <div className="flex items-center gap-4">
         <button onClick={toggleSidebar} className="lg:hidden text-[#808080] hover:text-white">
           <i className="fa-solid fa-bars text-xl"></i>
@@ -30,12 +30,12 @@ const TopNavbar = ({ toggleSidebar }) => {
           </div>
 
           {isDropdownOpen && (
-            <div className="absolute top-[calc(100%+10px)] right-0 w-[180px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-2 z-[100] shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
-              <a href="/myprofile" className="flex items-center gap-[10px] p-[10px_12px] text-[#808080] no-underline text-[13px] rounded-md transition-all hover:bg-[#1a1a1a] hover:text-white">
+            <div className="absolute top-[calc(100%+10px)] right-0 w-[180px] bg-[#0a0a0a] border border-[#555] rounded-xl p-2 z-[100] shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
+              <a href="/myprofile" className="flex items-center gap-[10px] p-[10px_12px] text-[#808080] no-underline text-[13px] rounded-md transition-all hover:bg-[#555] hover:text-white">
                 <i className="fa-solid fa-user"></i> Account
               </a>
-              <hr className="border-0 border-t border-[#1a1a1a] my-2" />
-              <button className="w-full flex items-center gap-[10px] p-[10px_12px] text-[#ff4444] text-[13px] rounded-md transition-all hover:bg-[#1a1a1a]">
+              <hr className="border-0 border-t border-[#555] my-2" />
+              <button className="w-full flex items-center gap-[10px] p-[10px_12px] text-[#ff4444] text-[13px] rounded-md transition-all hover:bg-[#555]">
                 <i className="fa-solid fa-right-from-bracket"></i> Logout
               </button>
             </div>

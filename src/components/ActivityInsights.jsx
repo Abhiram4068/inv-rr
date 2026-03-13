@@ -2,9 +2,9 @@ import React from "react";
 
 const ActivityInsights = () => {
   return (
-    <aside className="hidden lg:block w-[320px] p-[24px_20px] border-l border-[#1a1a1a] bg-black overflow-y-auto custom-scrollbar">
+    <aside className="hidden lg:block w-[320px] p-[24px_20px] border-l border-[#555] bg-black overflow-y-auto custom-scrollbar">
       {/* ACTIVITY SUMMARY */}
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-5 mb-4">
+      <div className="bg-[#0a0a0a] border border-[#555] rounded-xl p-5 mb-4">
         <div className="text-base font-semibold mb-3 text-white">
           Activity Summary
         </div>
@@ -28,7 +28,7 @@ const ActivityInsights = () => {
       </div>
 
       {/* SYNC STATUS */}
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-5">
+      <div className="bg-[#0a0a0a] border border-[#555] rounded-xl p-5">
         <div className="text-[13px] font-semibold mb-2 text-white">
           Sync Status
         </div>

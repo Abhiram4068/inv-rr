@@ -2,9 +2,9 @@ import React from 'react';
 
 const CollectionRightSidebar = ({ info, onManage, onDelete }) => {
   return (
-    <aside className="w-[320px] border-l border-[#1a1a1a] p-6 flex flex-col bg-black overflow-y-auto hidden xl:flex">
+    <aside className="w-[320px] border-l border-[#555] p-6 flex flex-col bg-black overflow-y-auto hidden xl:flex">
       {/* Collection Details Card */}
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-5 mb-4">
+      <div className="bg-[#0a0a0a] border border-[#555] rounded-xl p-5 mb-4">
         <h3 className="text-white text-base font-semibold mb-4">Collection Details</h3>
         <p className="text-gray-500 text-xs mb-4 leading-relaxed">
           Created by you on Feb 01, 2026.
@@ -27,7 +27,7 @@ const CollectionRightSidebar = ({ info, onManage, onDelete }) => {
       </div>
 
       {/* Recent Activity Card */}
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-5 mb-6">
+      <div className="bg-[#0a0a0a] border border-[#555] rounded-xl p-5 mb-6">
         <h3 className="text-white text-base font-semibold mb-4">Recent Activity</h3>
         <ul className="text-xs space-y-3 text-gray-500">
           <li className="flex gap-2">
@@ -45,7 +45,7 @@ const CollectionRightSidebar = ({ info, onManage, onDelete }) => {
       <div className="mt-auto space-y-3">
         <button 
           onClick={onManage}
-          className="w-full flex items-center justify-center gap-2 bg-transparent border border-[#1a1a1a] hover:bg-[#111] text-white py-3 rounded-xl text-sm font-medium transition-all"
+          className="w-full flex items-center justify-center gap-2 bg-transparent border border-[#555] hover:bg-[#111] text-white py-3 rounded-xl text-sm font-medium transition-all"
         >
           <i className="fa-solid fa-gear text-gray-400"></i>
           Manage Collection
