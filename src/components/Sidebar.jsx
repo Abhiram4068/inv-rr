@@ -12,10 +12,6 @@ const Sidebar = ({ isOpen }) => {
     <i className="fa-solid fa-house w-5 mr-3 text-base"></i>Home
   </NavLink>
 
-  {/* NEW: Schedules Field */}
-  <NavLink to="/schedules" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-calendar-days w-5 mr-3 text-base"></i> Schedules
-  </NavLink>
 
   <NavLink to="/files" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
     <i className="fa-solid fa-folder-open w-5 mr-3 text-base"></i> My Files
