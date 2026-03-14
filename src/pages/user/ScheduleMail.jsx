@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 const ScheduleMail = () => {
   const [activeModal, setActiveModal] = useState(null);
-  const [isStarred, setIsStarred] = useState(false);
   const [isProtected, setIsProtected] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -99,21 +98,11 @@ const ScheduleMail = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Schedule File Transfer</h1>
-              <p className="text-[#808080] text-sm mt-1 font-medium">Drafting as: user@hivedrive.com</p>
+              <p className="text-[#808080] text-sm mt-1 font-medium"> Schedule emails.</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => {
-                setIsStarred(!isStarred);
-                showToast(isStarred ? "Removed from Templates" : "Saved as Template");
-              }}
-              className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${
-                isStarred ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500' : 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] hover:text-white'
-              }`}
-            >
-              <i className={`${isStarred ? 'fa-solid' : 'fa-regular'} fa-star text-sm`}></i>
-            </button>
+     
           </div>
         </div>
 

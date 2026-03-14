@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 const ManagerReports = () => {
   const [reportType, setReportType] = useState('weekly'); 
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 3; // Adjust this number as needed
+  const rowsPerPage = 3; 
 
   const dataSources = {
     weekly: {
@@ -12,10 +12,10 @@ const ManagerReports = () => {
       storageUsed: "12.8 GB",
       avgEngagement: "82%",
       deliveryLogs: [
-        { recipient: "Abhiram K.", email: "abhiram@innovature.com", file: "Project_Brief.pdf", date: "Today, 09:00 AM", method: "Direct Link", status: "Downloaded" },
-        { recipient: "Sarah Chen", email: "sarah.c@client.com", file: "Design_Assets.zip", date: "Yesterday", method: "Email", status: "Opened" },
-        { recipient: "Legal Team", email: "legal@firm.com", file: "NDA_Final.docx", date: "Mar 11, 2026", method: "Secure Portal", status: "Pending" },
-        { recipient: "John Doe", email: "john@example.com", file: "Invoice_01.pdf", date: "Mar 10, 2026", method: "Email", status: "Downloaded" },
+        { recipient: "Abhiram K.", email: "abhiram@innovature.com", file: "Project_Brief.pdf", date: "Today, 09:00 AM", status: "Downloaded", accessedDate: "Today, 10:15 AM", expiry: "Mar 20, 2026" },
+        { recipient: "Sarah Chen", email: "sarah.c@client.com", file: "Design_Assets.zip", date: "Yesterday", status: "Opened", accessedDate: "Yesterday, 02:30 PM", expiry: "Mar 19, 2026" },
+        { recipient: "Legal Team", email: "legal@firm.com", file: "NDA_Final.docx", date: "Mar 11, 2026", status: "Pending", accessedDate: null, expiry: "Mar 18, 2026" },
+        { recipient: "John Doe", email: "john@example.com", file: "Invoice_01.pdf", date: "Mar 10, 2026", status: "Downloaded", accessedDate: "Mar 11, 2026", expiry: "Mar 17, 2026" },
       ]
     },
     monthly: {
@@ -24,31 +24,30 @@ const ManagerReports = () => {
       storageUsed: "54.2 GB",
       avgEngagement: "74%",
       deliveryLogs: [
-        { recipient: "Marketing Dept", email: "marketing@global.com", file: "Q1_Brand_Kit.zip", date: "Mar 05, 2026", method: "Email", status: "Downloaded" },
-        { recipient: "James Wilson", email: "j.wilson@partner.com", file: "Contract_V2.pdf", date: "Feb 28, 2026", method: "Direct Link", status: "Downloaded" },
-        { recipient: "Product Team", email: "product@internal.com", file: "Roadmap_2026.pptx", date: "Feb 20, 2026", method: "Secure Portal", status: "Expired" },
-        { recipient: "Abhiram K.", email: "abhiram@innovature.com", file: "Invoices_Feb.rar", date: "Feb 15, 2026", method: "Email", status: "Downloaded" },
-        { recipient: "External Audit", email: "audit@deloitte.com", file: "Tax_Docs.zip", date: "Feb 10, 2026", method: "Direct Link", status: "Opened" },
+        { recipient: "Marketing Dept", email: "marketing@global.com", file: "Q1_Brand_Kit.zip", date: "Mar 05, 2026", method: "Email", status: "Downloaded", accessedDate: "Mar 06, 2026", expiry: "Apr 05, 2026" },
+        { recipient: "James Wilson", email: "j.wilson@partner.com", file: "Contract_V2.pdf", date: "Feb 28, 2026", method: "Direct Link", status: "Downloaded", accessedDate: "Mar 01, 2026", expiry: "Mar 28, 2026" },
+        { recipient: "Product Team", email: "product@internal.com", file: "Roadmap_2026.pptx", date: "Feb 20, 2026", method: "Secure Portal", status: "Expired", accessedDate: null, expiry: "Feb 27, 2026" },
+        { recipient: "Abhiram K.", email: "abhiram@innovature.com", file: "Invoices_Feb.rar", date: "Feb 15, 2026", method: "Email", status: "Downloaded", accessedDate: "Feb 16, 2026", expiry: "Mar 15, 2026" },
+        { recipient: "External Audit", email: "audit@deloitte.com", file: "Tax_Docs.zip", date: "Feb 10, 2026", method: "Direct Link", status: "Opened", accessedDate: "Feb 11, 2026", expiry: "Feb 20, 2026" },
       ]
     }
   };
 
   const currentData = dataSources[reportType];
   
-  // Pagination Logic
   const totalPages = Math.ceil(currentData.deliveryLogs.length / rowsPerPage);
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = currentData.deliveryLogs.slice(indexOfFirstRow, indexOfLastRow);
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'Downloaded': return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-      case 'Opened': return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
-      case 'Pending': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
-      case 'Expired': return 'text-red-500 bg-red-500/10 border-red-500/20';
-      default: return 'text-[#808080] bg-[#111] border-[#1a1a1a]';
-    }
+  const getStatusDisplay = (status) => {
+    const isAccessed = status === 'Downloaded' || status === 'Opened';
+    return {
+      label: isAccessed ? 'Accessed' : 'Sent',
+      classes: isAccessed 
+        ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' 
+        : 'text-blue-500 bg-blue-500/10 border-blue-500/20'
+    };
   };
 
   return (
@@ -83,17 +82,14 @@ const ManagerReports = () => {
       </div>
 
       {/* KPI METRICS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {[
-          { label: 'Total Shares', val: currentData.totalShared, icon: 'fa-paper-plane', color: 'text-blue-500' },
-          { label: 'Recipient Reach', val: currentData.activeLinks + ' People', icon: 'fa-users', color: 'text-purple-500'},
-          { label: 'Bandwidth', val: currentData.storageUsed, icon: 'fa-cloud-arrow-up', color: 'text-orange-500' },
-          { label: 'Completion Rate', val: currentData.avgEngagement, icon: 'fa-circle-check', color: 'text-emerald-500'},
+          { label: 'Total Shares', val: currentData.totalShared, color: 'text-blue-500' },
+          { label: 'Active Links', val: currentData.activeLinks + ' People', color: 'text-purple-500'},
+          { label: 'Accessed', val: currentData.storageUsed,color: 'text-orange-500' }
         ].map((kpi, i) => (
           <div key={i} className="bg-[#050505] border border-[#1a1a1a] p-6 rounded-2xl">
-            <div className={`w-10 h-10 rounded-lg bg-[#0a0a0a] border border-[#1a1a1a] flex items-center justify-center text-sm mb-4 ${kpi.color}`}>
-              <i className={`fa-solid ${kpi.icon}`}></i>
-            </div>
+           
             <p className="text-[10px] uppercase text-[#444] font-bold tracking-widest">{kpi.label}</p>
             <p className="text-2xl font-bold text-white mt-1">{kpi.val}</p>
           </div>
@@ -108,7 +104,6 @@ const ManagerReports = () => {
             <p className="text-[10px] text-[#444] font-bold mt-1 uppercase">Detailed delivery status</p>
           </div>
 
-          {/* TABLE PAGINATION CONTROLS */}
           <div className="flex items-center gap-3 p-1.5 ">
             <span className="text-[10px] font-bold text-[#444] uppercase px-2">
               Page {currentPage} of {totalPages}
@@ -138,41 +133,52 @@ const ManagerReports = () => {
               <tr className="bg-[#080808] text-[10px] font-bold text-[#444] uppercase tracking-widest border-b border-[#1a1a1a]">
                 <th className="p-5">Recipient</th>
                 <th className="p-5">File Shared</th>
-                <th className="p-5">Date & Method</th>
+                <th className="p-5">Date</th>
+                <th className="p-5">Accessed Date</th>
+                <th className="p-5">Expiry</th>
                 <th className="p-5">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#0a0a0a]">
-              {currentRows.map((log, i) => (
-                <tr key={i} className="hover:bg-[#080808] transition-colors group">
-                  <td className="p-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#1a1a1a] to-[#0a0a0a] border border-[#333] flex items-center justify-center text-[10px] font-bold text-white uppercase">
-                        {log.recipient.charAt(0)}
+              {currentRows.map((log, i) => {
+                const statusInfo = getStatusDisplay(log.status);
+                return (
+                  <tr key={i} className="hover:bg-[#080808] transition-colors group">
+                    <td className="p-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#1a1a1a] to-[#0a0a0a] border border-[#333] flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                          {log.recipient.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white leading-none">{log.recipient}</p>
+                          <p className="text-[11px] text-[#444] mt-1 group-hover:text-[#666]">{log.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-white leading-none">{log.recipient}</p>
-                        <p className="text-[11px] text-[#444] mt-1 group-hover:text-[#666]">{log.email}</p>
+                    </td>
+                    <td className="p-5">
+                      <div className="flex items-center gap-2">
+                        <i className="fa-solid fa-file-pdf text-xs text-red-500/50"></i>
+                        <span className="text-sm text-[#ccc]">{log.file}</span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="p-5">
-                    <div className="flex items-center gap-2">
-                      <i className="fa-solid fa-file-pdf text-xs text-red-500/50"></i>
-                      <span className="text-sm text-[#ccc]">{log.file}</span>
-                    </div>
-                  </td>
-                  <td className="p-5">
-                    <p className="text-sm text-white font-medium">{log.date}</p>
-                    <p className="text-[10px] text-[#444] uppercase font-bold">{log.method}</p>
-                  </td>
-                  <td className="p-5">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${getStatusColor(log.status)}`}>
-                      {log.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="p-5">
+                      <p className="text-sm text-white font-medium">{log.date}</p>
+                      <p className="text-[10px] text-[#444] uppercase font-bold">{log.method}</p>
+                    </td>
+                    <td className="p-5">
+                      <p className="text-sm text-white font-medium">{log.accessedDate || "NA"}</p>
+                    </td>
+                    <td className="p-5">
+                      <p className="text-sm text-white font-medium">{log.expiry}</p>
+                    </td>
+                    <td className="p-5">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${statusInfo.classes}`}>
+                        {statusInfo.label}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

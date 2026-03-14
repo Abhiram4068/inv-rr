@@ -158,7 +158,7 @@ const SchedulesList = () => {
 
       {/* --- LIST VIEW CONTENT --- */}
       {viewMode === 'list' ? (
-        <div className="bg-[#050505] border border-[#1a1a1a] rounded-xl overflow-hidden animate-in fade-in duration-500">
+        <div className="bg-[#050505] border border-[#1a1a1a] rounded-xl overflow-hidden animate-in fade-in duration-400">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -223,7 +223,7 @@ const SchedulesList = () => {
         </div>
       ) : (
         /* --- CALENDAR VIEW CONTENT --- */
-        <div className="bg-[#050505] border border-[#1a1a1a] rounded-2xl p-6 animate-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-[#050505] border border-[#1a1a1a] rounded-2xl p-6 animate-in slide-in-from-bottom-4 duration-400">
           <div className="flex items-center justify-between mb-8">
              <h3 className="font-bold text-lg text-white tracking-tight">
                 {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
