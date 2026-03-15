@@ -41,11 +41,12 @@ const Sidebar = ({ isOpen }) => {
 >
   <i className="fa-solid fa-chart-line w-5 mr-3 text-base"></i> Reports
 </NavLink>
-  <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px]">Organize</div>
-<div className="border-b border-[#333] mx-3 mb-2"></div>
   <NavLink to="/collections" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
     <i className="fa-solid fa-folder w-5 mr-3 text-base"></i> Collections
   </NavLink>
+  <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px]">Manage</div>
+<div className="border-b border-[#333] mx-3 mb-2"></div>
+
 
   <NavLink to="/collections" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
     <i className="fa-solid fa-box-archive w-5 mr-3 text-base"></i> Archives
