@@ -3,7 +3,7 @@ import FileCard from '../../components/FileCard';
 
 const PaginatedFiles = () => {
   return (
-    <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] custom-scrollbar bg-black">
+    <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar bg-black">
       {/* Search and Action Bar */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
         <div className="w-full max-w-[450px] bg-[#0a0a0a] border border-[#1a1a1a] p-[10px_16px] rounded-xl flex items-center">
@@ -33,6 +33,42 @@ const PaginatedFiles = () => {
           time="2h ago" 
           iconClass="fa-file-pdf" 
           isLink={true} 
+        />
+        <FileCard 
+          title="Q4_Financial_Report.docx" 
+          size="1.8 MB" 
+          time="Yesterday" 
+          iconClass="fa-file-word" 
+        />
+        <FileCard 
+          title="Q4_Financial_Report.docx" 
+          size="1.8 MB" 
+          time="Yesterday" 
+          iconClass="fa-file-word" 
+        />
+        <FileCard 
+          title="Q4_Financial_Report.docx" 
+          size="1.8 MB" 
+          time="Yesterday" 
+          iconClass="fa-file-word" 
+        />
+        <FileCard 
+          title="Q4_Financial_Report.docx" 
+          size="1.8 MB" 
+          time="Yesterday" 
+          iconClass="fa-file-word" 
+        />
+        <FileCard 
+          title="Q4_Financial_Report.docx" 
+          size="1.8 MB" 
+          time="Yesterday" 
+          iconClass="fa-file-word" 
+        />
+        <FileCard 
+          title="Q4_Financial_Report.docx" 
+          size="1.8 MB" 
+          time="Yesterday" 
+          iconClass="fa-file-word" 
         />
         <FileCard 
           title="Q4_Financial_Report.docx" 

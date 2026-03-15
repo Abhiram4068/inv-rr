@@ -8,7 +8,8 @@ const FileDetails = () => {
   // Toast State
   const [toast, setToast] = useState({ visible: false, message: '' });
   
-  // NEW: State for dynamic recipient list
+  // Security and Recipients State
+  const [isProtected, setIsProtected] = useState(false);
   const [recipients, setRecipients] = useState(['']);
   
   // State for File Data
@@ -73,14 +74,14 @@ const FileDetails = () => {
   return (
     <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-black text-white font-sans relative">
       {/* Toast Notification */}
-{toast.visible && (
-  <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-bottom-4 duration-300">
-    <div className="bg-white text-black px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3">
-      <i className="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
-      {toast.message}
-    </div>
-  </div>
-)}
+      {toast.visible && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-white text-black px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3">
+            <i className="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+            {toast.message}
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto no-scrollbar p-6 lg:p-10 flex flex-col gap-8">
@@ -97,21 +98,21 @@ const FileDetails = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
- <button 
-  onClick={() => {
-    const newStarredState = !isStarred;
-    setIsStarred(newStarredState);
-    showToast(newStarredState ? "Added to Favorites" : "Removed from Favorites");
-  }}
-  className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${
-    isStarred 
-      ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
-      : 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] hover:text-white hover:border-[#333]'
-  }`}
-  title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
->
-  <i className={`${isStarred ? 'fa-solid' : 'fa-regular'} fa-star text-sm`}></i>
-</button>
+            <button 
+              onClick={() => {
+                const newStarredState = !isStarred;
+                setIsStarred(newStarredState);
+                showToast(newStarredState ? "Added to Favorites" : "Removed from Favorites");
+              }}
+              className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${
+                isStarred 
+                  ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
+                  : 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] hover:text-white hover:border-[#333]'
+              }`}
+              title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              <i className={`${isStarred ? 'fa-solid' : 'fa-regular'} fa-star text-sm`}></i>
+            </button>
             <button 
               onClick={() => setActiveModal('share')}
               className="flex-1 md:flex-none px-5 py-2.5 bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#111] transition-all"
@@ -157,17 +158,17 @@ const FileDetails = () => {
 
             <div className="flex flex-col gap-2">
               <button 
-    onClick={() => showToast("Opening file...")}
-    className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"
-  >
-    <i className="fa-solid fa-eye text-[#444]"></i> Open File
-  </button>
-             <button 
-    onClick={() => showToast("Downloading file...")}
-    className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"
-  >
-    <i className="fa-solid fa-download text-[#444]"></i> Download
-  </button>
+                onClick={() => showToast("Opening file...")}
+                className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"
+              >
+                <i className="fa-solid fa-eye text-[#444]"></i> Open File
+              </button>
+              <button 
+                onClick={() => showToast("Downloading file...")}
+                className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"
+              >
+                <i className="fa-solid fa-download text-[#444]"></i> Download
+              </button>
               <button onClick={() => setActiveModal('edit')} className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3"><i className="fa-solid fa-pen text-[#444]"></i> Edit Details</button>
               <button onClick={() => setActiveModal('archive')} className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3 text-blue-500"><i className="fa-solid fa-box-archive"></i> Archive</button>
               <button onClick={() => setActiveModal('delete')} className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3 text-red-500"><i className="fa-solid fa-trash"></i> Move to Trash</button>
@@ -208,7 +209,13 @@ const FileDetails = () => {
                   <div className="space-y-3">
                     {recipients.map((email, index) => (
                       <div key={index} className="flex gap-2 animate-in fade-in slide-in-from-top-1">
-                        <input value={email} onChange={(e) => handleEmailChange(index, e.target.value)} placeholder="Enter email address..." type="email" className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-[#333]" />
+                        <input 
+                          value={email} 
+                          onChange={(e) => handleEmailChange(index, e.target.value)} 
+                          placeholder="Enter email address..." 
+                          type="email" 
+                          className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-[#333]" 
+                        />
                         {index === recipients.length - 1 ? (
                           <button onClick={addRecipient} className="bg-blue-600/10 border border-blue-500/30 w-[46px] h-[46px] rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all"><i className="fa-solid fa-plus"></i></button>
                         ) : (
@@ -222,9 +229,9 @@ const FileDetails = () => {
                   <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Message</label>
                   <textarea placeholder="Write a note..." rows="4" className="w-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-[#333] outline-none transition-all text-white placeholder:text-[#333] resize-none"></textarea>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Expiry</label>
+                    <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Link Expiry</label>
                     <div className="relative">
                       <select className="w-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm outline-none text-[#808080] cursor-pointer appearance-none">
                         <option>7 Days</option>
@@ -234,11 +241,29 @@ const FileDetails = () => {
                       <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#444] pointer-events-none"></i>
                     </div>
                   </div>
+
                   <div>
-                    <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Access</label>
-                    <div className="h-[46px] flex items-center px-4 bg-[#111] border border-[#1a1a1a] rounded-xl text-xs text-[#606060] font-bold">
-                      <i className="fa-solid fa-lock mr-2 text-blue-500"></i> VIEW ONLY
-                    </div>
+                    <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Security Access</label>
+                    <button 
+                      onClick={() => {
+                          const nextState = !isProtected;
+                          setIsProtected(nextState);
+                          showToast(nextState ? "Identity Validation Enabled" : "Security Disabled");
+                      }}
+                      className={`w-full h-[46px] flex items-center justify-between px-4 rounded-xl border transition-all ${
+                        isProtected ? 'bg-blue-600/10 border-blue-500/50' : 'bg-[#111] border-[#1a1a1a] hover:bg-[#151515]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <i className={`fa-solid fa-shield-halved text-xs ${isProtected ? 'text-blue-500' : 'text-[#444]'}`}></i>
+                        <span className={`text-[11px] font-bold uppercase tracking-tight ${isProtected ? 'text-blue-500' : 'text-[#606060]'}`}>
+                          Email Validation
+                        </span>
+                      </div>
+                      <div className={`w-7 h-3.5 rounded-full relative transition-colors ${isProtected ? 'bg-blue-600' : 'bg-[#333]'}`}>
+                        <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all ${isProtected ? 'right-0.5' : 'left-0.5'}`}></div>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -247,6 +272,7 @@ const FileDetails = () => {
                 <button onClick={handleShare} className="flex-1 py-3 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20">Send Invites</button>
               </div>
             </div>
+            
             <div className="w-full md:w-[320px] bg-[#050505] p-8 flex flex-col">
                 <div className="text-[10px] uppercase text-[#444] font-bold tracking-widest mb-6">Recipient Preview</div>
                 <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-[#1a1a1a] rounded-2xl p-6 bg-[#0a0a0a]/50">
@@ -255,9 +281,12 @@ const FileDetails = () => {
                     </div>
                     <p className="text-xs font-bold text-center mb-1 truncate w-full">{fileData.name}</p>
                     <p className="text-[10px] text-[#444] mb-6">4.2 MB • Secure Link</p>
-                    <div className="w-full h-[32px] bg-[#111] rounded-lg border border-[#1a1a1a] flex items-center px-3 gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="text-[9px] text-[#808080] font-mono uppercase tracking-tighter">Encryption Active</span>
+                    
+                    <div className={`w-full h-[32px] rounded-lg border flex items-center px-3 gap-2 transition-all ${isProtected ? 'bg-blue-500/5 border-blue-500/20' : 'bg-[#111] border-[#1a1a1a]'}`}>
+                        <div className={`w-2 h-2 rounded-full ${isProtected ? 'bg-blue-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                        <span className="text-[9px] text-[#808080] font-mono uppercase tracking-tighter">
+                          {isProtected ? 'Identity Check ON' : 'Encryption Active'}
+                        </span>
                     </div>
                 </div>
             </div>

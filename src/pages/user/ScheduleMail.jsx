@@ -5,7 +5,7 @@ const ScheduleMail = () => {
   const [isProtected, setIsProtected] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [selectedInPicker, setSelectedInPicker] = useState([]);
+  const [selectedInPicker, setSelectedInPicker] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Mock data for the Library Picker
@@ -22,10 +22,7 @@ const ScheduleMail = () => {
     file.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const [attachedFiles, setAttachedFiles] = useState([
-    { name: "Project_Proposal_2024.pdf", size: "4.2 MB", icon: "fa-file-pdf", color: "text-red-500" },
-    { name: "Budget_Sheet.xlsx", size: "1.8 MB", icon: "fa-file-excel", color: "text-emerald-500" }
-  ]);
+  const [attachedFile, setAttachedFile] = useState({ name: "Project_Proposal_2024.pdf", size: "4.2 MB", icon: "fa-file-pdf", color: "text-red-500" });
   
   const [recipients, setRecipients] = useState(['']);
   const [subject, setSubject] = useState("Weekly Project Update");
@@ -56,25 +53,21 @@ const ScheduleMail = () => {
     setRecipients(updated);
   };
 
-  const removeFile = (index) => {
-    setAttachedFiles(attachedFiles.filter((_, i) => i !== index));
+  const removeFile = () => {
+    setAttachedFile(null);
     showToast("Attachment removed");
   };
 
-  const togglePickerSelection = (file) => {
-    if (selectedInPicker.find(f => f.id === file.id)) {
-      setSelectedInPicker(selectedInPicker.filter(f => f.id !== file.id));
-    } else {
-      setSelectedInPicker([...selectedInPicker, file]);
-    }
+  const selectInPicker = (file) => {
+    setSelectedInPicker(file);
   };
 
   const confirmPickerSelection = () => {
-    setAttachedFiles([...attachedFiles, ...selectedInPicker]);
-    setSelectedInPicker([]);
+    setAttachedFile(selectedInPicker);
+    setSelectedInPicker(null);
     setIsPickerOpen(false);
     setSearchTerm("");
-    showToast(`${selectedInPicker.length} files added`);
+    showToast(`File updated`);
   };
 
   return (
@@ -90,7 +83,7 @@ const ScheduleMail = () => {
 
       <main className="flex-1 overflow-y-auto no-scrollbar p-6 lg:p-10 flex flex-col gap-8">
         
-        {/* Header (Schedule Button Removed from here) */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-[#1a1a1a]">
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-900/20">
@@ -100,9 +93,6 @@ const ScheduleMail = () => {
               <h1 className="text-2xl font-bold tracking-tight">Schedule File Transfer</h1>
               <p className="text-[#808080] text-sm mt-1 font-medium"> Schedule emails.</p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-     
           </div>
         </div>
 
@@ -132,45 +122,38 @@ const ScheduleMail = () => {
 
             <div className="bg-[#050505] border border-[#1a1a1a] rounded-2xl p-6 flex flex-col gap-6 min-h-[300px]">
               <div className="flex justify-between items-center">
-                <div className="text-[10px] uppercase text-[#606060] font-bold tracking-widest">Selected HiveDrive Files</div>
-                <button 
-                    onClick={() => setIsPickerOpen(true)}
-                    className="text-[11px] font-bold text-blue-500 hover:text-blue-400 flex items-center gap-2"
-                >
-                    <i className="fa-solid fa-magnifying-glass"></i> Browse All Files
-                </button>
+                <div className="text-[10px] uppercase text-[#606060] font-bold tracking-widest">Selected HiveDrive File</div>
+                {attachedFile && (
+                  <button 
+                      onClick={() => setIsPickerOpen(true)}
+                      className="text-[11px] font-bold text-blue-500 hover:text-blue-400 flex items-center gap-2"
+                  >
+                      <i className="fa-solid fa-rotate"></i> Change File
+                  </button>
+                )}
               </div>
 
-              {attachedFiles.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {attachedFiles.map((file, i) => (
-                    <div key={i} className="group bg-[#0a0a0a] border border-[#1a1a1a] p-4 rounded-xl flex items-center justify-between hover:border-[#333] transition-all">
+              {attachedFile ? (
+                <div className="grid grid-cols-1 gap-4">
+                    <div className="group bg-[#0a0a0a] border border-blue-500/30 p-5 rounded-xl flex items-center justify-between hover:border-blue-500 transition-all">
                       <div className="flex items-center gap-4 overflow-hidden">
-                        <div className={`w-10 h-10 rounded-lg bg-[#111] flex items-center justify-center text-lg ${file.color}`}>
-                          <i className={`fa-solid ${file.icon}`}></i>
+                        <div className={`w-12 h-12 rounded-lg bg-[#111] flex items-center justify-center text-xl ${attachedFile.color}`}>
+                          <i className={`fa-solid ${attachedFile.icon}`}></i>
                         </div>
                         <div className="overflow-hidden">
-                          <p className="text-sm font-bold truncate">{file.name}</p>
-                          <p className="text-[10px] text-[#444] font-bold">{file.size}</p>
+                          <p className="text-sm font-bold truncate">{attachedFile.name}</p>
+                          <p className="text-[10px] text-[#444] font-bold uppercase tracking-wider">{attachedFile.size}</p>
                         </div>
                       </div>
-                      <button onClick={() => removeFile(i)} className="opacity-0 group-hover:opacity-100 p-2 text-[#444] hover:text-red-500 transition-all">
-                        <i className="fa-solid fa-xmark"></i>
+                      <button onClick={removeFile} className="p-2 text-[#444] hover:text-red-500 transition-all">
+                        <i className="fa-solid fa-trash-can"></i>
                       </button>
                     </div>
-                  ))}
-                  <button 
-                    onClick={() => setIsPickerOpen(true)}
-                    className="border-2 border-dashed border-[#1a1a1a] p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
-                  >
-                    <i className="fa-solid fa-plus text-[#222] group-hover:text-blue-500"></i>
-                    <span className="text-[10px] font-bold text-[#222] group-hover:text-blue-500 uppercase tracking-widest">Add Files</span>
-                  </button>
                 </div>
               ) : (
                 <div className="flex-1 border-2 border-dashed border-[#111] rounded-2xl flex flex-col items-center justify-center text-[#444]">
                     <i className="fa-solid fa-cloud-arrow-up text-4xl mb-4 opacity-20"></i>
-                    <p className="text-sm font-bold">No files selected</p>
+                    <p className="text-sm font-bold">No file selected</p>
                     <button onClick={() => setIsPickerOpen(true)} className="mt-6 px-6 py-2 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Browse Library</button>
                 </div>
               )}
@@ -236,19 +219,19 @@ const ScheduleMail = () => {
                 </div>
                 {isProtected && (
                   <p className="text-[10px] text-blue-400/80 leading-tight">
-                    Recipients must enter their email to unlock files.
+                    Recipients must enter their email to unlock the file.
                   </p>
                 )}
               </button>
               
-              <button onClick={() => { setAttachedFiles([]); showToast("Cleared all files"); }} className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3 text-red-500 mb-6">
+              <button onClick={() => { setAttachedFile(null); showToast("Cleared file"); }} className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:bg-[#111] text-xs font-bold transition-all flex items-center gap-3 text-red-500 mb-6">
                 <i className="fa-solid fa-trash-can"></i> Clear Selection
               </button>
 
-              {/* NEW: Schedule Mail Button (Moved to bottom) */}
               <button 
                 onClick={() => setActiveModal('confirm')}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 group"
+                disabled={!attachedFile}
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 group disabled:opacity-50"
               >
                 <span>Schedule Transfer</span>
                 <i className="fa-solid fa-paper-plane group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
@@ -266,7 +249,7 @@ const ScheduleMail = () => {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-xl font-bold">HiveDrive Library</h2>
-                  <p className="text-[10px] text-[#444] font-bold uppercase tracking-widest mt-1">Select files to attach</p>
+                  <p className="text-[10px] text-[#444] font-bold uppercase tracking-widest mt-1">Select a file to attach</p>
                 </div>
                 <button onClick={() => {setIsPickerOpen(false); setSearchTerm("");}} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#111] transition-colors">
                   <i className="fa-solid fa-xmark text-[#444]"></i>
@@ -286,9 +269,9 @@ const ScheduleMail = () => {
 
             <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 no-scrollbar">
               {filteredFiles.map((file) => {
-                const isSelected = selectedInPicker.find(f => f.id === file.id);
+                const isSelected = selectedInPicker?.id === file.id;
                 return (
-                  <div key={file.id} onClick={() => togglePickerSelection(file)} className={`p-4 rounded-xl border transition-all cursor-pointer group flex flex-col gap-3 ${isSelected ? 'bg-blue-600/10 border-blue-500/50' : 'bg-[#050505] border-[#1a1a1a] hover:border-[#333]'}`}>
+                  <div key={file.id} onClick={() => selectInPicker(file)} className={`p-4 rounded-xl border transition-all cursor-pointer group flex flex-col gap-3 ${isSelected ? 'bg-blue-600/10 border-blue-500/50' : 'bg-[#050505] border-[#1a1a1a] hover:border-[#333]'}`}>
                     <div className="flex justify-between items-start">
                       <div className={`w-10 h-10 rounded-lg bg-[#111] flex items-center justify-center text-lg ${file.color}`}>
                         <i className={`fa-solid ${file.icon}`}></i>
@@ -306,11 +289,10 @@ const ScheduleMail = () => {
               })}
             </div>
 
-            <div className="p-6 border-t border-[#1a1a1a] flex justify-between items-center bg-[#050505]">
-              <span className="text-xs font-bold text-[#444] uppercase tracking-widest">{selectedInPicker.length} Files Selected</span>
+            <div className="p-6 border-t border-[#1a1a1a] flex justify-end items-center bg-[#050505]">
               <div className="flex gap-3">
                 <button onClick={() => {setIsPickerOpen(false); setSearchTerm("");}} className="px-6 py-2.5 text-xs font-bold text-[#808080]">Cancel</button>
-                <button onClick={confirmPickerSelection} disabled={selectedInPicker.length === 0} className="px-6 py-2.5 bg-blue-600 rounded-xl text-xs font-bold disabled:opacity-50">Add to Schedule</button>
+                <button onClick={confirmPickerSelection} disabled={!selectedInPicker} className="px-6 py-2.5 bg-blue-600 rounded-xl text-xs font-bold disabled:opacity-50">Confirm Selection</button>
               </div>
             </div>
           </div>
@@ -326,7 +308,7 @@ const ScheduleMail = () => {
             </div>
             <h2 className="text-xl font-bold mb-2">Ready to Schedule?</h2>
             <p className="text-[#808080] text-sm mb-8 leading-relaxed">
-              <span className="text-white font-bold">{attachedFiles.length} files</span> will be shared with <span className="text-white font-bold">{recipients.filter(r => r !== '').length} recipients</span> on {scheduleDate}.
+              <span className="text-white font-bold">{attachedFile.name}</span> will be shared with <span className="text-white font-bold">{recipients.filter(r => r !== '').length} recipients</span> on {scheduleDate}.
               {isProtected && <span className="block mt-2 text-blue-500 font-bold italic">Protection is enabled.</span>}
             </p>
             <div className="flex gap-3">
