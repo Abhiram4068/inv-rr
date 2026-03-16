@@ -22,17 +22,17 @@ const Dashboard = () => {
 
       {/* 2. KPI STRIP: TOTALS & NEXT REPORT */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Total Sent" value="8,492" sub="Files delivered" icon="fa-paper-plane" color="text-blue-500" />
-        <StatCard label="Shared Contacts" value="142" sub="Active recipients" icon="fa-users" color="text-purple-500" />
+        <StatCard label="Total Sent" value="8,492" sub="Files delivered"  color="text-blue-500" />
+        <StatCard label="Shared Contacts" value="142" sub="Active recipients" color="text-purple-500" />
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5 rounded-2xl flex flex-col justify-center">
           <div className="text-[10px] text-blue-500 uppercase tracking-widest font-black mb-1">Next Report In</div>
-          <div className="text-2xl font-bold">2 Days</div>
+          
           <div className="text-[10px] text-[#444] mt-1 font-bold uppercase">Weekly Cycle</div>
         </div>
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5 rounded-2xl">
           <div className="flex justify-between items-center mb-2">
             <span className="text-[10px] text-[#808080] uppercase font-bold tracking-widest">Storage used</span>
-            <span className="text-[10px] text-white font-bold">28%</span>
+            
           </div>
           <div className="text-xl font-bold">14.08 <span className="text-xs text-[#444]">GB</span></div>
           <div className="w-full bg-[#1a1a1a] h-1.5 rounded-full mt-3 overflow-hidden">
@@ -82,9 +82,7 @@ const StatCard = ({ label, value, sub, icon, color }) => (
   <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5 rounded-2xl transition-all hover:border-[#222]">
     <div className="flex justify-between items-start mb-2">
       <div className="text-2xl font-bold">{value}</div>
-      <div className={`w-8 h-8 rounded-lg bg-[#111] border border-[#1a1a1a] flex items-center justify-center ${color} text-[12px]`}>
-        <i className={`fa-solid ${icon}`}></i>
-      </div>
+   
     </div>
     <div className="text-[10px] text-[#444] uppercase tracking-widest font-bold">{label}</div>
     <div className="text-[10px] text-[#333] mt-1 font-medium">{sub}</div>
