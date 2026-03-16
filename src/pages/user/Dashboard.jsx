@@ -47,7 +47,7 @@ const Dashboard = () => {
       {/* 4. ACTIVITY & LINKS GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Activities */}
-        <div className="bg-[#050505] border border-[#1a1a1a] rounded-2xl p-6">
+        <div className="bg-[#050505] border border-[#1a1a1a] rounded-l p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="font-bold text-sm uppercase tracking-tighter text-white">Recent Activities</div>
             <div className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline">View all logs</div>
@@ -60,7 +60,7 @@ const Dashboard = () => {
         </div>
 
         {/* Active Shared Links */}
-        <div className="bg-[#050505] border border-[#1a1a1a] rounded-2xl p-6">
+        <div className="bg-[#050505] border border-[#1a1a1a] rounded-l p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="font-bold text-sm uppercase tracking-tighter text-white">Active Shared Links</div>
             <div className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline">Manage links</div>
