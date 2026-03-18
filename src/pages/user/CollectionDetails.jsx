@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOutletContext, useNavigate } from "react-router-dom";
-
+import { Link } from "react-router-dom";
 const CollectionDetails = () => {
   const { isManageOpen, setIsManageOpen, isDeleteOpen, setIsDeleteOpen } = useOutletContext();
   const navigate = useNavigate(); // Hook for navigation
@@ -60,9 +60,9 @@ const CollectionDetails = () => {
               <i className={`${isStarred ? 'fa-solid' : 'fa-regular'} fa-star text-sm`}></i>
             </button>
 
-            <a href="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-2">
+            <Link to="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-2">
               <i className="fa-solid fa-plus"></i> Upload Files
-            </a>
+           </Link>
           </div>
         </div>
 

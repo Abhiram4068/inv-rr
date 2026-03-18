@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { Link } from "react-router-dom";
 const ViewAllShares = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,10 +29,10 @@ const ViewAllShares = () => {
       <div className="p-6 lg:p-10 max-w-6xl mx-auto">
         
         {/* BREADCRUMB / BACK NAVIGATION */}
-        <a href='/shared'className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors mb-6 text-sm group">
+        <Link href='/shared'className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors mb-6 text-sm group">
           <i className="fa-solid fa-arrow-left text-[10px] group-hover:-translate-x-1 transition-transform"></i>
           <span>Back to Shared</span>
-        </a>
+       </Link>
 
         {/* HEADER & SEARCH */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">

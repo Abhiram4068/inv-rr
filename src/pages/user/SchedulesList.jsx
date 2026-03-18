@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { Link } from "react-router-dom";
 const SchedulesList = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -132,9 +132,9 @@ const SchedulesList = () => {
               <i className="fa-solid fa-calendar-days"></i> Calendar
             </button>
           </div>
-          <a href="/schedule-mail" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20">
+          <Link to="/schedule-mail" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20">
             <i className="fa-solid fa-plus"></i> Schedule
-          </a>
+         </Link>
         </div>
       </div>
 

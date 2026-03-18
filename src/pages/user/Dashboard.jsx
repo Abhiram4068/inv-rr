@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Link } from "react-router-dom";
 const Dashboard = () => {
   return (
     <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar bg-black text-white">
@@ -14,9 +14,9 @@ const Dashboard = () => {
           <button className="flex-1 md:flex-none bg-[#0a0a0a] border border-[#1a1a1a] text-[#808080] p-[10px_20px] rounded-xl font-bold text-xs hover:text-white transition-all flex items-center justify-center gap-2">
             <i className="fa-solid fa-gear"></i> Settings
           </button>
-          <a href="/upload-file" className="flex-1 md:flex-none bg-blue-600 text-white p-[10px_24px] rounded-xl font-bold text-xs transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
+          <Link to="/upload-file" className="flex-1 md:flex-none bg-blue-600 text-white p-[10px_24px] rounded-xl font-bold text-xs transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
             <i className="fa fa-plus text-[10px]"></i> New Document
-          </a>
+         </Link>
         </div>
       </div>
 

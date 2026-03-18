@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { Link } from "react-router-dom";
 const Register = () => {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -147,14 +147,14 @@ const Register = () => {
         {/* Footer */}
         <div className="mt-6 text-center text-[13px] text-[#808080] flex flex-col gap-3">
           <span>
-            Already have an account? <a href="/login" className="text-[#3b82f6] no-underline font-medium hover:brightness-110">Log In</a>
+            Already have an account? <Link to="/login" className="text-[#3b82f6] no-underline font-medium hover:brightness-110">Log In</Link>
           </span>
-          <a 
-            href="/" 
+          <Link 
+            to="/" 
             className="text-[12px] text-[#808080] opacity-70 transition-all hover:opacity-100 hover:text-white"
           >
             Back to Home
-          </a>
+         </Link>
         </div>
       </div>
     </div>

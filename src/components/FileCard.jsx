@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Link } from "react-router-dom";
 const FileCard = ({ title, size, time, iconClass, isLink = false }) => {
   const Content = (
     <>
@@ -20,7 +20,7 @@ const FileCard = ({ title, size, time, iconClass, isLink = false }) => {
   const containerClass = "bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden transition-all hover:border-[#333] hover:-translate-y-1 no-underline group cursor-pointer";
 
   return isLink ? (
-    <a href="/details" className={containerClass}>{Content}</a>
+    <Link to="/details" className={containerClass}>{Content}</Link>
   ) : (
     <div className={containerClass}>{Content}</div>
   );

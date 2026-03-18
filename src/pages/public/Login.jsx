@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { Link } from "react-router-dom";
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -64,9 +64,9 @@ const Login = () => {
                 className="w-full bg-[#111] border border-[#1a1a1a] py-3 pl-[45px] pr-4 rounded-[10px] text-white text-sm outline-none transition-all focus:border-[#3b82f6] focus:bg-[#151515]"
               />
             </div>
-            <a href="#" className="block text-right text-[12px] text-[#808080] mt-2 no-underline hover:text-white transition-colors">
+            <Link to="#" className="block text-right text-[12px] text-[#808080] mt-2 no-underline hover:text-white transition-colors">
               Forgot password?
-            </a>
+           </Link>
           </div>
 
           <button 
@@ -80,14 +80,14 @@ const Login = () => {
         {/* Footer */}
         <div className="mt-6 text-center text-[13px] text-[#808080] flex flex-col gap-3">
           <span>
-            Don't have an account? <a href="/register" className="text-[#3b82f6] no-underline font-medium hover:brightness-110">Join Now</a>
+            Don't have an account? <Link to="/register" className="text-[#3b82f6] no-underline font-medium hover:brightness-110">Join Now</Link>
           </span>
-          <a 
-            href="/" 
+          <Link 
+            to="/" 
             className="text-[12px] text-[#808080] opacity-70 transition-all hover:opacity-100 hover:text-white"
           >
             Back to Home
-          </a>
+         </Link>
         </div>
       </div>
     </div>

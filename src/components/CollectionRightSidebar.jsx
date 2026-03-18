@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Link } from "react-router-dom";
 const CollectionRightSidebar = ({ info, onManage, onDelete }) => {
   return (
     <aside className="w-[320px] border-l border-[#555] p-6 flex flex-col bg-black overflow-y-auto hidden xl:flex">

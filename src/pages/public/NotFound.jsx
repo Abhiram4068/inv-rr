@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Link } from "react-router-dom";
 const NotFound = () => {
   return (
     <main className="flex-1 flex flex-col items-center justify-center min-h-screen bg-black text-white p-6 text-center">
@@ -26,13 +26,13 @@ const NotFound = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a 
-            href="/" 
+          <Link 
+            to="/" 
             className="w-full sm:w-auto bg-[#3b82f6] text-white px-8 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
           >
             <i className="fa-solid fa-house text-[12px]"></i>
             Back to Dashboard
-          </a>
+         </Link>
           
          
         </div>

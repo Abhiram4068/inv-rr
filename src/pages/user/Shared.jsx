@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import { Link } from "react-router-dom";
 const Shared = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   
@@ -119,13 +119,13 @@ const Shared = () => {
 
         {/* VIEW ALL LINK */}
         <div className="mt-2 py-4 border-t border-neutral-900">
-          <a 
-            href="/viewallshares"
+          <Link 
+            to="/viewallshares"
             className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
           >
             <span>View All Shared Files</span>
             <i className="fa-solid fa-chevron-right text-[8px]"></i>
-          </a>
+         </Link>
         </div>
 
         {/* SECTION 2: RECENTLY SHARED WITH */}
@@ -172,13 +172,13 @@ const Shared = () => {
 
         {/* VIEW ALL LINK */}
         <div className="mt-2 py-4 border-t border-neutral-900">
-          <a 
-            href="/viewallshares"
+          <Link 
+            to="/viewallshares"
             className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
           >
             <span>View All Shared Files</span>
             <i className="fa-solid fa-chevron-right text-[8px]"></i>
-          </a>
+         </Link>
         </div>
       </div>
 

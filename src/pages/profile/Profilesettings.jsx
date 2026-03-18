@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { Link } from "react-router-dom";
 const AccountSettings = () => {
   const [formData, setFormData] = useState({
     firstName: 'John',
@@ -29,15 +29,15 @@ const AccountSettings = () => {
           
           {/* Back Navigation Link */}
           <div className="mb-6">
-            <a 
-              href="/myprofile" 
+            <Link 
+              to="/myprofile" 
               className="group flex items-center gap-2 text-[#808080] hover:text-white transition-colors text-base font-medium"
             >
               <i className="fa-solid fa-chevron-left text-[10px] group-hover:-translate-x-1 transition-transform"></i>
               <span>Account</span>
               <span className="text-[#333]">/</span>
               <span className="text-white"> Account Settings</span>
-            </a>
+           </Link>
           </div>
 
           <div className="flex items-center gap-[30px] mb-10 pb-10 border-b border-[#1a1a1a]">
@@ -104,9 +104,9 @@ const AccountSettings = () => {
               <button type="submit" className="bg-white text-black px-[30px] py-3 rounded-full font-bold text-sm hover:opacity-90 transition-opacity">
                 Save Changes
               </button>
-              <a href="/myprofile" className="text-[#808080] px-[30px] py-3 rounded-full border border-[#1a1a1a] font-bold text-sm text-center hover:bg-[#111] transition-all">
+              <Link to="/myprofile" className="text-[#808080] px-[30px] py-3 rounded-full border border-[#1a1a1a] font-bold text-sm text-center hover:bg-[#111] transition-all">
                 Cancel
-              </a>
+             </Link>
             </div>
           </form>
         </main>

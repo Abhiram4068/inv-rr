@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { Link } from "react-router-dom";
 const Collections = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('');
@@ -56,9 +56,9 @@ const Collections = () => {
         {/* FOLDER GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
           {collectionsData.map((folder) => (
-            <a 
+            <Link 
               key={folder.id} 
-               href="/viewcollection"
+               to="/viewcollection"
               className="bg-[#0a0a0a] border border-[#1a1a1a] p-4 rounded-[12px] flex items-center gap-4 hover:bg-[#111] hover:border-[#333] transition-all group"
             >
               <i className="fa-solid fa-folder text-[24px] text-[#fbbf24]"></i>
@@ -66,7 +66,7 @@ const Collections = () => {
                 <span className="text-sm font-medium text-white truncate">{folder.name}</span>
                 <span className="text-[11px] text-[#808080] mt-[2px]">{folder.files} files • {folder.size}</span>
               </div>
-            </a>
+           </Link>
           ))}
         </div>
 

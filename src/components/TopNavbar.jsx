@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { Link } from "react-router-dom";
 const TopNavbar = ({ toggleSidebar }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -14,8 +14,8 @@ const TopNavbar = ({ toggleSidebar }) => {
 
       <div className="flex items-center gap-3 md:gap-5">
         <div className="hidden sm:flex items-center gap-5">
-          <a href="/login" className="text-[#808080] no-underline text-sm hover:text-white">Log In</a>
-          <a href="/register" className="bg-white text-black px-[18px] py-2 rounded-[20px] no-underline font-semibold text-sm">Join Now</a>
+          <Link to="/login" className="text-[#808080] no-underline text-sm hover:text-white">Log In</Link>
+          <Link to="/register" className="bg-white text-black px-[18px] py-2 rounded-[20px] no-underline font-semibold text-sm">Join Now</Link>
         </div>
 
         <div className="relative flex items-center p-1 rounded-lg cursor-pointer hover:bg-[#111] transition-colors group" 
@@ -31,9 +31,9 @@ const TopNavbar = ({ toggleSidebar }) => {
 
           {isDropdownOpen && (
             <div className="absolute top-[calc(100%+10px)] right-0 w-[180px] bg-[#0a0a0a] border border-[#555] rounded-xl p-2 z-[100] shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
-              <a href="/myprofile" className="flex items-center gap-[10px] p-[10px_12px] text-[#808080] no-underline text-[13px] rounded-md transition-all hover:bg-[#555] hover:text-white">
+              <Link to="/myprofile" className="flex items-center gap-[10px] p-[10px_12px] text-[#808080] no-underline text-[13px] rounded-md transition-all hover:bg-[#555] hover:text-white">
                 <i className="fa-solid fa-user"></i> Account
-              </a>
+             </Link>
               <hr className="border-0 border-t border-[#555] my-2" />
               <button className="w-full flex items-center gap-[10px] p-[10px_12px] text-[#ff4444] text-[13px] rounded-md transition-all hover:bg-[#555]">
                 <i className="fa-solid fa-right-from-bracket"></i> Logout

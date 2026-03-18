@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { Link } from "react-router-dom";
 const StorageDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
@@ -76,12 +76,12 @@ const StorageDashboard = () => {
           </div>
           <div className="text-2xl font-bold mb-1">35.92 GB</div>
           <div className="text-[10px] text-[#808080] uppercase tracking-widest mb-6 font-bold">Free Space Available</div>
-          <a href='/storage/storage-cleanup' className="w-full py-3 bg-white text-black rounded-xl text-xs font-bold hover:bg-neutral-200 transition-colors uppercase tracking-widest">Manage Storage</a>
+          <Link href='/storage/storage-cleanup' className="w-full py-3 bg-white text-black rounded-xl text-xs font-bold hover:bg-neutral-200 transition-colors uppercase tracking-widest">Manage Storage</Link>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
-        
+         
         {/* LEFT SIDE: Categories */}
         <div className="lg:col-span-4 space-y-3">
           <div className="px-2 mb-4">

@@ -1,6 +1,6 @@
 import React from 'react';
 import FileCard from '../../components/FileCard';
-
+import { Link } from "react-router-dom";
 const PaginatedFiles = () => {
   return (
     <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar bg-black">
@@ -14,9 +14,9 @@ const PaginatedFiles = () => {
             className="bg-transparent border-none text-white ml-3 w-full outline-none text-sm" 
           />
         </div>
-        <a href="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-2">
+        <Link to="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-2">
           <i className="fa fa-plus"></i> New Document
-        </a>
+       </Link>
       </div>
 
       {/* Header Info */}
