@@ -76,7 +76,7 @@ const StorageDashboard = () => {
           </div>
           <div className="text-2xl font-bold mb-1">35.92 GB</div>
           <div className="text-[10px] text-[#808080] uppercase tracking-widest mb-6 font-bold">Free Space Available</div>
-          <Link href='/storage/storage-cleanup' className="w-full py-3 bg-white text-black rounded-xl text-xs font-bold hover:bg-neutral-200 transition-colors uppercase tracking-widest">Manage Storage</Link>
+          <Link to='/storage/storage-cleanup' className="w-full py-3 bg-white text-black rounded-xl text-xs font-bold hover:bg-neutral-200 transition-colors uppercase tracking-widest">Manage Storage</Link>
         </div>
       </div>
 
