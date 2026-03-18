@@ -9,51 +9,51 @@ const Sidebar = ({ isOpen }) => {
   <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px]">Main Feed</div>
 <div className="border-b border-[#333] mx-3 mb-2"></div>
   <NavLink to="/" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-house w-5 mr-3 text-base"></i>Home
+    <i className="fa-solid fa-house w-5 mr-3 text-base text-white"></i>Home
   </NavLink>
 
 
   <NavLink to="/files" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-folder-open w-5 mr-3 text-base"></i> My Files
+    <i className="fa-solid fa-folder-open w-5 mr-3 text-base text-white" ></i> My Files
   </NavLink>
 
   <NavLink to="/shared" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-share-nodes w-5 mr-3 text-base"></i> Shares
+    <i className="fa-solid fa-share-nodes w-5 mr-3 text-base text-white"></i> Shares
   </NavLink>
 
   <NavLink to="/recent" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-clock w-5 mr-3 text-[16px]"></i> Recent
+    <i className="fa-solid fa-clock w-5 mr-3 text-[16px] text-white"></i> Recent
   </NavLink>
 
   <NavLink to="/starred" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-star w-5 mr-3 text-[16px]"></i> Starred
+    <i className="fa-solid fa-star w-5 mr-3 text-[16px] text-white"></i> Starred
   </NavLink>
-  <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px]">Workspace</div>
+  <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px] ">Workspace</div>
 <div className="border-b border-[#333] mx-3 mb-2"></div>
   {/* NEW: Schedules Field */}
   <NavLink to="/schedules" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-calendar-days w-5 mr-3 text-base"></i> Schedules
+    <i className="fa-solid fa-calendar-days w-5 mr-3 text-base text-white"></i> Schedules
   </NavLink>
 
 <NavLink
   to="/reports"
   className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white"
 >
-  <i className="fa-solid fa-chart-line w-5 mr-3 text-base"></i> Reports
+  <i className="fa-solid fa-chart-line w-5 mr-3 text-base text-white"></i> Reports
 </NavLink>
   <NavLink to="/collections" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-folder w-5 mr-3 text-base"></i> Collections
+    <i className="fa-solid fa-folder w-5 mr-3 text-base text-white"></i> Collections
   </NavLink>
   <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px]">Manage</div>
 <div className="border-b border-[#333] mx-3 mb-2"></div>
 
 
   <NavLink to="/collections" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-box-archive w-5 mr-3 text-base"></i> Archives
+    <i className="fa-solid fa-box-archive w-5 mr-3 text-base text-white"></i> Archives
   </NavLink>
 
   <NavLink to="/storage/trash" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-trash w-5 mr-3 text-base"></i> Trash
+    <i className="fa-solid fa-trash w-5 mr-3 text-base text-white"></i> Trash
   </NavLink>
 
 </aside>
