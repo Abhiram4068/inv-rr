@@ -21,8 +21,8 @@ import TrashManagement from "./pages/user/storage/Trash";
 import UploadFilesMain from "./pages/user/UploadFile";
 import StorageDashboard from "./pages/user/StorageDashboard";
 
-import UserProfile from "./pages/profile/UserProfile";
-import AccountSettings from "./pages/profile/Profilesettings";
+import UserProfile from "./pages/user/profile/UserProfile";
+import AccountSettings from "./pages/user/profile/Profilesettings";
 
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";

@@ -1,62 +1,122 @@
-import React from 'react';
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
 import { NavLink } from "react-router-dom";
 
-
 const Sidebar = ({ isOpen }) => {
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setTheme(localStorage.getItem('theme') || 'dark');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(() => {
+      const currentTheme = localStorage.getItem('theme');
+      if (currentTheme !== theme) setTheme(currentTheme);
+    }, 100);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [theme]);
+
+  const isDark = theme === 'dark';
+
   return (
-   <aside className={`${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static fixed inset-y-0 left-0 w-[260px] bg-black border-r border-[#555] flex flex-col z-40 transition-transform duration-300 ease-in-out p-[24px_16px] overflow-y-auto no-scrollbar`}>
-  <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px]">Main Feed</div>
-<div className="border-b border-[#333] mx-3 mb-2"></div>
-  <NavLink to="/" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-house w-5 mr-3 text-base text-white"></i>Home
-  </NavLink>
+    <aside className={`
+      ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+      lg:translate-x-0 lg:static fixed inset-y-0 left-0 w-[260px] 
+      flex flex-col z-40 transition-all duration-300 ease-in-out p-[24px_16px] overflow-y-auto no-scrollbar
+      ${isDark ? 'bg-black border-r border-[#333]' : 'bg-white border-r border-slate-200'}
+    `}>
+      
+      {/* Main Feed Section */}
+      <div className={`text-[11px] uppercase tracking-widest m-[24px_0_12px_12px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+        Main Feed
+      </div>
+      <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#333]' : 'border-slate-100'}`}></div>
+      
+      {[
+        { to: "/", icon: "fa-house", label: "Home" },
+        { to: "/files", icon: "fa-folder-open", label: "My Files" },
+        { to: "/shared", icon: "fa-share-nodes", label: "Shares" },
+        { to: "/recent", icon: "fa-clock", label: "Recent" },
+        { to: "/starred", icon: "fa-star", label: "Starred" },
+      ].map((item) => (
+        <NavLink 
+          key={item.label}
+          to={item.to} 
+          className={({ isActive }) => `
+            flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1
+            ${isActive 
+              ? (isDark ? 'bg-[#111] text-white' : 'bg-blue-50 text-blue-600 font-semibold') 
+              : (isDark ? 'text-[#808080] hover:bg-[#111] hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600')
+            }
+          `}
+        >
+          {({ isActive }) => (
+            <>
+              <i className={`fa-solid ${item.icon} w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i>
+              {item.label}
+            </>
+          )}
+        </NavLink>
+      ))}
 
+      {/* Workspace Section */}
+      <div className={`text-[11px] uppercase tracking-widest m-[24px_0_12px_12px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+        Workspace
+      </div>
+      <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#333]' : 'border-slate-100'}`}></div>
+      
+      {[
+        { to: "/schedules", icon: "fa-calendar-days", label: "Schedules" },
+        { to: "/reports", icon: "fa-chart-line", label: "Reports" },
+        { to: "/collections", icon: "fa-folder", label: "Collections" },
+      ].map((item) => (
+        <NavLink 
+          key={item.label}
+          to={item.to} 
+          className={({ isActive }) => `
+            flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1
+            ${isActive 
+              ? (isDark ? 'bg-[#111] text-white' : 'bg-blue-50 text-blue-600 font-semibold') 
+              : (isDark ? 'text-[#808080] hover:bg-[#111] hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600')
+            }
+          `}
+        >
+           {({ isActive }) => (
+            <>
+              <i className={`fa-solid ${item.icon} w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i>
+              {item.label}
+            </>
+          )}
+        </NavLink>
+      ))}
 
-  <NavLink to="/files" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-folder-open w-5 mr-3 text-base text-white" ></i> My Files
-  </NavLink>
+      {/* Manage Section */}
+      <div className={`text-[11px] uppercase tracking-widest m-[24px_0_12px_12px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+        Manage
+      </div>
+      <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#333]' : 'border-slate-100'}`}></div>
 
-  <NavLink to="/shared" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-share-nodes w-5 mr-3 text-base text-white"></i> Shares
-  </NavLink>
+      {/* FIXED NavLinks below */}
+      <NavLink to="/archives" className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1 ${isActive ? (isDark ? 'bg-[#111] text-white' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-white' : 'text-slate-600 hover:bg-slate-50')}`}>
+        {({ isActive }) => (
+          <>
+            <i className={`fa-solid fa-box-archive w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i> Archives
+          </>
+        )}
+      </NavLink>
 
-  <NavLink to="/recent" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-clock w-5 mr-3 text-[16px] text-white"></i> Recent
-  </NavLink>
+      <NavLink to="/storage/trash" className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all ${isActive ? (isDark ? 'bg-[#111] text-white' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-white' : 'text-slate-600 hover:bg-slate-50')}`}>
+        {({ isActive }) => (
+          <>
+            <i className={`fa-solid fa-trash w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i> Trash
+          </>
+        )}
+      </NavLink>
 
-  <NavLink to="/starred" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-star w-5 mr-3 text-[16px] text-white"></i> Starred
-  </NavLink>
-  <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px] ">Workspace</div>
-<div className="border-b border-[#333] mx-3 mb-2"></div>
-  {/* NEW: Schedules Field */}
-  <NavLink to="/schedules" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-calendar-days w-5 mr-3 text-base text-white"></i> Schedules
-  </NavLink>
-
-<NavLink
-  to="/reports"
-  className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm transition-colors hover:bg-[#111] hover:text-white"
->
-  <i className="fa-solid fa-chart-line w-5 mr-3 text-base text-white"></i> Reports
-</NavLink>
-  <NavLink to="/collections" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-folder w-5 mr-3 text-base text-white"></i> Collections
-  </NavLink>
-  <div className="text-[11px] uppercase text-[#808080] tracking-widest m-[24px_0_12px_12px]">Manage</div>
-<div className="border-b border-[#333] mx-3 mb-2"></div>
-
-
-  <NavLink to="/collections" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-box-archive w-5 mr-3 text-base text-white"></i> Archives
-  </NavLink>
-
-  <NavLink to="/storage/trash" className="flex items-center p-[10px_12px] rounded-lg text-[#808080] no-underline text-sm hover:bg-[#111] hover:text-white">
-    <i className="fa-solid fa-trash w-5 mr-3 text-base text-white"></i> Trash
-  </NavLink>
-
-</aside>
+    </aside>
   );
 };
 

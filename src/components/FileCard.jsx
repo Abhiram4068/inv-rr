@@ -1,15 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
+
 const FileCard = ({ title, size, time, iconClass, isLink = false }) => {
+  // 1. Theme State Sync
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(() => {
+      const current = localStorage.getItem('theme');
+      if (current !== theme) setTheme(current);
+    }, 100);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [theme]);
+
+  const isDark = theme === 'dark';
+
   const Content = (
     <>
-      <div className="h-[140px] bg-[#111] flex items-center justify-center relative border-b border-[#555]">
-        <i className={`fa-solid ${iconClass} text-[40px] text-[#808080] absolute z-10 group-hover:scale-110 transition-transform`}></i>
-        <img src="https://via.placeholder.com/300x140/111/111" alt="preview" className="w-full h-full object-cover opacity-40" />
+      <div className={`h-[140px] flex items-center justify-center relative border-b transition-colors duration-300
+        ${isDark ? 'bg-[#111] border-[#555]' : 'bg-slate-50 border-slate-100'}`}>
+        
+        <i className={`fa-solid ${iconClass} text-[40px] absolute z-10 group-hover:scale-110 transition-all
+          ${isDark ? 'text-[#808080]' : 'text-blue-500'}`}></i>
+        
+        {/* Placeholder/Preview Image adapts to background */}
+        <div className={`w-full h-full object-cover opacity-40 ${isDark ? 'bg-[#111]' : 'bg-white'}`}></div>
       </div>
+
       <div className="p-4">
-        <span className="block text-sm font-medium mb-2 truncate text-white">{title}</span>
-        <div className="flex justify-between text-[12px] text-[#808080]">
+        <span className={`block text-sm font-semibold mb-2 truncate transition-colors
+          ${isDark ? 'text-white' : 'text-slate-700'}`}>
+          {title}
+        </span>
+        <div className={`flex justify-between text-[12px] font-medium
+          ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
           <span>{size}</span>
           <span>{time}</span>
         </div>
@@ -17,7 +46,10 @@ const FileCard = ({ title, size, time, iconClass, isLink = false }) => {
     </>
   );
 
-  const containerClass = "bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg overflow-hidden transition-all hover:border-[#333] hover:-translate-y-1 no-underline group cursor-pointer";
+  const containerClass = `rounded-lg overflow-hidden transition-all no-underline group cursor-pointer border
+    ${isDark 
+      ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] hover:-translate-y-1' 
+      : 'bg-white border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md hover:-translate-y-1'}`;
 
   return isLink ? (
     <Link to="/details" className={containerClass}>{Content}</Link>
