@@ -5,7 +5,7 @@ export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser]       = useState(null);
-  const [loading, setLoading] = useState(false);  // true while cookie check runs
+  const [loading, setLoading] = useState(false);  
 
 
 
