@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";  
+import { login } from "../../services/authService";     
+import useAuth from  "../../hooks/useAuth";  
 const Login = () => {
+    const { login: setUser } = useAuth();  
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+const [error, setError] = useState('');       
+const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { type, value } = e.target;
@@ -12,11 +18,20 @@ const Login = () => {
     const key = type === 'email' ? 'email' : 'password';
     setFormData(prev => ({ ...prev, [key]: value }));
   };
-
-  const handleSubmit = (e) => {
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Logging in with:', formData);
-    // Add your auth logic here
+    setError('');
+    setLoading(true);
+    try {
+      const res = await login(formData);   // calls Django POST /login/
+      setUser(res.data.user);              // puts user into AuthContext
+      navigate('/');                       // redirect to dashboard
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Invalid email or password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,7 +43,11 @@ const Login = () => {
           <div className="text-2xl font-bold tracking-tighter mb-2 text-white">HiveDrive</div>
           <div className="text-[#808080] text-sm">Welcome back. Please login to continue.</div>
         </div>
-
+{error && (
+  <div className="mb-5 px-4 py-3 rounded-[10px] bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+    {error}
+  </div>
+)}
         <form onSubmit={handleSubmit}>
           {/* Email Group */}
           <div className="mb-5">
@@ -71,6 +90,7 @@ const Login = () => {
 
           <button 
             type="submit" 
+             disabled={loading}
             className="w-full py-3.5 bg-[#e3e3e3] text-black border-none rounded-[10px] font-semibold text-sm cursor-pointer mt-2.5 transition-all hover:opacity-90 hover:-translate-y-[1px]"
           >
             Sign In

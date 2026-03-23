@@ -1,11 +1,12 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 import UserLayout from "./layouts/UserLayout";
 import StorageLayout from "./layouts/StorageManagement";
 import RecentLayout from "./layouts/RecentLayout";
 import CollectionLayout from "./layouts/CollectionLayout";
-
 
 import Dashboard from "./pages/user/Dashboard";
 import PaginatedFiles from "./pages/user/PaginatedFiles";
@@ -28,8 +29,7 @@ import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
 import ExternalShareView from "./pages/public/PublicView";
 
-
-import ManageStorage from "./pages/user/storage/ManageStorage"
+import ManageStorage from "./pages/user/storage/ManageStorage";
 import DuplicateManager from "./pages/user/storage/ViewDuplicates";
 import OldFilesManager from "./pages/user/storage/ViewOldFiles";
 import ScheduleMail from "./pages/user/ScheduleMail";
@@ -38,52 +38,56 @@ import ManagerReports from "./pages/user/ManagerReports";
 
 function App() {
   return (
-    <Routes>
+    <AuthProvider>
+      <Routes>
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* ── Public routes — no cookie check ── */}
+        <Route path="/login"        element={<Login />} />
+        <Route path="/register"     element={<Register />} />
+        <Route path="/downloadpage" element={<ExternalShareView />} />
 
-      <Route element={<UserLayout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/files" element={<PaginatedFiles />} />
-        <Route path="/details" element={<FileDetails />} />
-        <Route path="/starred" element={<Starred />} />
-        <Route path="/shared" element={<Shared />} />
-        <Route path="/collections" element={<Collections />} />
-        
-        <Route path="/upload-file" element={<UploadFilesMain />} />
-        <Route path="/viewallshares" element={<ViewAllShares />} />
-        <Route path="/myprofile" element={<UserProfile />} />
-        <Route path="/settings" element={<AccountSettings />} />
-        <Route path="/storage" element={<StorageDashboard />} />
-        <Route path="/schedule-mail" element={<ScheduleMail/>} />
-        <Route path="/schedules" element={<SchedulesList/>} />
-        <Route path="/reports" element={<ManagerReports/>} />
-        
+        {/* ── Protected routes — cookie checked first ── */}
+        <Route element={<ProtectedRoute />}>
 
-      </Route>
-      <Route element={<StorageLayout />}>
-         <Route path="/storage/storage-cleanup" element={<ManageStorage />} />
-          <Route path="/storage/view-duplicates" element={<DuplicateManager />} />
-          <Route path="/storage/trash" element={<TrashManagement />} />
-          <Route path="/storage/view-oldfiles" element={<OldFilesManager />} />
-      </Route>
-       
+          <Route element={<UserLayout />}>
+            <Route path="/"              element={<Dashboard />} />
+            <Route path="/files"         element={<PaginatedFiles />} />
+            <Route path="/details"       element={<FileDetails />} />
+            <Route path="/starred"       element={<Starred />} />
+            <Route path="/shared"        element={<Shared />} />
+            <Route path="/collections"   element={<Collections />} />
+            <Route path="/upload-file"   element={<UploadFilesMain />} />
+            <Route path="/viewallshares" element={<ViewAllShares />} />
+            <Route path="/myprofile"     element={<UserProfile />} />
+            <Route path="/settings"      element={<AccountSettings />} />
+            <Route path="/storage"       element={<StorageDashboard />} />
+            <Route path="/schedule-mail" element={<ScheduleMail />} />
+            <Route path="/schedules"     element={<SchedulesList />} />
+            <Route path="/reports"       element={<ManagerReports />} />
+          </Route>
 
-      <Route element={<RecentLayout />}>
-      <Route path="/recent" element={<RecentFiles />} />
-      </Route>
-      <Route element={<CollectionLayout />}>
-      <Route path="/viewcollection" element={<CollectionDetails />} />
-      </Route>
- 
-      <Route path="/downloadpage" element={<ExternalShareView />} />  
-      <Route path="*" element={<NotFound />} />
+          <Route element={<StorageLayout />}>
+            <Route path="/storage/storage-cleanup" element={<ManageStorage />} />
+            <Route path="/storage/view-duplicates" element={<DuplicateManager />} />
+            <Route path="/storage/trash"           element={<TrashManagement />} />
+            <Route path="/storage/view-oldfiles"   element={<OldFilesManager />} />
+          </Route>
 
+          <Route element={<RecentLayout />}>
+            <Route path="/recent" element={<RecentFiles />} />
+          </Route>
 
+          <Route element={<CollectionLayout />}>
+            <Route path="/viewcollection" element={<CollectionDetails />} />
+          </Route>
 
+        </Route>
+        {/* ── End protected ── */}
 
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+
+      </Routes>
+    </AuthProvider>
   );
 }
 
