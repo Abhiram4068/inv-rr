@@ -1,38 +1,41 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from "react-router-dom";  
-import { login } from "../../services/authService";     
-import useAuth from  "../../hooks/useAuth";  
+import React, { useState } from "react";
+import { Link, useNavigate, Navigate } from "react-router-dom";
+import { login } from "../../services/authService";
+import useAuth from "../../hooks/useAuth";
+
 const Login = () => {
-    const { login: setUser } = useAuth();  
+  const { user, loading: authLoading, login: setUser } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
-const [error, setError] = useState('');       
-const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { type, value } = e.target;
-    // Map email/password type to state keys
-    const key = type === 'email' ? 'email' : 'password';
-    setFormData(prev => ({ ...prev, [key]: value }));
+    const key = type === "email" ? "email" : "password";
+    setFormData((prev) => ({ ...prev, [key]: value }));
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
     try {
-      const res = await login(formData);   // calls Django POST /login/
-      setUser(res.data.user);              // puts user into AuthContext
-      navigate('/');                       // redirect to dashboard
+      const res = await login(formData);
+      setUser(res.data?.user || res.data);
+      navigate("/", { replace: true });
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid email or password');
+      setError(err.response?.data?.detail || "Invalid email or password");
     } finally {
       setLoading(false);
     }
   };
+
+  if (authLoading) return null;
+  if (user) return <Navigate to="/" replace />;
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center font-['Inter']">
@@ -88,9 +91,9 @@ const [loading, setLoading] = useState(false);
            </Link>
           </div>
 
-          <button 
-            type="submit" 
-             disabled={loading}
+          <button
+            type="submit"
+            disabled={loading}
             className="w-full py-3.5 bg-[#e3e3e3] text-black border-none rounded-[10px] font-semibold text-sm cursor-pointer mt-2.5 transition-all hover:opacity-90 hover:-translate-y-[1px]"
           >
             Sign In

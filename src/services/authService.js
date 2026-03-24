@@ -8,5 +8,3 @@ export const login = (data) => api.post("/login/", data);
 
 // POST /logout/  → Django clears cookie (add this view if you haven't)
 export const logout = () => api.post("/logout/");
-
-// GET  /me/      → returns { id, name, email } using the cookie

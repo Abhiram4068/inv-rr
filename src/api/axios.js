@@ -1,25 +1,16 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
-  withCredentials: true,  // sends cookies on every request automatically
+  // In dev, use Vite proxy (/api) to avoid cross-origin cookie issues.
+  baseURL: import.meta.env.VITE_API_URL || "/api",
+  withCredentials: true,
+  xsrfCookieName: "csrftoken",
+  xsrfHeaderName: "X-CSRFToken",
 });
 
 api.interceptors.response.use(
   (res) => res,
-  async (error) => {
-    const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
-      original._retry = true;
-      try {
-        await api.post("/token/refresh/");
-        return api(original);
-      } catch {
-        window.location.href = "/login";
-      }
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;
