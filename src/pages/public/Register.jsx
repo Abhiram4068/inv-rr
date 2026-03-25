@@ -70,7 +70,7 @@ const Register = () => {
 
       if (createdUser && typeof createdUser === "object") {
         setUser(createdUser);
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
         return;
       }
 
@@ -83,7 +83,7 @@ const Register = () => {
   };
 
   if (authLoading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-5 font-['Inter']">

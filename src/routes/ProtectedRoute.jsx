@@ -4,7 +4,6 @@ import useAuth from "../hooks/useAuth";
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
 
-  // Still checking cookie — render nothing yet
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-black">
@@ -13,8 +12,6 @@ const ProtectedRoute = () => {
     );
   }
 
-  // Cookie valid → render whatever route was requested
-  // Cookie missing/expired → kick to login
   return user ? <Outlet /> : <Navigate to="/login" replace />;
 };
 

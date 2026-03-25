@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../services/authService";
+
+import useAuth from "../hooks/useAuth";
 
 const TopNavbar = ({ toggleSidebar }) => {
+  const { user, logout: clearUser } = useAuth();
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
   // 1. Initialize theme from localStorage or default to 'dark'
@@ -24,7 +29,16 @@ const TopNavbar = ({ toggleSidebar }) => {
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
-
+  const handleLogout = async () => {
+    try {
+      await logout();          // tells the server to blacklist / clear the refresh cookie
+    } catch {
+      // even if the server call fails, clear client state
+    } finally {
+      clearUser(null);          // wipe user from context
+      navigate("/login", { replace: true });
+    }
+  };
   return (
     <nav className={`h-[60px] flex items-center justify-between px-4 md:px-6 border-b shrink-0 z-50 transition-colors duration-300 
       ${theme === 'dark' ? 'bg-black border-[#333]' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -88,7 +102,9 @@ const TopNavbar = ({ toggleSidebar }) => {
               
               <hr className={`my-2 border-0 border-t ${theme === 'dark' ? 'border-[#333]' : 'border-slate-100'}`} />
               
-              <button className={`w-full flex items-center gap-[10px] p-[10px_12px] text-[#ff4444] text-[13px] rounded-md transition-all 
+              <button 
+              onClick={handleLogout}
+              className={`w-full flex items-center gap-[10px] p-[10px_12px] text-[#ff4444] text-[13px] rounded-md transition-all 
                 ${theme === 'dark' ? 'hover:bg-[#222]' : 'hover:bg-red-50'}`}>
                 <i className="fa-solid fa-right-from-bracket"></i> Logout
               </button>

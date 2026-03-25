@@ -28,6 +28,7 @@ import AccountSettings from "./pages/user/profile/Profilesettings";
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
 import ExternalShareView from "./pages/public/PublicView";
+import Landing from "./pages/public/Landing";
 
 import ManageStorage from "./pages/user/storage/ManageStorage";
 import DuplicateManager from "./pages/user/storage/ViewDuplicates";
@@ -42,6 +43,7 @@ function App() {
       <Routes>
 
         {/* ── Public routes — no cookie check ── */}
+        <Route path="/"             element={<Landing />} />
         <Route path="/login"        element={<Login />} />
         <Route path="/register"     element={<Register />} />
         <Route path="/downloadpage" element={<ExternalShareView />} />
@@ -50,7 +52,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
 
           <Route element={<UserLayout />}>
-            <Route path="/"              element={<Dashboard />} />
+            <Route path="/dashboard"     element={<Dashboard />} />
             <Route path="/files"         element={<PaginatedFiles />} />
             <Route path="/details"       element={<FileDetails />} />
             <Route path="/starred"       element={<Starred />} />
