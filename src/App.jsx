@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 
 import UserLayout from "./layouts/UserLayout";
 import StorageLayout from "./layouts/StorageManagement";
@@ -43,9 +44,11 @@ function App() {
       <Routes>
 
         {/* ── Public routes — no cookie check ── */}
-        <Route path="/"             element={<Landing />} />
-        <Route path="/login"        element={<Login />} />
-        <Route path="/register"     element={<Register />} />
+        <Route element={<PublicRoute />}>
+          <Route path="/"             element={<Landing />} />
+          <Route path="/login"        element={<Login />} />
+          <Route path="/register"     element={<Register />} />
+        </Route>
         <Route path="/downloadpage" element={<ExternalShareView />} />
 
         {/* ── Protected routes — cookie checked first ── */}
@@ -54,7 +57,7 @@ function App() {
           <Route element={<UserLayout />}>
             <Route path="/dashboard"     element={<Dashboard />} />
             <Route path="/files"         element={<PaginatedFiles />} />
-            <Route path="/details"       element={<FileDetails />} />
+            <Route path="/file/:id"   element={<FileDetails />} />
             <Route path="/starred"       element={<Starred />} />
             <Route path="/shared"        element={<Shared />} />
             <Route path="/collections"   element={<Collections />} />

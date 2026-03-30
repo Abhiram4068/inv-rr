@@ -4,6 +4,10 @@ import api from "../api/axios";
 export const getFiles = (page = 1, search = "") =>
   api.get("/file-list/", { params: { page, search } });
 
+// GET /files/:id/
+export const getFileById = (fileId) =>
+  api.get(`/files/${fileId}/`);
+
 // POST /file-upload
 export const uploadFile = (formData) =>
   api.post("/file-upload", formData, {

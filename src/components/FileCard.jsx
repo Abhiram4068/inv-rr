@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 
-const FileCard = ({ title, size, time, iconClass, isLink = false }) => {
+const FileCard = ({ id, title, size, time, iconClass, isLink = false }) => {
   // 1. Theme State Sync
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -52,7 +52,7 @@ const FileCard = ({ title, size, time, iconClass, isLink = false }) => {
       : 'bg-white border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md hover:-translate-y-1'}`;
 
   return isLink ? (
-    <Link to="/details" className={containerClass}>{Content}</Link>
+   <Link to={`/file/${id}`} className={containerClass}>{Content}</Link> 
   ) : (
     <div className={containerClass}>{Content}</div>
   );

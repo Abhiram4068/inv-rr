@@ -191,6 +191,7 @@ const PaginatedFiles = () => {
           {files.map((file) => (
             <FileCard
               key={file.id}
+              id={file.id}
               title={file.original_name || file.description || "Untitled"}
               size={sizeFormatter(file.file_size)}
               time={timeFormatter(file.created_at)}

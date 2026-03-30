@@ -66,16 +66,7 @@ const TopNavbar = ({ toggleSidebar }) => {
           <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
         </button>
 
-        <div className="hidden sm:flex items-center gap-5">
-          <Link to="/login" className={`no-underline text-sm transition-colors 
-            ${theme === 'dark' ? 'text-[#808080] hover:text-white' : 'text-slate-500 hover:text-blue-600'}`}>
-            Log In
-          </Link>
-          <Link to="/register" className={`px-[18px] py-2 rounded-[20px] no-underline font-semibold text-sm transition-all
-            ${theme === 'dark' ? 'bg-white text-black hover:bg-slate-200' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'}`}>
-            Join Now
-          </Link>
-        </div>
+       
 
         {/* User Profile Dropdown */}
         <div className={`relative flex items-center p-1 rounded-lg cursor-pointer transition-colors group

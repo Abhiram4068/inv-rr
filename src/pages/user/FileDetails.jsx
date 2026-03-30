@@ -1,6 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { getFileById } from '../../services/fileService';
 
 const FileDetails = () => {
+
+  const {id} = useParams();
+
+  //states for file handling
+  const [ file, setFile ] = useState(null);
+  const [ fetchError , setFetchError ] = useState("");
+  const [ fetchLoading , setLoading ] = useState(true);  
+  useEffect(() => {
+    const fetchFile = async () => {
+      try {
+        const res = await getFileById(id);
+        setFile(res.data);
+        setFileData({
+        name: res.data.original_name || "Untitled",
+        description: res.data.description || "No description available."
+      });
+      setTempName(res.data.original_name || "");
+      setTempDesc(res.data.description || "");
+      } catch (error) {
+        setFetchError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFile();
+  }, [id]);
+
+
   // Theme State Sync
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -32,8 +62,8 @@ const FileDetails = () => {
   
   // State for File Data
   const [fileData, setFileData] = useState({
-    name: "Project_Proposal_2024.pdf",
-    description: "This document contains the final project proposal for the 2024 infrastructure upgrade. Please review the security protocols on page 12 before sharing externally."
+    name: "",
+    description: ""
   });
 
   const [tempName, setTempName] = useState(fileData.name);
@@ -81,7 +111,76 @@ const FileDetails = () => {
     setActiveModal(null);
     showToast("File moved to trash");
   };
+  const sizeFormatter = (value) => {
+    if (value === null || value === undefined) return "-";
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return "-";
+      if (trimmed.includes("MB") || trimmed.includes("KB") || trimmed.includes("GB")) return trimmed;
+      const parsed = Number(trimmed);
+      if (Number.isFinite(parsed)) return sizeFormatter(parsed);
+      return trimmed;
+    }
+    if (typeof value !== "number" || !Number.isFinite(value)) return "-";
 
+    const mb = value / (1024 * 1024);
+    if (mb >= 1024) return `${(mb / 1024).toFixed(2)} GB`;
+    if (mb >= 1) return `${mb.toFixed(1)} MB`;
+    const kb = value / 1024;
+    return `${kb.toFixed(0)} KB`;
+  };
+
+  const timeFormatter = (isoOrDate) => {
+    if (!isoOrDate) return "-";
+    const d = new Date(isoOrDate);
+    if (Number.isNaN(d.getTime())) return String(isoOrDate);
+
+    const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const iconClassForFile = (f) => {
+    const name = f?.original_name || "";
+    const ct = f?.content_type || "";
+    const lower = String(name).toLowerCase();
+
+    if (lower.endsWith(".pdf") || String(ct).includes("pdf")) return "fa-file-pdf";
+    if ((lower.endsWith(".doc") || lower.endsWith(".docx")) || String(ct).includes("word")) return "fa-file-word";
+    if ((lower.endsWith(".xls") || lower.endsWith(".xlsx")) || String(ct).includes("excel")) return "fa-file-excel";
+    if ((lower.endsWith(".ppt") || lower.endsWith(".pptx")) || String(ct).includes("powerpoint")) return "fa-file-powerpoint";
+    if ((lower.endsWith(".zip") || lower.endsWith(".rar")) || String(ct).includes("zip")) return "fa-file-zipper";
+    if (/\.(png|jpe?g|gif|webp)$/.test(lower) || String(ct).includes("image")) return "fa-file-image";
+    if (/\.(mp4|mov|mkv|webm)$/.test(lower) || String(ct).includes("video")) return "fa-file-video";
+    if (lower.endsWith(".txt") || String(ct).includes("text")) return "fa-file-lines";
+    return "fa-file";
+  };
+
+  const getFileDocType = (f) => {
+    const name = f?.original_name || "";
+    const lower = String(name).toLowerCase();
+    if (lower.endsWith(".pdf")) return "PDF Document";
+    if (lower.endsWith(".doc") || lower.endsWith(".docx")) return "Word Document";
+    if (lower.endsWith(".xls") || lower.endsWith(".xlsx")) return "Excel Spreadsheet";
+    if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "Image";
+    return "File";
+  };
+
+if (fetchLoading) return (
+  <div className="flex-1 flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+if (fetchError) return (
+  <div className="flex-1 flex items-center justify-center text-red-500 text-sm font-bold">
+    {fetchError}
+  </div>
+);
   return (
     <div className={`flex-1 flex flex-col lg:flex-row overflow-hidden transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
       
@@ -102,11 +201,11 @@ const FileDetails = () => {
         <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-500/20 text-white">
-              <i className="fa-solid fa-file-pdf"></i>
+              <i className={`fa-solid ${iconClassForFile(file)}`}></i>
             </div>
             <div>
               <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{fileData.name}</h1>
-              <p className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm mt-1 font-medium`}>Uploaded by you • PDF Document</p>
+              <p className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm mt-1 font-medium`}>Uploaded by you • {getFileDocType(file)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -155,9 +254,9 @@ const FileDetails = () => {
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-6 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Properties</div>
               <div className="space-y-5">
                 {[ 
-                  { label: "Size", val: "4.2 MB" },
-                  { label: "Created", val: "Feb 14, 2026" },
-                  { label: "Modified", val: "2 hours ago" }
+                  { label: "Size", val: sizeFormatter(file?.file_size) },
+                  { label: "Created", val: file?.created_at ? new Date(file.created_at).toLocaleDateString() : "-" },
+                  { label: "Modified", val: timeFormatter(file?.updated_at || file?.created_at) }
                 ].map((prop, i) => (
                   <div key={i} className={`flex justify-between items-center ${i !== 2 ? (isDark ? 'border-b border-[#111] pb-3' : 'border-b border-slate-100 pb-3') : ''}`}>
                     <span className={`text-[11px] font-bold uppercase ${isDark ? 'text-[#404040]' : 'text-slate-400'}`}>{prop.label}</span>
