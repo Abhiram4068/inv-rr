@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 
-const FileCard = ({ id, title, size, time, iconClass, isLink = false }) => {
+const FileCard = ({ id, title, display_name, originalName, size, time, iconClass, isLink = false }) => {
   // 1. Theme State Sync
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -28,15 +28,22 @@ const FileCard = ({ id, title, size, time, iconClass, isLink = false }) => {
         <i className={`fa-solid ${iconClass} text-[40px] absolute z-10 group-hover:scale-110 transition-all
           ${isDark ? 'text-[#808080]' : 'text-blue-500'}`}></i>
         
-        {/* Placeholder/Preview Image adapts to background */}
         <div className={`w-full h-full object-cover opacity-40 ${isDark ? 'bg-[#111]' : 'bg-white'}`}></div>
       </div>
 
       <div className="p-4">
-        <span className={`block text-sm font-semibold mb-2 truncate transition-colors
-          ${isDark ? 'text-white' : 'text-slate-700'}`}>
-          {title}
+        {/* Original Name - Now Main Title & Larger */}
+        <span className={`block text-base font-bold truncate transition-colors
+          ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          {title || 'Untitled File'}
         </span>
+
+        {/* Display Name (title) - Now Subtitle & Smaller */}
+        <span className={`block text-[12px] font-medium truncate mb-2
+          ${isDark ? 'text-[#aaa]' : 'text-slate-500'}`}>
+          {display_name}
+        </span>
+
         <div className={`flex justify-between text-[12px] font-medium
           ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
           <span>{size}</span>

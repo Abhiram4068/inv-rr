@@ -17,6 +17,7 @@ import FileDetails from "./pages/user/FileDetails";
 import RecentFiles from "./pages/user/RecentFiles";
 import Starred from "./pages/user/Starred";
 import Shared from "./pages/user/Shared";
+import ArchivesList from "./pages/user/Archives";
 import Collections from "./pages/user/Collections";
 import CollectionDetails from "./pages/user/CollectionDetails";
 import TrashManagement from "./pages/user/storage/Trash";
@@ -55,6 +56,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
 
           <Route element={<UserLayout />}>
+            <Route path="/archives"     element={<ArchivesList />} />
             <Route path="/dashboard"     element={<Dashboard />} />
             <Route path="/files"         element={<PaginatedFiles />} />
             <Route path="/file/:id"   element={<FileDetails />} />

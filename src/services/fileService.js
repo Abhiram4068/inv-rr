@@ -8,6 +8,12 @@ export const getFiles = (page = 1, search = "") =>
 export const getFileById = (fileId) =>
   api.get(`/files/${fileId}/`);
 
+
+// PATCH /files/:id/update/
+export const updateFile=(fileId, data) =>
+  api.patch(`files/${fileId}/update/`, data);
+
+
 // POST /file-upload
 export const uploadFile = (formData) =>
   api.post("/file-upload", formData, {
@@ -21,6 +27,10 @@ export const downloadFile = (fileId) =>
 // DELETE /files/:id/file-delete/
 export const deleteFile = (fileId) =>
   api.delete(`/files/${fileId}/file-delete/`);
+
+// ARCHIVE /files/:id/archive/
+export const archiveFile = (fileId) =>
+  api.post(`/files/${fileId}/archive/`);
 
 // GET  /files/view-recently-deleted/
 export const getDeletedFiles = () =>

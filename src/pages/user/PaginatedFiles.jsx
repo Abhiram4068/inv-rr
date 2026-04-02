@@ -117,7 +117,7 @@ const PaginatedFiles = () => {
       try {
         const res = await getFiles(page, search);
         const data = res.data;
-
+        console.log(data);
         const results = Array.isArray(data)
           ? data
           : Array.isArray(data?.results)
@@ -192,7 +192,8 @@ const PaginatedFiles = () => {
             <FileCard
               key={file.id}
               id={file.id}
-              title={file.original_name || file.description || "Untitled"}
+              title={file.original_name}
+              display_name={file.display_name || file.description || "Untitled"}
               size={sizeFormatter(file.file_size)}
               time={timeFormatter(file.created_at)}
               iconClass={iconClassForFile(file)}
