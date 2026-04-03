@@ -62,8 +62,8 @@ api.interceptors.response.use(
   }
 );
 
-export const login    = (data) => api.post("/api/login/", data);
-export const logout   = ()     => api.post("/api/logout/");
-export const register = (data) => api.post("/api/register/", data);
+export const login    = (data) => api.post("/api/auth/login/", data);
+export const logout   = ()     => api.post("/api/auth/logout/");
+export const register = (data) => api.post("/api/auth/register/", data);
 
 export default api;
