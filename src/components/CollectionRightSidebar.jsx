@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 
-const CollectionRightSidebar = ({ info, onManage, onDelete }) => {
+const CollectionRightSidebar = ({ collectionInfo, onManage, onDelete }) => {
   // 1. Theme State Sync
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -19,37 +19,52 @@ const CollectionRightSidebar = ({ info, onManage, onDelete }) => {
   }, [theme]);
 
   const isDark = theme === 'dark';
-
+if (!collectionInfo) {
+  return (
+    <aside className="w-[320px] p-6 hidden xl:flex">
+      <div className="text-gray-400 text-sm">Loading...</div>
+    </aside>
+  );
+}
   return (
     <aside className={`w-[320px] p-6 flex flex-col overflow-y-auto hidden xl:flex border-l transition-colors duration-300 no-scrollbar
       ${isDark ? 'bg-black border-[#555]' : 'bg-[#F1F5F9] border-slate-200'}`}>
-      
+     <div className={`border rounded-lg p-5 mb-4 transition-colors 
+  ${isDark ? 'bg-[#0a0a0a] border-[#555]' : 'bg-white border-slate-200 shadow-sm'}`}>
+  <h3 className={`text-base font-semibold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+    About
+  </h3>
+  <p className={`text-sm leading-relaxed break-words ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+    {collectionInfo?.description || "No description provided for this collection."}
+  </p>
+</div>
       {/* Collection Details Card */}
-      <div className={`border rounded-xl p-5 mb-4 transition-colors 
+      <div className={`border rounded-lg p-5 mb-4 transition-colors 
         ${isDark ? 'bg-[#0a0a0a] border-[#555]' : 'bg-white border-slate-200 shadow-sm'}`}>
         <h3 className={`text-base font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>Collection Details</h3>
-        <p className={`text-xs mb-4 leading-relaxed ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
-          Created by you on Feb 01, 2026.
-        </p>
+        {/* <p className={`text-xs mb-4 leading-relaxed ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>
+          Created on: {collectionInfo?.created_at}
+        </p> */}
         
         <div className="space-y-3">
           <div className="flex justify-between items-center text-sm">
+            <span className={`${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Created on:</span>
+            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{collectionInfo?.created_at}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
             <span className={`${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Total Size</span>
-            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>8.7 MB</span>
+            
+            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{collectionInfo?.total_size}</span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className={`${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Files</span>
-            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>12</span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className={`${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Visibility</span>
-            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>Private</span>
+            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{collectionInfo?.total_files}</span>
           </div>
         </div>
       </div>
 
-      {/* Recent Activity Card */}
-      <div className={`border rounded-xl p-5 mb-6 transition-colors 
+      {/* Recent Activity Card
+      <div className={`border rounded-lg p-5 mb-6 transition-colors 
         ${isDark ? 'bg-[#0a0a0a] border-[#555]' : 'bg-white border-slate-200 shadow-sm'}`}>
         <h3 className={`text-base font-semibold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>Recent Activity</h3>
         <ul className="text-xs space-y-3">
@@ -66,7 +81,7 @@ const CollectionRightSidebar = ({ info, onManage, onDelete }) => {
             </span>
           </li>
         </ul>
-      </div>
+      </div> */}
 
       {/* Action Buttons (Sticky at bottom) */}
       <div className="mt-auto space-y-3">

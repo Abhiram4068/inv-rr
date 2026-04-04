@@ -83,7 +83,7 @@ function App() {
           </Route>
 
           <Route element={<CollectionLayout />}>
-            <Route path="/viewcollection" element={<CollectionDetails />} />
+            <Route path="/viewcollection/:id" element={<CollectionDetails />} />
           </Route>
 
         </Route>

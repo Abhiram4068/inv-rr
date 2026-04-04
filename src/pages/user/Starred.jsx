@@ -73,7 +73,7 @@ const StarredItems = () => {
       )}
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] custom-scrollbar">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar">
         
         {/* Search and Action Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">

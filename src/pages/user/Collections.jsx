@@ -25,6 +25,7 @@ const Collections = () => {
   const isDark = theme === 'dark';
 
   const [collections, setCollections]=useState([]);
+  const [totalCollections, setTotalCollections] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -33,8 +34,8 @@ const fetchCollections=async () =>{
   try{
     setLoading(true);
     const res = await getCollections()
-console.log(res.data)
-    setCollections(res.data);    
+    setCollections(res.data.collections);
+    setTotalCollections(res.data.total_collections);    
   }catch{
     setError("Failed to fetch collections");
   }finally{
@@ -64,7 +65,7 @@ const formatSize = (bytes) => {
 
   return (
     /* Main Background: bg-black for dark, bg-[#E6EBF2] for light */
-    <div className={`flex-1 min-w-0 overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <div className={`flex-1 min-w-0 overflow-y-auto no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
       <div className="p-6 lg:p-[24px_40px]">
         
         {/* HEADER ACTION ROW */}
@@ -88,29 +89,51 @@ const formatSize = (bytes) => {
         {/* PAGE HEADER */}
         <div className="flex justify-between items-center mb-5">
           <div className={`text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>My Collections</div>
-          <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>6 collections</div>
+          <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>{totalCollections} collections</div>
         </div>
 
-        {/* FOLDER GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-          {collections.map((folder) => (
-            <Link 
-              key={folder.id} 
-              to="/viewcollection"
-              className={`border p-4 rounded-[12px] flex items-center gap-4 transition-all group ${
-                isDark 
-                ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' 
-                : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'
-              }`}
-            >
-              <i className="fa-solid fa-folder text-[24px] text-[#fbbf24]"></i>
-              <div className="flex flex-col overflow-hidden">
-                <span className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>{folder.name}</span>
-                <span className={`text-[11px] mt-[2px] ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>{folder.total_files} files •  {folder.total_size ? formatSize(folder.total_size) : "0 B"}</span>
-              </div>
-            </Link>
-          ))}
+{/* FOLDER GRID */}
+{loading ? (
+  <div className="py-16 flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+) : error ? (
+  <div className="py-16 text-center">
+    <div className={`text-sm font-bold ${isDark ? "text-[#ff6b6b]" : "text-red-600"}`}>
+      {error}
+    </div>
+  </div>
+) : collections.length === 0 ? (
+  <div className="py-16 text-center">
+    <div className={`text-sm font-bold ${isDark ? "text-[#808080]" : "text-slate-500"}`}>
+      No collections found.
+    </div>
+  </div>
+) : (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+    {collections.map((folder) => (
+      <Link 
+        key={folder.id} 
+        to={`/viewcollection/${folder.id}`}
+        className={`border p-4 rounded-[11px] flex items-center gap-4 transition-all group ${
+          isDark 
+          ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' 
+          : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'
+        }`}
+      >
+        <i className="fa-solid fa-folder text-[24px] text-[#fbbf24]"></i>
+        <div className="flex flex-col overflow-hidden">
+          <span className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>
+            {folder.name}
+          </span>
+          <span className={`text-[11px] mt-[2px] ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+            {folder.total_files} files • {folder.total_size ? formatSize(folder.total_size) : "0 B"}
+          </span>
         </div>
+      </Link>
+    ))}
+  </div>
+)}
 
       </div>
 
@@ -180,7 +203,9 @@ const formatSize = (bytes) => {
         </div>
       )}
     </div>
+    
   );
+  
 };
 
 export default Collections;

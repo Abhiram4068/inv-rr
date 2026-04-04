@@ -9,8 +9,8 @@ export const getCollectionById = (collectionId) => api.get(`/collections/${colle
 //POST /collections/
 export const createCollection = (collectionData) => api.post("/collections/", collectionData);
 
-//PUT /collections/:id/
-export const updateCollection = (collectionId, collectionData) => api.put(`/collections/${collectionId}/`, collectionData);
+//PATCH /collections/:id/
+export const updateCollection = (collectionId, collectionData) => api.patch(`/collections/${collectionId}/`, collectionData);
 
 //DELETE /collections/:id/
 export const deleteCollection = (collectionId) => api.delete(`/collections/${collectionId}/`);
