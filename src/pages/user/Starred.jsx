@@ -96,7 +96,7 @@ const StarredItems = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <div className={`text-[18px] md:text-[20px] font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              <i className="fa-solid fa-star text-[#f59e0b] text-lg"></i> Starred Items
+               Starred Files
             </div>
             <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-xs`}>{items.length} Items Total</div>
           </div>
@@ -104,6 +104,7 @@ const StarredItems = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {items.map((item) => (
+              <Link key={item.id} to='/starred-files'>
               <div key={item.id} className={`rounded-lg overflow-hidden transition-all hover:-translate-y-1 group cursor-pointer relative border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-200 hover:shadow-md'}`}>
                 <div 
                   className="absolute top-3 right-3 z-20 cursor-pointer"
@@ -122,14 +123,22 @@ const StarredItems = () => {
                   </div>
                 </div>
               </div>
+              </Link>
             ))}
+          </div>
+          
+          {/* VIEW ALL STARRED FILES LINK */}
+          <div className="mt-4">
+            <Link to="/starred-files" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+              View all starred files
+            </Link>
           </div>
         </div>
 
         {/* SECTION: Pinned Folders */}
         <div className="mt-12">
           <div className="flex justify-between items-center mb-2">
-            <div className={`text-[18px] md:text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Pinned Folders</div>
+            <div className={`text-[18px] md:text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Starred Folders</div>
           </div>
           <hr className={`border-0 border-t mb-6 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`} />
 
@@ -151,6 +160,13 @@ const StarredItems = () => {
                 </div>
               </Link>
             ))}
+          </div>
+
+          {/* VIEW ALL STARRED FOLDERS LINK */}
+          <div className="mt-4">
+            <Link to="/starred-folders" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+              View all starred folders
+            </Link>
           </div>
         </div>
       </main>
