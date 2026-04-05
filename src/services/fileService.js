@@ -37,3 +37,7 @@ export const shareFile = (fileId, shareData) =>
 // GET  /files/public/:token/   ← this one is PUBLIC, no cookie needed
 export const getPublicFile = (token) =>
   api.get(`/files/public/${token}/`);
+
+
+//GET /files/starred/
+export const getStarredFiles = () => api.get(`/files/starred/`);

@@ -23,3 +23,7 @@ export const removeFileFromCollection = (collectionId, fileId) => api.post(`/col
 
 //GET /collections/:id/files/
 export const getCollectionFiles = (collectionId) => api.get(`/collections/${collectionId}/files/`);
+
+
+//GET /collections/starred/
+export const getStarredCollection = () => api.get(`/collections/starred/`);

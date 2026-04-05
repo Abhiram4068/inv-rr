@@ -121,7 +121,7 @@ const formatSize = (bytes) => {
           : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'
         }`}
       >
-        <i className="fa-solid fa-folder text-[24px] text-[#fbbf24]"></i>
+        <i className="fa-solid fa-folder text-2xl text-[#3b82f6]"></i>
         <div className="flex flex-col overflow-hidden">
           <span className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>
             {folder.name}
