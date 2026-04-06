@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
-import { getCollections } from '../../services/collectionService';
+import { getCollections, createCollection } from '../../services/collectionService';
 
 const Collections = () => {
   // 1. Theme State Sync Logic
@@ -17,7 +17,7 @@ const Collections = () => {
       if (current !== theme) setTheme(current);
     }, 100);
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('stocreateCollectionrage', handleStorageChange);
       clearInterval(interval);
     };
   }, [theme]);
@@ -52,16 +52,31 @@ const formatSize = (bytes) => {
 
   return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i];
 };
-  const handleCreate = () => {
-    if (!collectionName) {
-      alert("Please enter a collection name.");
-      return;
-    }
-    alert(`Success! Collection "${collectionName}" has been created.`);
+const handleCreate=async()=>{
+  if(!collectionName.trim()){
+    alert("Enter the collection name!")
+    return;
+  }
+  try{
+    setLoading(true)
+    const payload={
+      name: collectionName,
+      description: collectionDesc
+    };
+    await createCollection(payload);
+    const res=await getCollections();
+    setCollections(res.data.collections);
+    setTotalCollections(res.data.total_collections); 
     setModalOpen(false);
     setCollectionName('');
     setCollectionDesc('');
-  };
+  }catch(err){
+    console.error(err);
+    setError("Failed to create collection");
+  }finally{
+    setLoading(false);
+  }
+};
 
   return (
     /* Main Background: bg-black for dark, bg-[#E6EBF2] for light */
