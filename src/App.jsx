@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 
 import UserLayout from "./layouts/UserLayout";
 import StorageLayout from "./layouts/StorageManagement";
@@ -16,6 +17,7 @@ import FileDetails from "./pages/user/FileDetails";
 import RecentFiles from "./pages/user/RecentFiles";
 import Starred from "./pages/user/Starred";
 import Shared from "./pages/user/Shared";
+import ArchivesList from "./pages/user/Archives";
 import Collections from "./pages/user/Collections";
 import CollectionDetails from "./pages/user/CollectionDetails";
 import TrashManagement from "./pages/user/storage/Trash";
@@ -28,6 +30,7 @@ import AccountSettings from "./pages/user/profile/Profilesettings";
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
 import ExternalShareView from "./pages/public/PublicView";
+import Landing from "./pages/public/Landing";
 
 import ManageStorage from "./pages/user/storage/ManageStorage";
 import DuplicateManager from "./pages/user/storage/ViewDuplicates";
@@ -42,17 +45,21 @@ function App() {
       <Routes>
 
         {/* ── Public routes — no cookie check ── */}
-        <Route path="/login"        element={<Login />} />
-        <Route path="/register"     element={<Register />} />
+        <Route element={<PublicRoute />}>
+          <Route path="/"             element={<Landing />} />
+          <Route path="/login"        element={<Login />} />
+          <Route path="/register"     element={<Register />} />
+        </Route>
         <Route path="/downloadpage" element={<ExternalShareView />} />
 
         {/* ── Protected routes — cookie checked first ── */}
         <Route element={<ProtectedRoute />}>
 
           <Route element={<UserLayout />}>
-            <Route path="/"              element={<Dashboard />} />
+            <Route path="/archives"     element={<ArchivesList />} />
+            <Route path="/dashboard"     element={<Dashboard />} />
             <Route path="/files"         element={<PaginatedFiles />} />
-            <Route path="/details"       element={<FileDetails />} />
+            <Route path="/file/:id"   element={<FileDetails />} />
             <Route path="/starred"       element={<Starred />} />
             <Route path="/shared"        element={<Shared />} />
             <Route path="/collections"   element={<Collections />} />

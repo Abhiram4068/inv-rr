@@ -26,7 +26,7 @@ const Login = () => {
     try {
       const res = await login(formData);
       setUser(res.data?.user || res.data);
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.response?.data?.detail || "Invalid email or password");
     } finally {
@@ -35,7 +35,7 @@ const Login = () => {
   };
 
   if (authLoading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center font-['Inter']">

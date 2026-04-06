@@ -42,7 +42,7 @@ const Sidebar = ({ isOpen }) => {
       </div>
 
       <div className="space-y-1">
-        <NavLink to="/" className={getNavLinkClass}>
+        <NavLink to="/dashboard" className={getNavLinkClass}>
           <i className="fa-solid fa-house w-5 mr-3 text-base"></i> Home
         </NavLink>
 
