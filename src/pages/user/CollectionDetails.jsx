@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { useParams } from "react-router-dom"
-import { getCollectionById } from '../../services/collectionService';
-import { getCollectionFiles } from '../../services/collectionService';
+import { getCollectionById, getCollectionFiles, updateCollection } from '../../services/collectionService';
 
 const CollectionDetails = () => {
   const { isManageOpen, setIsManageOpen, isDeleteOpen, setIsDeleteOpen, handleUpdateCollection,handleDeleteCollection   } = useOutletContext();
@@ -55,8 +54,6 @@ const CollectionDetails = () => {
 
   const isDark = theme === 'dark';
 
-  const [isStarred, setIsStarred] = useState(false);
-
 const [formData, setFormData] = useState({
   name: "",
   description: ""
@@ -79,7 +76,21 @@ useEffect(() => {
   const handleFileClick = (file) => {
     navigate('/details', { state: { file } });
   };
+const handleToggleStar = async () => {
+  try {
+    const newState = !collectionInfo?.is_starred;
 
+    await updateCollection(id, { is_starred: newState });
+
+    setCollectionInfo(prev => ({
+      ...prev,
+      is_starred: newState
+    }));
+
+  } catch (error) {
+    console.error("Failed to update star:", error);
+  }
+};
   return (
     <div className="collection-container transition-colors duration-300" style={{ width: '100%', height: '100%', overflowY: 'hidden', display: 'flex', flexDirection: 'column', background: isDark ? 'transparent' : '#E6EBF2' }}>
       
@@ -98,13 +109,13 @@ useEffect(() => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button 
-              onClick={() => setIsStarred(!isStarred)}
+              onClick={handleToggleStar}
               className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${
                 collectionInfo?.is_starred
                 ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
                 : (isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] hover:text-white hover:border-[#333]' : 'bg-white border-slate-200 text-slate-400 hover:text-blue-600')
               }`}
-              title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
+              title={collectionInfo?.is_starred ? "Remove from Favorites" : "Add to Favorites"}
             >
               <i className={`${ collectionInfo?.is_starred ? 'fa-solid' : 'fa-regular'} fa-star text-sm`}></i>
             </button>

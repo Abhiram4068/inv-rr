@@ -16,7 +16,7 @@ import NotFound from "./pages/public/NotFound";
 import FileDetails from "./pages/user/FileDetails";
 import RecentFiles from "./pages/user/RecentFiles";
 import Starred from "./pages/user/Starred";
-import StarredFiles from "./pages/user/starredfiles";
+import StarredFiles from "./pages/user/StarredFiles";
 import Shared from "./pages/user/Shared";
 import ArchivesList from "./pages/user/Archives";
 import Collections from "./pages/user/Collections";

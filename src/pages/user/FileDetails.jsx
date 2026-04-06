@@ -140,7 +140,20 @@ const saveDetails = async () => {
     }
     
   };
+  const handleToggleStar = async () => {
+    try {
+      const newState = !isStarred;
 
+      await updateFile(id, { is_starred: newState });
+
+      setIsStarred(newState);
+      showToast(newState ? "Added to Favorites" : "Removed from Favorites");
+
+    } catch (error) {
+      console.error("Failed to update star:", error);
+      showToast("Failed to update favorite");
+    }
+  };
   const handleDelete = async () => {
     try{
       await deleteFile(id);
@@ -251,11 +264,7 @@ const saveDetails = async () => {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                const newState = !isStarred;
-                setIsStarred(newState);
-                showToast(newState ? "Added to Favorites" : "Removed from Favorites");
-              }}
+              onClick={handleToggleStar}
               className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${isStarred
                   ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
                   : (isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] hover:text-white hover:border-[#333]' : 'bg-white border-slate-200 text-slate-400 hover:text-blue-600')
