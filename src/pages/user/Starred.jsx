@@ -62,10 +62,6 @@ const StarredItems = () => {
     fetchStarredCollections();
   },[]);
 
-  // const [folders, setFolders] = useState([
-  //   { id: 1, name: "Project Assets", count: 24 },
-  //   { id: 2, name: "Client Documents", count: 0 }
-  // ]);
 
   // --- TOAST STATE ---
   const [toast, setToast] = useState({ visible: false, message: '' });
@@ -245,7 +241,7 @@ const getFileIcon = (contentType) => {
           </div>
         </div>
 
-        {/* SECTION: Pinned Folders */}
+        {/* SECTION: Pinned Collections */}
         <div className="mt-12">
           <div className="flex justify-between items-center mb-2">
             <div className={`text-[18px] md:text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Starred Collections</div>
@@ -253,7 +249,7 @@ const getFileIcon = (contentType) => {
           </div>
           <hr className={`border-0 border-t mb-6 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`} />
 
-          
+         
 {loadingCollections?(
   <div className="py-16 flex items-center justify-center">
     <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -294,7 +290,7 @@ const getFileIcon = (contentType) => {
           {/* VIEW ALL STARRED FOLDERS LINK */}
           <div className="mt-4">
             <Link to="/starred-folders" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-              View all starred folders
+              View all starred Collections
             </Link>
           </div>
         </div>
