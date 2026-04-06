@@ -278,7 +278,7 @@ const saveDetails = async () => {
         {/* Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
           <div className="xl:col-span-2 space-y-6">
-            <div className={`aspect-video border rounded-2xl flex flex-col items-center justify-center transition-colors ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-[#444]' : 'bg-white border-slate-200 text-slate-300'}`}>
+            <div className={`aspect-video border rounded-lg flex flex-col items-center justify-center transition-colors ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-[#444]' : 'bg-white border-slate-200 text-slate-300'}`}>
               <i className="fa-solid fa-eye-slash text-4xl mb-4 opacity-30"></i>
               <span className="text-sm font-medium">Preview not available for this file type</span>
             </div>
