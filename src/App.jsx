@@ -16,6 +16,7 @@ import NotFound from "./pages/public/NotFound";
 import FileDetails from "./pages/user/FileDetails";
 import RecentFiles from "./pages/user/RecentFiles";
 import Starred from "./pages/user/Starred";
+import StarredFiles from "./pages/user/starredfiles";
 import Shared from "./pages/user/Shared";
 import ArchivesList from "./pages/user/Archives";
 import Collections from "./pages/user/Collections";
@@ -61,6 +62,7 @@ function App() {
             <Route path="/files"         element={<PaginatedFiles />} />
             <Route path="/file/:id"   element={<FileDetails />} />
             <Route path="/starred"       element={<Starred />} />
+            <Route path="/starred-files" element={<StarredFiles />} />
             <Route path="/shared"        element={<Shared />} />
             <Route path="/collections"   element={<Collections />} />
             <Route path="/upload-file"   element={<UploadFilesMain />} />
@@ -85,7 +87,7 @@ function App() {
           </Route>
 
           <Route element={<CollectionLayout />}>
-            <Route path="/viewcollection" element={<CollectionDetails />} />
+            <Route path="/viewcollection/:id" element={<CollectionDetails />} />
           </Route>
 
         </Route>

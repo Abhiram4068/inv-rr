@@ -22,7 +22,7 @@ const RecentActivityMain = () => {
   return (
     <div className={`flex-1 flex overflow-hidden transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] custom-scrollbar">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar">
         
         {/* Search and Action Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
