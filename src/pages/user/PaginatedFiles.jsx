@@ -170,7 +170,7 @@ const PaginatedFiles = () => {
       {/* Header Info */}
       <div className="flex justify-between items-center mb-6">
         <div className={`text-[18px] md:text-[20px] font-semibold transition-colors ${isDark ? 'text-white' : 'text-slate-800'}`}>My Files</div>
-        <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>1,248 items</div>
+        <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>{files.length} item(s)</div>
       </div>
 
       {/* File Grid */}

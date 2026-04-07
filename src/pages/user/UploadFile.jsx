@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { uploadFile } from '../../services/fileService';
 
 const UploadFilesMain = () => {
   // --- THEME STATE SYNC ---
@@ -6,6 +7,9 @@ const UploadFilesMain = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+
+  // --- TOAST STATE ---
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -20,6 +24,18 @@ const UploadFilesMain = () => {
     };
   }, [theme]);
 
+  // Toast Timer Logic
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => setToast({ ...toast, visible: false }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ visible: true, message: msg, type: type });
+  };
+
   const isDark = theme === 'dark';
 
   // Trigger file selection
@@ -29,7 +45,16 @@ const UploadFilesMain = () => {
 
   // Process files from input or drop
   const handleFiles = (files) => {
-    const newFiles = Array.from(files).map((file) => ({
+    const filteredFiles = Array.from(files).filter(file => {
+      const isFolder = !file.type && file.size % 4096 === 0;
+      if (isFolder) {
+        showToast("Ignored folders!", 'error');
+        return false;
+      }
+      return true;
+    });
+
+    const newFiles = filteredFiles.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       size: (file.size / (1024 * 1024)).toFixed(2),
@@ -66,17 +91,56 @@ const UploadFilesMain = () => {
     setSelectedFiles((prev) => prev.filter((file) => file.id !== id));
   };
 
-  const handleUpload = () => {
+  // Clear all selected files
+  const clearAllFiles = () => {
+    setSelectedFiles([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+    showToast("Cleared all files", "success");
+  };
+
+  const handleUpload = async() => {
     if (selectedFiles.length === 0) {
-      alert('Please select files first.');
+      showToast('Please select files first.', 'error');
       return;
     }
-    alert(`Uploading ${selectedFiles.length} files...`);
-    setSelectedFiles([]);
+    try{
+      const formData=new FormData();
+      selectedFiles.forEach((file)=>{
+        formData.append("files", file.raw);
+      });
+      const response = await uploadFile(formData);
+      
+      showToast(`${selectedFiles.length} file(s) uploaded successfully`, 'success');
+      
+      setSelectedFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+    }catch(err){
+      const backendError = err?.response?.data?.files?.[0] || err?.response?.data?.non_field_errors?.[0] || err?.response?.data?.[0];
+      if (backendError) {
+        showToast(backendError, 'error'); 
+      } else {
+        showToast("Upload failed. Please try again.", 'error');
+      }
+    }
   };
 
   return (
-    <main className={`flex-1 overflow-y-auto p-10 no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
+    <main className={`flex-1 overflow-y-auto p-10 no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
+      
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className={`${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'} px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3`}>
+            <i className={`fa-solid ${toast.type === 'error' ? 'fa-circle-exclamation text-red-500' : 'fa-circle-check text-emerald-500'} text-lg`}></i>
+            {toast.message}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <h2 className={`text-2xl font-bold m-0 ${isDark ? 'text-white' : 'text-slate-800'}`}>Upload Files</h2>
@@ -134,7 +198,15 @@ const UploadFilesMain = () => {
       </div>
 
       {/* Action Footer */}
-      <div className={`flex justify-end pt-5 border-t mt-5 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
+      <div className={`flex justify-end items-center gap-4 pt-5 border-t mt-5 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
+        {selectedFiles.length > 0 && (
+          <button
+            onClick={clearAllFiles}
+            className={`text-xs font-bold transition-colors ${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-500 hover:text-red-500'}`}
+          >
+            Clear All
+          </button>
+        )}
         <button
           onClick={handleUpload}
           className={`px-[30px] py-3 rounded-[25px] font-bold cursor-pointer transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5 shadow-lg ${

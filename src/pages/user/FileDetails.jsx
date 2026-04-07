@@ -450,20 +450,22 @@ const saveDetails = async () => {
                 <h2 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>Edit Details</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className={`block text-[10px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Display Name</label>
+                    <label className={`block text-[10px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`} >Display Name</label>
                     <input
                       value={tempName}
                       onChange={(e) => setTempName(e.target.value)}
                       type="text"
+                      placeholder="Identify your file with a display name."
                       className={`w-full border rounded-xl p-3 text-sm outline-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500'}`}
                     />
                   </div>
                   <div>
-                    <label className={`block text-[10px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Description</label>
+                    <label className={`block text-[10px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`} >Description</label>
                     <textarea
                       value={tempDesc}
                       onChange={(e) => setTempDesc(e.target.value)}
                       rows="4"
+                      placeholder="Description for your file."
                       className={`w-full border rounded-xl p-3 text-sm outline-none resize-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500'}`}
                     />
                   </div>
