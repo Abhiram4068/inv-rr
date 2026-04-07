@@ -16,7 +16,7 @@ export const updateFile=(fileId, data) =>
 
 // POST /file-upload
 export const uploadFile = (formData) =>
-  api.post("/file-upload", formData, {
+  api.post("/files/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
