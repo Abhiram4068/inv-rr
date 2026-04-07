@@ -26,7 +26,7 @@ const FileDetails = () => {
         console.log(res.data);
         setIsStarred(res.data.is_starred);
         setFileData({
-          display_name: res.data.display_name || "Untitled",
+          display_name: res.data.display_name || res.data.original_name,
           original_name: res.data.original_name || "Untitled",
           description: res.data.description || "No description available."
         });
