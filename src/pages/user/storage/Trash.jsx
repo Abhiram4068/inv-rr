@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
+import { getDeletedFiles, restoreFile } from "../../../services/fileService";
+
 
 const TrashManagement = () => {
   // --- THEME STATE SYNC ---
@@ -8,6 +10,32 @@ const TrashManagement = () => {
   const [isRestoreModalOpen, setRestoreModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+
+  const [ trashFiles, setTrashFiles ] = useState([])
+  const [ loading, setLoading ] = useState(true)
+  const [ error, setError ] = useState("")
+
+
+
+  useEffect(()=>{
+    const fetchTrashFiles=async()=>{
+      setLoading(true)
+      try{
+        setError("");
+        const res=await getDeletedFiles();
+        setTrashFiles(res.data);
+      }catch(err){
+        setError(
+  err.response?.data?.detail ||
+  err.response?.data?.message ||
+  "Failed to fetch"
+);
+      }finally{
+        setLoading(false)
+      }
+    };
+    fetchTrashFiles();
+  }, [])
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -24,18 +52,6 @@ const TrashManagement = () => {
 
   const isDark = theme === 'dark';
 
-  // Mock Data for Trash
-  const trashFiles = [
-    { id: 1, name: "Old_Project_Draft.zip", type: "archive", size: "420 MB", deletedDate: "2 days ago", color: "#ffa900", icon: "fa-file-zipper" },
-    { id: 2, name: "Unused_Asset_01.png", type: "image", size: "4.5 MB", deletedDate: "5 days ago", color: "#10b981", icon: "fa-file-image" },
-    { id: 3, name: "Raw_Footage_Blurry.mp4", type: "video", size: "1.8 GB", deletedDate: "1 week ago", color: "#3b82f6", icon: "fa-file-video" },
-    { id: 4, name: "Meeting_Notes_July.pdf", type: "pdf", size: "1.2 MB", deletedDate: "3 days ago", color: "#ff4444", icon: "fa-file-pdf" },
-    { id: 5, name: "Temp_Database_Export.sql", type: "database", size: "210 MB", deletedDate: "6 hours ago", color: "#8b5cf6", icon: "fa-database" },
-  ];
-
-  const filteredFiles = trashFiles.filter(file => 
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const openDeleteModal = (file) => {
     setSelectedFile(file);
@@ -96,37 +112,46 @@ const TrashManagement = () => {
 
       {/* Content Area - Data Table */}
       <div className="overflow-x-auto">
+        {loading ? (
+  <div className="py-16 flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+) : error ? (
+  <div className="py-16 text-center">
+    <div className={`text-sm font-bold ${isDark ? "text-[#ff6b6b]" : "text-red-600"}`}>
+      {error}
+    </div>
+  </div>
+) : trashFiles.length === 0 ? (
+  <div className="py-16 text-center">
+    <div className={`text-sm font-bold ${isDark ? "text-[#808080]" : "text-slate-500"}`}>
+      No Trash found.
+    </div>
+  </div>
+) : (
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className={`text-[10px] uppercase tracking-[0.15em] border-b ${isDark ? 'text-[#808080] border-[#1a1a1a]' : 'text-slate-400 border-slate-200'}`}>
               <th className="p-6 font-bold">File Name</th>
-              <th className="p-6 font-bold">Deleted</th>
+              <th className="p-6 font-bold">Deleted At</th>
               <th className="p-6 font-bold">Size</th>
-              <th className="p-6 font-bold text-center">View</th>
               <th className="p-6 font-bold text-right">Actions</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDark ? 'divide-[#111]' : 'divide-slate-200/50'}`}>
-            {filteredFiles.map((file) => (
+            {trashFiles.map((file) => (
               <tr 
                 key={file.id} 
                 className={`group transition-all duration-200 border-b last:border-none ${isDark ? 'hover:bg-[#111] border-[#111]' : 'hover:bg-white/50 border-slate-200/30'}`}
               >
                 <td className="p-4 text-sm font-bold">
                   <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isDark ? 'bg-[#111] group-hover:bg-[#1a1a1a]' : 'bg-white shadow-sm'}`}>
-                      <i className={`fa-solid ${file.icon} text-base`} style={{ color: file.color }}></i>
-                    </div>
-                    <span className={`truncate max-w-[250px] ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.name}</span>
+                    <span className={`truncate max-w-[250px] ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.original_name}</span>
                   </div>
                 </td>
-                <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{file.deletedDate}</td>
-                <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.size}</td>
-                <td className="p-4 text-sm text-center">
-                  <button className={`p-2 rounded-lg transition-colors ${isDark ? 'text-[#808080] hover:text-white hover:bg-[#1a1a1a]' : 'text-slate-400 hover:text-blue-600 hover:bg-white shadow-sm'}`}>
-                    <i className="fa-solid fa-eye text-xs"></i>
-                  </button>
-                </td>
+                <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{file.deleted_at}</td>
+                <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.file_size}</td>
+                
                 <td className="p-4 text-sm text-right">
                   <div className="flex justify-end gap-2">
                     <button 
@@ -149,19 +174,14 @@ const TrashManagement = () => {
             ))}
           </tbody>
         </table>
-        
-        {filteredFiles.length === 0 && (
-          <div className="py-20 text-center">
-            <i className={`fa-solid fa-trash-can text-4xl mb-4 ${isDark ? 'text-[#333]' : 'text-slate-200'}`}></i>
-            <p className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>Trash is empty. No items to display.</p>
-          </div>
-        )}
+      
+      )}
       </div>
 
       {/* Footer Stats */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-          {filteredFiles.length} items currently in bin
+          {trashFiles.length} items currently in bin
         </p>
         <span className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
            Total Trash Size: <span className={isDark ? 'text-white font-bold ml-1' : 'text-blue-600 font-bold ml-1'}>2.44 GB</span>
@@ -196,7 +216,7 @@ const TrashManagement = () => {
             </div>
             <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>{modal.title}</h3>
             <p className={`text-sm mb-8 leading-relaxed font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-              <span className={isDark ? 'text-white' : 'text-slate-800'}>{selectedFile?.name}</span> {modal.desc}
+              <span className={isDark ? 'text-white' : 'text-slate-800'}>{selectedFile?.original_name}</span> {modal.desc}
             </p>
             <div className="flex gap-3">
               <button 
