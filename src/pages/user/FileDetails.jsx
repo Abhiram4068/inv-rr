@@ -28,7 +28,7 @@ const FileDetails = () => {
         setFileData({
           display_name: res.data.display_name || res.data.original_name,
           original_name: res.data.original_name || "Untitled",
-          description: res.data.description || "No description available."
+          description: res.data.description || "You haven't added any description yet."
         });
         setTempName(res.data.display_name || "");
         setTempDesc(res.data.description || "");
@@ -292,8 +292,12 @@ const saveDetails = async () => {
               <span className="text-sm font-medium">Preview not available for this file type</span>
             </div>
 
-            <div className={`border rounded-2xl p-6 transition-colors ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-              <div className={`text-[11px] uppercase font-bold tracking-widest mb-4 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Description</div>
+            <div className={` p-6 transition-colors`}>
+              <div className={`text-[11px] uppercase font-bold tracking-widest mb-4 pb-2 border-b ${
+    isDark ? 'text-[#606060] border-[#1a1a1a]' : 'text-slate-400 border-slate-100'
+  }`}>
+    Description
+  </div>
               <p className={`text-sm leading-relaxed ${isDark ? 'text-[#e3e3e3]' : 'text-slate-600'}`}>{fileData.description}</p>
             </div>
           </div>
