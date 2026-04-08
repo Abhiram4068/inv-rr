@@ -51,3 +51,6 @@ export const getPublicFile = (token) =>
 
 //GET /files/starred/
 export const getStarredFiles = () => api.get(`/files/starred/`);
+
+//GET files/recents/
+export const getRecentFiles = () => api.get(`/files/recents/`);

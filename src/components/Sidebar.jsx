@@ -39,7 +39,7 @@ const Sidebar = ({ isOpen }) => {
         { to: "/", icon: "fa-house", label: "Home" },
         { to: "/files", icon: "fa-folder-open", label: "My Files" },
         { to: "/shared", icon: "fa-share-nodes", label: "Shares" },
-        { to: "/recent", icon: "fa-clock", label: "Recent" },
+        { to: "/recent", icon: "fa-clock", label: "Recents" },
         { to: "/starred", icon: "fa-star", label: "Starred" },
       ].map((item) => (
         <NavLink 
@@ -69,9 +69,10 @@ const Sidebar = ({ isOpen }) => {
       <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#333]' : 'border-slate-100'}`}></div>
       
       {[
+        { to: "/collections", icon: "fa-folder", label: "Collections" },
         { to: "/schedules", icon: "fa-calendar-days", label: "Schedules" },
         { to: "/reports", icon: "fa-chart-line", label: "Reports" },
-        { to: "/collections", icon: "fa-folder", label: "Collections" },
+        
       ].map((item) => (
         <NavLink 
           key={item.label}

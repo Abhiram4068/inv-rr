@@ -8,6 +8,12 @@ const FileDetails = () => {
 
   const { id } = useParams();
   const navigate=useNavigate()
+
+
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
+
   //states for file list handling
   const [file, setFile] = useState(null);
   const [fetchError, setFetchError] = useState("");
@@ -41,7 +47,30 @@ const FileDetails = () => {
     fetchFile();
   }, [id]);
 
+useEffect(() => {
+  console.log('file object:', file);
+  if (!file?.file_url) return;
+  const ct = file.content_type || '';
+  if (!ct.startsWith('image/') && ct !== 'application/pdf') return;
 
+  setPreviewLoading(true);
+  setPreviewError(false);
+
+  fetch(file.file_url, {
+    credentials: 'include'
+  })
+    .then(r => { if (!r.ok) throw new Error(); return r.blob(); })
+    .then(blob => setPreviewUrl(URL.createObjectURL(blob)))
+    .catch(() => setPreviewError(true))
+    .finally(() => setPreviewLoading(false));
+
+  return () => {
+    setPreviewUrl(prev => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+}, [file?.file_url]);
   // Theme State Sync
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -287,10 +316,28 @@ const saveDetails = async () => {
         {/* Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
           <div className="xl:col-span-2 space-y-6">
-            <div className={`aspect-video border rounded-lg flex flex-col items-center justify-center transition-colors ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-[#444]' : 'bg-white border-slate-200 text-slate-300'}`}>
-              <i className="fa-solid fa-eye-slash text-4xl mb-4 opacity-30"></i>
-              <span className="text-sm font-medium">Preview not available for this file type</span>
-            </div>
+<div className={`aspect-video border rounded-lg flex flex-col items-center justify-center overflow-hidden transition-colors ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-[#444]' : 'bg-white border-slate-200 text-slate-300'}`}>
+  {previewLoading ? (
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <span className="text-xs">Loading preview...</span>
+    </div>
+  ) : previewError ? (
+    <div className="flex flex-col items-center gap-3">
+      <i className="fa-solid fa-triangle-exclamation text-3xl text-yellow-500 opacity-60"></i>
+      <span className="text-xs font-medium">Failed to load preview</span>
+    </div>
+  ) : previewUrl && file?.content_type?.startsWith('image/') ? (
+    <img src={previewUrl} alt={fileData.display_name} className="max-h-full max-w-full object-contain" />
+  ) : previewUrl && file?.content_type === 'application/pdf' ? (
+    <iframe src={`${previewUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0`} className="w-full h-full border-none" title="PDF Preview" />
+  ) : (
+    <div className="flex flex-col items-center gap-3">
+      <i className="fa-solid fa-eye-slash text-4xl opacity-30"></i>
+      <span className="text-sm font-medium">Preview not available for this file type</span>
+    </div>
+  )}
+</div>
 
             <div className={` p-6 transition-colors`}>
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-4 pb-2 border-b ${
