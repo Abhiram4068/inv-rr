@@ -39,9 +39,12 @@ const UploadFilesMain = () => {
   const isDark = theme === 'dark';
 
   // Trigger file selection
-  const handleZoneClick = () => {
-    fileInputRef.current.click();
-  };
+const handleZoneClick = () => {
+  if (fileInputRef.current) {
+    fileInputRef.current.value = null;
+  }
+  fileInputRef.current.click();
+};
 
   // Process files from input or drop
   const handleFiles = (files) => {

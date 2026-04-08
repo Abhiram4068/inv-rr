@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { getRecentFiles } from '../../services/fileService';
+import Collections from './Collections';
+import { Link } from 'react-router-dom';
 
 const RecentActivityMain = () => {
   // 1. Theme State Sync Logic
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  const [recentFiles, setRecentFiles] = useState([]);
+  const [ loading, setLoading ] = useState(true);
+  const [ error, setError ] = useState("");
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -16,6 +23,22 @@ const RecentActivityMain = () => {
       clearInterval(interval);
     };
   }, [theme]);
+
+
+  useEffect(()=>{
+    const fetchRecentFiles = async()=>{
+      try{
+        setLoading(true)
+        const res = await getRecentFiles();
+        setRecentFiles(res.data.files)
+      }catch(err){
+        setError(err.response?.data?.detail || "Failed to fetch recent files");
+      }finally{
+        setLoading(false)
+      }
+    };
+    fetchRecentFiles()
+  }, [])
 
   const isDark = theme === 'dark';
 
@@ -43,61 +66,47 @@ const RecentActivityMain = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <div className={`text-[18px] md:text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Recently Added</div>
-            <div className="text-[#3b82f6] text-xs cursor-pointer hover:underline font-bold">View All</div>
+              <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-[#888]' : 'text-gray-400'}`}>
+        Viewing {recentFiles.length} {recentFiles.length === 1 ? 'file' : 'files'}
+      </span>
           </div>
           <hr className={`border-0 border-t mb-6 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-300'}`} />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {/* File Card 1 */}
-            <div className={`border rounded-lg overflow-hidden transition-all hover:-translate-y-1 group cursor-pointer shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400'}`}>
+
+            {recentFiles.map((recents)=>( 
+< Link to={`/file/${recents.id}`}>
+              <div key={recents.id} className={`border rounded-lg overflow-hidden transition-all hover:-translate-y-1 group cursor-pointer shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400'}`}>
               <div className={`h-[140px] flex items-center justify-center relative border-b transition-colors ${isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'}`}>
                 <i className={`fa-solid fa-file-image text-[40px] absolute z-10 group-hover:scale-110 transition-transform ${isDark ? 'text-[#808080]' : 'text-slate-300'}`}></i>
                 <img src="https://via.placeholder.com/300x140/222/444" alt="preview" className="w-full h-full object-cover opacity-40" />
               </div>
               <div className="p-4">
-                <span className={`block text-sm font-medium mb-2 truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>Hero_Section_v1.png</span>
+                <span className={`block text-sm font-medium mb-2 truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>{recents.original_name}</span>
                 <div className="flex justify-between text-[12px]">
-                  <span className={isDark ? 'text-[#808080]' : 'text-slate-400'}>Uploaded 10m ago</span>
+                  <span className={isDark ? 'text-[#808080]' : 'text-slate-400'}>Uploaded {recents.created_at}</span>
                   <span className="text-[#00c851] font-bold">New</span>
                 </div>
               </div>
             </div>
+            </Link>
+            ))}
 
-            {/* File Card 2 */}
-            <div className={`border rounded-lg overflow-hidden transition-all hover:-translate-y-1 group cursor-pointer shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400'}`}>
-              <div className={`h-[140px] flex items-center justify-center relative border-b transition-colors ${isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'}`}>
-                <i className={`fa-solid fa-file-lines text-[40px] absolute z-10 group-hover:scale-110 transition-transform ${isDark ? 'text-[#808080]' : 'text-slate-300'}`}></i>
-              </div>
-              <div className="p-4">
-                <span className={`block text-sm font-medium mb-2 truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>Meeting_Notes_Feb28.txt</span>
-                <div className="flex justify-between text-[12px]">
-                  <span className={isDark ? 'text-[#808080]' : 'text-slate-400'}>Uploaded 1h ago</span>
-                  <span className={isDark ? 'text-[#808080]' : 'text-slate-400'}>12 KB</span>
-                </div>
-              </div>
-            </div>
 
-            {/* File Card 3 */}
-            <div className={`border rounded-lg overflow-hidden transition-all hover:-translate-y-1 group cursor-pointer shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400'}`}>
-              <div className={`h-[140px] flex items-center justify-center relative border-b transition-colors ${isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'}`}>
-                <i className={`fa-solid fa-file-video text-[40px] absolute z-10 group-hover:scale-110 transition-transform ${isDark ? 'text-[#808080]' : 'text-slate-300'}`}></i>
-              </div>
-              <div className="p-4">
-                <span className={`block text-sm font-medium mb-2 truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>Project_Demo.mp4</span>
-                <div className="flex justify-between text-[12px]">
-                  <span className={isDark ? 'text-[#808080]' : 'text-slate-400'}>Uploaded 3h ago</span>
-                  <span className={isDark ? 'text-[#808080]' : 'text-slate-400'}>45.2 MB</span>
-                </div>
-              </div>
-            </div>
+        
+
+        
           </div>
         </div>
 
         {/* SECTION: Recently Shared With You */}
         <div className="mt-12">
           <div className="flex justify-between items-center mb-2">
-            <div className={`text-[18px] md:text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Added Last Week</div>
-            <div className="text-[#3b82f6] text-xs cursor-pointer hover:underline font-bold">View All</div>
+            <div className={`text-[18px] md:text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>Recent Shares</div>
+                       <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-[#888]' : 'text-gray-400'}`}>
+        Viewing {recentFiles.length} {recentFiles.length === 1 ? 'file' : 'files'}
+      </span>
           </div>
           <hr className={`border-0 border-t mb-6 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-300'}`} />
 
