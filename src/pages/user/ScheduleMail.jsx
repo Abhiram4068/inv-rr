@@ -41,7 +41,7 @@ const ScheduleMail = () => {
 
   const [attachedFile, setAttachedFile] = useState({ name: "Project_Proposal_2024.pdf", size: "4.2 MB", icon: "fa-file-pdf", color: "text-red-500" });
   const [recipients, setRecipients] = useState(['']);
-  const [subject, setSubject] = useState("Weekly Project Update");
+  const [subject, setSubject] = useState("");
   const [message, setMessage] = useState(""); 
   const [scheduleDate, setScheduleDate] = useState("2026-03-20");
   const [scheduleTime, setScheduleTime] = useState("09:00");
@@ -118,7 +118,7 @@ const ScheduleMail = () => {
                       value={subject} 
                       onChange={(e) => setSubject(e.target.value)}
                       className={`w-full bg-transparent text-lg font-semibold outline-none focus:text-blue-500 transition-all ${isDark ? 'text-white' : 'text-slate-800'}`}
-                      placeholder="What are you sending?"
+                      placeholder="Your title over here...."
                     />
                 </div>
                 <div>
@@ -176,20 +176,23 @@ const ScheduleMail = () => {
             <div>
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-4 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Deliver To</div>
               <div className="flex flex-col gap-3">
-                {recipients.map((email, i) => (
-                  <div key={i} className={`border px-3 py-2.5 rounded-xl flex items-center gap-3 text-xs group transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                    <div className="w-5 h-5 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center text-[8px] font-bold shrink-0">
-                      {email ? email[0].toUpperCase() : '?'}
-                    </div>
-                    <input 
-                      value={email} 
-                      onChange={(e) => handleEmailChange(i, e.target.value)}
-                      placeholder="Recipient email"
-                      className={`bg-transparent outline-none flex-1 ${isDark ? 'text-[#808080]' : 'text-slate-600'}`}
-                    />
-                    <i onClick={() => removeRecipient(i)} className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors"></i>
-                  </div>
-                ))}
+             {recipients.map((email, i) => (
+              <div key={i} className={`border px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs group transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+                <div className="w-5 h-5 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center text-[8px] font-bold shrink-0">
+                  {email ? email[0].toUpperCase() : '?'}
+                </div>
+                <input 
+                  value={email} 
+                  onChange={(e) => handleEmailChange(i, e.target.value)}
+                  placeholder="Recipient email"
+                  className={`bg-transparent outline-none flex-1 min-w-0 ${isDark ? 'text-[#808080]' : 'text-slate-600'}`}
+                />
+                <i 
+                  onClick={() => removeRecipient(i)} 
+                  className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors ml-auto"
+                ></i>
+              </div>
+            ))}
                 <button onClick={addRecipient} className={`border border-dashed p-2.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-slate-600 hover:border-slate-600'}`}>
                   <i className="fa-solid fa-plus"></i> Add Recipient
                 </button>
