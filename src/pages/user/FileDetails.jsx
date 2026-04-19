@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { updateFile, getFileById,  archiveFile, deleteFile} from '../../services/fileService';
+import { shareFile } from '../../services/shareService';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -101,6 +102,7 @@ useEffect(() => {
   const [recipients, setRecipients] = useState(['']);
   
   // State for Sharing Data
+  const [isSharing, setIsSharing] = useState(false);
   const [shareData, setShareData] = useState({
     title: "",
     message: "",
@@ -160,16 +162,36 @@ const saveDetails = async () => {
   }
 }
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    const validEmails = recipients.filter(r => r.trim() !== '');
+    if (validEmails.length === 0) {
+      showToast("Please add at least one recipient email");
+      return;
+    }
+
     const payload = {
-      recipient_emails: recipients.filter(r => r !== ''),
+      recipient_emails: validEmails,
       expiration_datetime: Number(shareData.expiration_datetime),
       title: shareData.title,
       message: shareData.message
     };
-    console.log("Sharing Data:", payload);
-    setActiveModal(null);
-    showToast(`File shared with ${payload.recipient_emails.length} recipients`);
+    
+    setIsSharing(true);
+    try {
+      const response = await shareFile(id, payload);
+      console.log("Sharing Data Success:", response);
+      setActiveModal(null);
+      showToast(`File shared successfully with ${validEmails.length} recipient(s)`);
+      // Optional: reset form state
+      setRecipients(['']);
+      setShareData({ title: "", message: "", expiration_datetime: 48 });
+    } catch (error) {
+      console.error("Failed to share file:", error);
+      const errorMsg = error.response?.data?.error || error.response?.data?.detail || "Failed to share file";
+      showToast(errorMsg);
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const handleArchive = async() => {
@@ -533,17 +555,19 @@ const saveDetails = async () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex flex-col gap-3 mt-10">
           <button 
             onClick={handleShare} 
-            className="w-full py-4 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20"
+            disabled={isSharing}
+            className="w-full py-4 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Send Invites
+            {isSharing && <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
+            {isSharing ? 'Sending Invites...' : 'Send Invites'}
           </button>
           <button 
             onClick={() => setActiveModal(null)} 
-            className={`w-full py-4 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+            disabled={isSharing}
+            className={`w-full py-4 border rounded-xl font-bold text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
           >
             Cancel
           </button>
