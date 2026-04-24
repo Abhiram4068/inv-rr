@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { updateFile, getFileById,  archiveFile, deleteFile} from '../../services/fileService';
+import { shareFile } from '../../services/shareService';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -99,6 +100,14 @@ useEffect(() => {
   // Security and Recipients State
   const [isProtected, setIsProtected] = useState(false);
   const [recipients, setRecipients] = useState(['']);
+  
+  // State for Sharing Data
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareData, setShareData] = useState({
+    title: "",
+    message: "",
+    expiration_datetime: 48
+  });
 
   // State for File Data
   const [fileData, setFileData] = useState({
@@ -153,9 +162,36 @@ const saveDetails = async () => {
   }
 }
 
-  const handleShare = () => {
-    setActiveModal(null);
-    showToast(`File shared with ${recipients.filter(r => r !== '').length} recipients`);
+  const handleShare = async () => {
+    const validEmails = recipients.filter(r => r.trim() !== '');
+    if (validEmails.length === 0) {
+      showToast("Please add at least one recipient email");
+      return;
+    }
+
+    const payload = {
+      recipient_emails: validEmails,
+      expiration_datetime: Number(shareData.expiration_datetime),
+      title: shareData.title,
+      message: shareData.message
+    };
+    
+    setIsSharing(true);
+    try {
+      const response = await shareFile(id, payload);
+      console.log("Sharing Data Success:", response);
+      setActiveModal(null);
+      showToast(`File shared successfully with ${validEmails.length} recipient(s)`);
+      // Optional: reset form state
+      setRecipients(['']);
+      setShareData({ title: "", message: "", expiration_datetime: 48 });
+    } catch (error) {
+      console.error("Failed to share file:", error);
+      const errorMsg = error.response?.data?.error || error.response?.data?.detail || "Failed to share file";
+      showToast(errorMsg);
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const handleArchive = async() => {
@@ -401,101 +437,145 @@ const saveDetails = async () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
           <div className={`border w-full max-w-[450px] rounded-2xl p-8 shadow-2xl transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
             {activeModal === 'share' && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all">
-                <div className="bg-[#0a0a0a] border border-[#1a1a1a] w-full max-w-[800px] rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
-                  <div className="flex-1 p-8 border-b md:border-b-0 md:border-r border-[#1a1a1a] max-h-[80vh] overflow-y-auto no-scrollbar">
-                    <div className="flex justify-between items-center mb-8">
-                      <h2 className="text-xl font-bold">Share Document</h2>
-                    </div>
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Recipient Emails</label>
-                        <div className="space-y-3">
-                          {recipients.map((email, index) => (
-                            <div key={index} className="flex gap-2 animate-in fade-in slide-in-from-top-1">
-                              <input
-                                value={email}
-                                onChange={(e) => handleEmailChange(index, e.target.value)}
-                                placeholder="Enter email address..."
-                                type="email"
-                                className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-[#333]"
-                              />
-                              {index === recipients.length - 1 ? (
-                                <button onClick={addRecipient} className="bg-blue-600/10 border border-blue-500/30 w-[46px] h-[46px] rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all"><i className="fa-solid fa-plus"></i></button>
-                              ) : (
-                                <button onClick={() => removeRecipient(index)} className="bg-[#111] border border-[#1a1a1a] w-[46px] h-[46px] rounded-xl flex items-center justify-center text-[#444] hover:text-red-500 hover:border-red-500/30 transition-all"><i className="fa-solid fa-trash-can text-xs"></i></button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Message</label>
-                        <textarea placeholder="Write a note..." rows="4" className="w-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm focus:border-[#333] outline-none transition-all text-white placeholder:text-[#333] resize-none"></textarea>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Link Expiry</label>
-                          <div className="relative">
-                            <select className="w-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 text-sm outline-none text-[#808080] cursor-pointer appearance-none">
-                              <option>7 Days</option>
-                              <option>24 Hours</option>
-                              <option>Never</option>
-                            </select>
-                            <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#444] pointer-events-none"></i>
-                          </div>
-                        </div>
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
+    {/* Large Modal Container: Background logic updated to match 'edit' modal */}
+    <div className={`border w-full max-w-[1000px] min-h-[600px] rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+      
+      {/* Left Column: Form Fields */}
+      <div className={`flex-1 p-10 border-b md:border-b-0 md:border-r max-h-[90vh] overflow-y-auto no-scrollbar ${isDark ? 'border-[#1a1a1a]' : 'border-slate-100'}`}>
+        <div className="flex justify-between items-center mb-10">
+          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Share File</h2>
+        </div>
+        
+        <div className="space-y-8">
+          <div>
+            <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Title</label>
+            <input
+              value={shareData.title}
+              onChange={(e) => setShareData({ ...shareData, title: e.target.value })}
+              placeholder="e.g. Important Project Updates"
+              className={`w-full border rounded-xl p-4 text-sm outline-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
+            />
+          </div>
 
-                        <div>
-                          <label className="block text-[10px] uppercase text-[#808080] font-bold tracking-widest mb-2">Security Access</label>
-                          <button
-                            onClick={() => {
-                              const nextState = !isProtected;
-                              setIsProtected(nextState);
-                              showToast(nextState ? "Identity Validation Enabled" : "Security Disabled");
-                            }}
-                            className={`w-full h-[46px] flex items-center justify-between px-4 rounded-xl border transition-all ${isProtected ? 'bg-blue-600/10 border-blue-500/50' : 'bg-[#111] border-[#1a1a1a] hover:bg-[#151515]'
-                              }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <i className={`fa-solid fa-shield-halved text-xs ${isProtected ? 'text-blue-500' : 'text-[#444]'}`}></i>
-                              <span className={`text-[11px] font-bold uppercase tracking-tight ${isProtected ? 'text-blue-500' : 'text-[#606060]'}`}>
-                                Email Validation
-                              </span>
-                            </div>
-                            <div className={`w-7 h-3.5 rounded-full relative transition-colors ${isProtected ? 'bg-blue-600' : 'bg-[#333]'}`}>
-                              <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all ${isProtected ? 'right-0.5' : 'left-0.5'}`}></div>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 mt-10">
-                      <button onClick={() => setActiveModal(null)} className="flex-1 py-3 border border-[#1a1a1a] rounded-xl font-bold text-xs hover:bg-[#111] transition-colors text-[#808080]">Cancel</button>
-                      <button onClick={handleShare} className="flex-1 py-3 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20">Send Invites</button>
-                    </div>
-                  </div>
-
-                  <div className="w-full md:w-[320px] bg-[#050505] p-8 flex flex-col">
-                    <div className="text-[10px] uppercase text-[#444] font-bold tracking-widest mb-6">Recipient Preview</div>
-                    <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-[#1a1a1a] rounded-2xl p-6 bg-[#0a0a0a]/50">
-                      <div className="w-16 h-16 bg-blue-600/20 text-blue-500 rounded-2xl flex items-center justify-center text-2xl mb-4 border border-blue-500/20">
-                        <i className="fa-solid fa-file-pdf"></i>
-                      </div>
-                      <p className="text-xs font-bold text-center mb-1 truncate w-full">{fileData.name}</p>
-                      <p className="text-[10px] text-[#444] mb-6">4.2 MB • Secure Link</p>
-
-                      <div className={`w-full h-[32px] rounded-lg border flex items-center px-3 gap-2 transition-all ${isProtected ? 'bg-blue-500/5 border-blue-500/20' : 'bg-[#111] border-[#1a1a1a]'}`}>
-                        <div className={`w-2 h-2 rounded-full ${isProtected ? 'bg-blue-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                        <span className="text-[9px]  text-[#808080] font-mono uppercase tracking-tighter">
-                          {isProtected ? 'Identity Check ON' : 'Encryption Active'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+          <div>
+            <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Recipient Emails</label>
+            <div className="space-y-4">
+              {recipients.map((email, index) => (
+                <div key={index} className="flex gap-3 animate-in fade-in slide-in-from-top-1">
+                  <input
+                    value={email}
+                    onChange={(e) => handleEmailChange(index, e.target.value)}
+                    placeholder="Enter email address..."
+                    type="email"
+                    className={`flex-1 border rounded-xl p-4 text-sm outline-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
+                  />
+                  {index === recipients.length - 1 ? (
+                    <button onClick={addRecipient} className="bg-blue-600/10 border border-blue-500/30 w-[54px] h-[54px] rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all">
+                      <i className="fa-solid fa-plus"></i>
+                    </button>
+                  ) : (
+                    <button onClick={() => removeRecipient(index)} className={`border w-[54px] h-[54px] rounded-xl flex items-center justify-center transition-all ${isDark ? 'bg-[#111] border-[#1a1a1a] text-[#444] hover:text-red-500' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-red-500'}`}>
+                      <i className="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                  )}
                 </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Message</label>
+            <textarea 
+              value={shareData.message}
+              onChange={(e) => setShareData({ ...shareData, message: e.target.value })}
+              placeholder="Write a note to recipients..." 
+              rows="5" 
+              className={`w-full border rounded-xl p-4 text-sm outline-none transition-all resize-none ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-[#333] placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-300 placeholder:text-slate-300'}`}
+            ></textarea>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Link Expiry</label>
+              <div className="relative">
+                <select 
+                  value={shareData.expiration_datetime}
+                  onChange={(e) => setShareData({ ...shareData, expiration_datetime: e.target.value })}
+                  className={`w-full border rounded-xl p-4 text-sm outline-none cursor-pointer appearance-none ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-[#808080]' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
+                >
+                  <option value="24">24 Hours</option>
+                  <option value="48">48 Hours</option>
+                  <option value="168">7 Days</option>
+                </select>
+                <i className={`fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none ${isDark ? 'text-[#444]' : 'text-slate-400'}`}></i>
               </div>
-            )}
+            </div>
+
+            <div>
+              <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Security Access</label>
+              <button
+                onClick={() => {
+                  const nextState = !isProtected;
+                  setIsProtected(nextState);
+                  showToast(nextState ? "Identity Validation Enabled" : "Security Disabled");
+                }}
+                className={`w-full h-[54px] flex items-center justify-between px-5 rounded-xl border transition-all ${isProtected ? 'bg-blue-600/10 border-blue-500/50' : isDark ? 'bg-[#111] border-[#1a1a1a] hover:bg-[#151515]' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+              >
+                <div className="flex items-center gap-2">
+                  <i className={`fa-solid fa-shield-halved text-sm ${isProtected ? 'text-blue-500' : isDark ? 'text-[#444]' : 'text-slate-400'}`}></i>
+                  <span className={`text-[11px] font-bold uppercase tracking-tight ${isProtected ? 'text-blue-500' : isDark ? 'text-[#606060]' : 'text-slate-500'}`}>Email Validation</span>
+                </div>
+                <div className={`w-8 h-4 rounded-full relative transition-colors ${isProtected ? 'bg-blue-600' : isDark ? 'bg-[#333]' : 'bg-slate-300'}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${isProtected ? 'right-0.5' : 'left-0.5'}`}></div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Preview & Action Buttons */}
+      <div className={`w-full md:w-[380px] p-10 flex flex-col justify-between transition-colors ${isDark ? 'bg-[#050505]' : 'bg-slate-50/50'}`}>
+        <div>
+          <div className={`text-[11px] uppercase font-bold tracking-widest mb-8 ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Recipient Preview</div>
+          <div className={`flex flex-col items-center justify-center border border-dashed rounded-2xl p-8 transition-colors ${isDark ? 'border-[#1a1a1a] bg-[#0a0a0a]/50' : 'border-slate-200 bg-white'}`}>
+            <div className="w-20 h-20 bg-blue-600/20 text-blue-500 rounded-3xl flex items-center justify-center text-3xl mb-6 border border-blue-500/20">
+              <i className={`fa-solid ${iconClassForFile(file)}`}></i>
+            </div>
+            <p className={`text-sm font-bold text-center mb-2 truncate w-full ${isDark ? 'text-white' : 'text-slate-900'}`}>{fileData.display_name}</p>
+            <p className={`text-xs mb-8 ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{sizeFormatter(file?.file_size)} • Secure Link</p>
+
+            <div className={`w-full h-[40px] rounded-lg border flex items-center px-4 gap-3 transition-all ${isProtected ? 'bg-blue-500/5 border-blue-500/20' : isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-slate-50 border-slate-200'}`}>
+              <div className={`w-2.5 h-2.5 rounded-full ${isProtected ? 'bg-blue-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+              <span className={`text-[10px] font-mono uppercase tracking-tighter ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+                {isProtected ? 'Identity Check ON' : 'Encryption Active'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 mt-10">
+          <button 
+            onClick={handleShare} 
+            disabled={isSharing}
+            className="w-full py-4 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isSharing && <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
+            {isSharing ? 'Sending Invites...' : 'Send Invites'}
+          </button>
+          <button 
+            onClick={() => setActiveModal(null)} 
+            disabled={isSharing}
+            className={`w-full py-4 border rounded-xl font-bold text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
             {activeModal === 'edit' && (
               <>
                 <h2 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>Edit Details</h2>

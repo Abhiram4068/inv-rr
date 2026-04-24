@@ -38,7 +38,7 @@ const Login = () => {
   if (user) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div className="min-h-screen bg-black flex font-['Inter']">
+    <div className="min-h-screen bg-[#141d2a] flex font-['Inter']">
       
       {/* LEFT SIDE: Welcome Back Panel (Hidden on mobile) */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-[#050505] border-r border-[#1a1a1a] relative overflow-hidden">

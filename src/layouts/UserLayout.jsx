@@ -14,14 +14,16 @@ const UserLayout = () => {
       <div className="flex flex-grow overflow-hidden relative">
         <Sidebar isOpen={isSidebarOpen} />
         
-       <Outlet />
+       <main className="flex-1 overflow-y-auto no-scrollbar">
+  <Outlet />
+</main>
 
         <RightSidebar />
 
         {/* Backdrop for Mobile */}
         {isSidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden" 
+            className="fixed inset-0 bg-[#141d2a] z-30 lg:hidden" 
             onClick={() => setSidebarOpen(false)}
           ></div>
         )}

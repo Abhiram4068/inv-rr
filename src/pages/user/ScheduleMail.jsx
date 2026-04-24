@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getFiles } from '../../services/fileService';
+import { scheduleShareFile } from '../../services/shareService';
 
 const ScheduleMail = () => {
   // 1. Theme State Sync Logic
@@ -25,21 +27,64 @@ const ScheduleMail = () => {
 
   const isDark = theme === 'dark';
 
-  // Mock data for the Library Picker
-  const libraryFiles = [
-    { id: 1, name: "Technical_Specs.pdf", size: "1.2 MB", icon: "fa-file-pdf", color: "text-red-500" },
-    { id: 2, name: "Marketing_Plan.docx", size: "850 KB", icon: "fa-file-word", color: "text-blue-500" },
-    { id: 3, name: "Product_Demo.mp4", size: "24.5 MB", icon: "fa-file-video", color: "text-purple-500" },
-    { id: 4, name: "User_Feedback.xlsx", size: "3.1 MB", icon: "fa-file-excel", color: "text-emerald-500" },
-    { id: 5, name: "Brand_Assets.zip", size: "15.2 MB", icon: "fa-file-zipper", color: "text-yellow-500" },
-    { id: 6, name: "Invoice_March.pdf", size: "450 KB", icon: "fa-file-pdf", color: "text-red-500" },
-  ];
+  const [libraryFiles, setLibraryFiles] = useState([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [expirationHours, setExpirationHours] = useState(24);
+
+  const sizeFormatter = (value) => {
+    if (value == null) return "-";
+    const mb = value / (1024 * 1024);
+    if (mb >= 1) return `${mb.toFixed(1)} MB`;
+    const kb = value / 1024;
+    return `${kb.toFixed(0)} KB`;
+  };
+
+  const iconClassForFile = (file) => {
+    const name = String(file?.original_name || "").toLowerCase();
+    if (name.endsWith(".pdf")) return "fa-file-pdf text-red-500";
+    if (name.endsWith(".doc") || name.endsWith(".docx")) return "fa-file-word text-blue-500";
+    if (name.endsWith(".xls") || name.endsWith(".xlsx")) return "fa-file-excel text-emerald-500";
+    if (name.endsWith(".zip") || name.endsWith(".rar")) return "fa-file-zipper text-yellow-500";
+    if (/\.(mp4|mov|mkv|webm)$/.test(name)) return "fa-file-video text-purple-500";
+    return "fa-file text-blue-500";
+  };
+
+  useEffect(() => {
+    const fetchFiles = async () => {
+      setLoadingFiles(true);
+      try {
+        const res = await getFiles(1, ""); // fetch first page for picker
+        const data = res.data;
+        const results = Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : data?.items || []);
+        
+        const mapped = results.map(f => {
+          const iconColorClass = iconClassForFile(f);
+          const parts = iconColorClass.split(' ');
+          return {
+            id: f.id,
+            name: f.original_name || "Untitled",
+            size: sizeFormatter(f.file_size),
+            icon: parts[0],
+            color: parts[1] || "text-blue-500",
+            rawFile: f
+          };
+        });
+        setLibraryFiles(mapped);
+      } catch (err) {
+        console.error("Failed to load files for picker", err);
+      } finally {
+        setLoadingFiles(false);
+      }
+    };
+    fetchFiles();
+  }, []);
 
   const filteredFiles = libraryFiles.filter(file => 
-    file.name.toLowerCase().includes(searchTerm.toLowerCase())
+    file.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const [attachedFile, setAttachedFile] = useState({ name: "Project_Proposal_2024.pdf", size: "4.2 MB", icon: "fa-file-pdf", color: "text-red-500" });
+  const [attachedFile, setAttachedFile] = useState(null);
   const [recipients, setRecipients] = useState(['']);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState(""); 
@@ -78,6 +123,45 @@ const ScheduleMail = () => {
     setIsPickerOpen(false);
     setSearchTerm("");
     showToast(`File updated`);
+  };
+
+  const handleScheduleSubmit = async () => {
+    if (!attachedFile) {
+      showToast("Please attach a file.");
+      return;
+    }
+    const validRecipients = recipients.filter(r => r.trim() !== '');
+    if (validRecipients.length === 0) {
+      showToast("Please add at least one recipient email.");
+      return;
+    }
+
+    const payload = {
+      recipient_emails: validRecipients,
+      title: subject,
+      message: message,
+      expiration_datetime: expirationHours,
+      schedule_at: `${scheduleDate}T${scheduleTime}:00+05:30`
+    };
+
+    setIsScheduling(true);
+    try {
+setActiveModal(null);
+showToast("Transfer Scheduled Successfully");
+setSubject("");
+setMessage("");
+setRecipients(['']);
+setAttachedFile(null);
+setIsProtected(false);
+setScheduleDate("2026-03-20");
+setScheduleTime("09:00");
+setExpirationHours(24);
+    } catch (err) {
+      console.error("Schedule error", err);
+      showToast(err?.response?.data?.detail || "Failed to schedule file sharing");
+    } finally {
+      setIsScheduling(false);
+    }
   };
 
   return (
@@ -211,6 +295,10 @@ const ScheduleMail = () => {
                     <label className={`text-[10px] font-bold block mb-2 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Release Time</label>
                     <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className={`w-full border rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
                 </div>
+                <div>
+                    <label className={`text-[10px] font-bold block mb-2 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Expiration (Hours)</label>
+                    <input type="number" min="1" value={expirationHours} onChange={(e) => setExpirationHours(parseInt(e.target.value) || 24)} className={`w-full border rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
+                </div>
               </div>
             </div>
 
@@ -326,8 +414,10 @@ const ScheduleMail = () => {
               {isProtected && <span className="block mt-2 text-blue-500 font-bold italic">Protection is enabled.</span>}
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>Go Back</button>
-              <button onClick={() => {setActiveModal(null); showToast("Transfer Scheduled Successfully");}} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">Confirm Schedule</button>
+              <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`} disabled={isScheduling}>Go Back</button>
+              <button onClick={handleScheduleSubmit} disabled={isScheduling} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 flex justify-center items-center gap-2">
+                {isScheduling ? <i className="fa-solid fa-spinner fa-spin"></i> : "Confirm Schedule"}
+              </button>
             </div>
           </div>
         </div>

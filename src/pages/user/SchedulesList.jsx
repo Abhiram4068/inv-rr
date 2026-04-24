@@ -1,12 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
+import { getScheduledFiles } from '../../services/shareService';
+
 
 const SchedulesList = () => {
-  // 1. Theme State Sync Logic
+  // --- STATE ---
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
+  const [viewMode, setViewMode] = useState('list');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [counts, setCounts] = useState({ total: 0, pending: 0, completed: 0 });
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+const STATUS_MAP = {
+  sent: 'Completed',
+  pending: 'Pending',
+  failed: 'Processing',   // or add 'Failed' style
+  cancelled: 'Processing',
+};
+const transformSchedule = (item) => ({
+  id: item.id,
+  title: item.title || item.file_name,
+  description: item.message,
+  date: item.scheduled_for.split('T')[0],           // "2026-04-20"
+  time: item.scheduled_for.split('T')[1].slice(0,5), // "10:20"
+  status: item.status.charAt(0).toUpperCase() + item.status.slice(1), // "Sent" → fix below
+  recipients: [item.recipient_email],
+  isProtected: false,
+});
+
+  useEffect(() => {
+const fetchSchedules = async () => {
+  try {
+    const response = await getScheduledFiles();
+    const { total, pending, completed, data } = response.data;
+    setCounts({ total, pending, completed });
+    setSchedules(data.map(transformSchedule));
+  } catch (error) {
+    console.error('Error fetching schedules:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+    fetchSchedules();
+  }, []);
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -23,42 +62,12 @@ const SchedulesList = () => {
 
   const isDark = theme === 'dark';
 
-  // Mock data
-  const schedules = [
-    {
-      id: 1,
-      title: "Weekly Project Update",
-      date: "2026-03-20",
-      time: "09:00 AM",
-      status: "Pending",
-      recipients: ["abhiram@innovature.com", "demo@innovature.com", "team@innovature.com"],
-      filesCount: 5,
-      isProtected: true,
-      description: "Standard weekly sync files for the internal development team. Includes latest build logs."
-    },
-    {
-      id: 2,
-      title: "Quarterly Brand Assets",
-      date: "2026-03-15",
-      time: "14:30 PM",
-      status: "Processing",
-      recipients: ["marketing@client.com"],
-      filesCount: 12,
-      isProtected: false,
-      description: "Q1 Branding package including vector logos, social media templates, and font files."
-    },
-    {
-      id: 3,
-      title: "Legal Documents - Final",
-      date: "2026-03-10",
-      time: "10:00 AM",
-      status: "Completed",
-      recipients: ["legal@firm.com", "compliance@firm.com"],
-      filesCount: 2,
-      isProtected: true,
-      description: "Fully executed NDAs and Service Agreements for the upcoming fiscal year."
-    }
-  ];
+
+
+  // // --- LOGIC ---
+  const filteredSchedules = statusFilter === 'All' 
+    ? schedules 
+    : schedules.filter(s => s.status === statusFilter);
 
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
@@ -75,7 +84,7 @@ const SchedulesList = () => {
   return (
     <div className={`flex-1 min-h-screen p-6 lg:p-10 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
       
-      {/* --- DIALOGUE MODAL --- */}
+      {/* --- DETAIL MODAL --- */}
       {selectedSchedule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
@@ -119,46 +128,63 @@ const SchedulesList = () => {
             </div>
 
             <div className={`p-4 border-t flex gap-3 ${isDark ? 'bg-[#0d0d0d] border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'}`}>
+              <button onClick={() => setSelectedSchedule(null)} className={`flex-1 py-3 text-xs font-bold rounded-xl border transition-all ${isDark ? 'bg-transparent border-[#1a1a1a] text-white hover:bg-[#111]' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                Close
+              </button>
               <button className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-red-500/20">
-                Cancel Schedule
+                Revoke Schedule
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- HEADER --- */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+ {/* --- HEADER --- */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-10">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>Transfer Schedules</h1>
           <p className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm mt-1`}>Manage your automated and upcoming file deliveries.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <button 
-              onClick={() => setViewMode('list')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'list' ? (isDark ? 'bg-[#1a1a1a] text-white shadow-lg' : 'bg-slate-100 text-slate-800 shadow-sm') : 'text-[#444] hover:text-[#666]'}`}
-            >
-              <i className="fa-solid fa-list-ul"></i> List
-            </button>
-            <button 
-              onClick={() => setViewMode('calendar')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'calendar' ? (isDark ? 'bg-[#1a1a1a] text-white shadow-lg' : 'bg-slate-100 text-slate-800 shadow-sm') : 'text-[#444] hover:text-[#666]'}`}
-            >
-              <i className="fa-solid fa-calendar-days"></i> Calendar
-            </button>
-          </div>
+        
+        <div className="flex flex-col items-end gap-3">
+                {/* Schedule Link - Positioned exactly below the toggles */}
           <Link to="/schedule-mail" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20">
             <i className="fa-solid fa-plus"></i> Schedule
           </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Status Filter */}
+            <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
+              {['All', 'Pending', 'Processing', 'Completed'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${statusFilter === status ? (isDark ? 'bg-[#1a1a1a] text-white' : 'bg-slate-100 text-slate-800') : 'text-[#444] hover:text-[#666]'}`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
+              <button onClick={() => setViewMode('list')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'list' ? (isDark ? 'bg-[#1a1a1a] text-white shadow-lg' : 'bg-slate-100 text-slate-800 shadow-sm') : 'text-[#444] hover:text-[#666]'}`}>
+                <i className="fa-solid fa-list-ul"></i>
+              </button>
+              <button onClick={() => setViewMode('calendar')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'calendar' ? (isDark ? 'bg-[#1a1a1a] text-white shadow-lg' : 'bg-slate-100 text-slate-800 shadow-sm') : 'text-[#444] hover:text-[#666]'}`}>
+                <i className="fa-solid fa-calendar-days"></i>
+              </button>
+            </div>
+          </div>
+
+    
         </div>
-      </div>
+      </div> 
 
       {/* --- SUMMARY STATS --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
         {[
-          { label: 'Scheduled', val: '12', icon: 'fa-clock', color: 'text-blue-500' },
-          { label: 'Sent Today', val: '04', icon: 'fa-check-double', color: 'text-emerald-500' },
+          { label: 'Scheduled', val: schedules.filter(s => s.status !== 'Completed').length, icon: 'fa-clock', color: 'text-blue-500' },
+          { label: 'Total Completed', val: schedules.filter(s => s.status === 'Completed').length, icon: 'fa-check-double', color: 'text-emerald-500' },
         ].map((stat, i) => (
           <div key={i} className={`border p-6 rounded-2xl flex items-center gap-5 transition-colors shadow-sm ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
             <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center text-xl ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'} ${stat.color}`}>
@@ -172,7 +198,7 @@ const SchedulesList = () => {
         ))}
       </div>
 
-      {/* --- LIST VIEW CONTENT --- */}
+      {/* --- CONTENT --- */}
       {viewMode === 'list' ? (
         <div className={`border rounded-xl overflow-hidden animate-in fade-in duration-400 shadow-sm ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
           <div className="overflow-x-auto">
@@ -180,9 +206,8 @@ const SchedulesList = () => {
               <thead>
                 <tr className={`border-b ${isDark ? 'border-[#1a1a1a] bg-[#080808]' : 'border-slate-100 bg-slate-50'}`}>
                   <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Schedule Info</th>
-                  <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Recipients</th>
+                  <th className="p-4 text-[10px] uppercase tconst hasEvent = filteredSchedules.find(s => s.date === dateStr);ext-[#444] font-bold tracking-widest">Recipients</th>
                   <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Release Date</th>
-                  <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Status</th>
                   <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
@@ -191,7 +216,7 @@ const SchedulesList = () => {
                   <tr key={item.id} className={`border-b transition-colors group ${isDark ? 'border-[#0a0a0a] hover:bg-[#080808]' : 'border-slate-50 hover:bg-slate-50/50'}`}>
                     <td className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg border flex items-center justify-center text-blue-500 ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-100'}`}>
+                            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center text-blue-500 ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-100'}`}>
                                 <i className="fa-solid fa-box-archive"></i>
                             </div>
                             <div>
@@ -199,7 +224,9 @@ const SchedulesList = () => {
                                     {item.title}
                                     {item.isProtected && <i className="fa-solid fa-shield-halved text-[10px] text-blue-500"></i>}
                                 </p>
-                                <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{item.filesCount} Files Attached</p>
+                                <span className={`inline-block px-2 py-0.5 mt-1 rounded-[4px] text-[9px] font-bold border uppercase tracking-tighter ${getStatusStyle(item.status)}`}>
+                                    {item.status}
+                                </span>
                             </div>
                         </div>
                     </td>
@@ -217,17 +244,14 @@ const SchedulesList = () => {
                         <div className={`text-[10px] font-bold uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{item.time}</div>
                     </td>
                     <td className="p-4">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${getStatusStyle(item.status)}`}>
-                            {item.status}
-                        </span>
-                    </td>
-                    <td className="p-4 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => setSelectedSchedule(item)} className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:text-blue-500' : 'bg-white border-slate-200 hover:text-blue-600 hover:shadow-sm'}`}>
-                                <i className="fa-solid fa-eye text-xs"></i>
+                        <div className="flex justify-end gap-2">
+                            <button 
+                              onClick={() => setSelectedSchedule(item)}
+                              className={`h-9 px-4 flex items-center justify-center gap-2 rounded-lg border text-[10px] font-bold transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white hover:border-blue-500/50 hover:text-blue-500' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600'}`}>
+                                <i className="fa-solid fa-eye text-[10px]"></i> View Detail
                             </button>
-                            <button className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:text-red-500' : 'bg-white border-slate-200 hover:text-red-600 hover:shadow-sm'}`}>
-                                <i className="fa-solid fa-trash-can text-xs"></i>
+                            <button className={`h-9 px-4 flex items-center justify-center gap-2 rounded-lg border text-[10px] font-bold transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#666] hover:text-red-500 hover:border-red-500/30' : 'bg-white border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50'}`}>
+                                <i className="fa-solid fa-ban text-[10px]"></i> Revoke
                             </button>
                         </div>
                     </td>
@@ -238,54 +262,40 @@ const SchedulesList = () => {
           </div>
         </div>
       ) : (
-        /* --- CALENDAR VIEW CONTENT --- */
+        /* --- CALENDAR VIEW --- */
         <div className={`border rounded-2xl p-6 animate-in slide-in-from-bottom-4 duration-400 shadow-sm ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
           <div className="flex items-center justify-between mb-8">
              <h3 className={`font-bold text-lg tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
              </h3>
              <div className="flex gap-2">
-                <button 
-                  onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                  className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] text-[#808080]' : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-500'}`}
-                >
+                <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))} className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] text-[#808080]' : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-500'}`}>
                   <i className="fa-solid fa-chevron-left text-xs"></i>
                 </button>
-                <button 
-                  onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                  className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] text-[#808080]' : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-500'}`}
-                >
+                <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))} className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] text-[#808080]' : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-500'}`}>
                   <i className="fa-solid fa-chevron-right text-xs"></i>
                 </button>
              </div>
           </div>
-          
           <div className={`grid grid-cols-7 gap-px border rounded-xl overflow-hidden ${isDark ? 'bg-[#1a1a1a] border-[#1a1a1a]' : 'bg-slate-200 border-slate-200'}`}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
               <div key={day} className={`p-4 text-center text-[10px] uppercase font-bold tracking-widest ${isDark ? 'bg-[#080808] text-[#444]' : 'bg-slate-50 text-slate-400'}`}>{day}</div>
             ))}
-            
             {[...Array(firstDayOfMonth)].map((_, i) => (
               <div key={`empty-${i}`} className={`${isDark ? 'bg-[#030303]' : 'bg-slate-50/50'} min-h-[120px]`}></div>
             ))}
-
             {[...Array(daysInMonth)].map((_, i) => {
               const day = i + 1;
               const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const hasEvent = schedules.find(s => s.date === dateStr);
+              const hasEvent = filteredSchedules.find(s => s.date === dateStr);
               const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
-
               return (
                 <div key={i} className={`min-h-[120px] p-3 transition-all relative border-r border-b group ${isDark ? 'bg-[#050505] border-[#1a1a1a]/30' : 'bg-white border-slate-100 hover:bg-slate-50/30'}`}>
                   <span className={`text-xs font-bold ${isToday ? 'text-blue-500 bg-blue-500/10 px-2 py-1 rounded-md' : (isDark ? 'text-[#333]' : 'text-slate-300')}`}>
                     {day}
                   </span>
-                  
                   {hasEvent && (
-                    <div 
-                      onClick={() => setSelectedSchedule(hasEvent)}
-                      className={`mt-3 p-2 rounded-lg border text-left cursor-pointer transition-all hover:scale-[1.03] hover:shadow-lg active:scale-95 shadow-sm ${getStatusStyle(hasEvent.status)}`}
-                    >
+                    <div onClick={() => setSelectedSchedule(hasEvent)} className={`mt-3 p-2 rounded-lg border text-left cursor-pointer transition-all hover:scale-[1.03] hover:shadow-lg active:scale-95 shadow-sm ${getStatusStyle(hasEvent.status)}`}>
                       <p className="text-[10px] font-bold truncate leading-tight">{hasEvent.title}</p>
                       <p className="text-[8px] mt-1 opacity-70 font-bold uppercase">{hasEvent.time}</p>
                     </div>
