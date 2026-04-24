@@ -54,3 +54,4 @@ export const getStarredFiles = () => api.get(`/files/starred/`);
 
 //GET files/recents/
 export const getRecentFiles = () => api.get(`/files/recents/`);
+

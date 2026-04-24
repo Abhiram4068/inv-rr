@@ -16,7 +16,7 @@ export const updateCollection = (collectionId, collectionData) => api.patch(`/co
 export const deleteCollection = (collectionId) => api.delete(`/collections/${collectionId}/`);
 
 //POST /collections/:id/add-file/
-export const addFileToCollection = (collectionId, fileId) => api.post(`/collections/${collectionId}/add-file/`, { file_id: fileId });
+export const addFileToCollection = (collectionId, fileId) => api.post(`/collections/${collectionId}/files/${fileId}/`);
 
 //POST /collections/:id/remove-file/
 export const removeFileFromCollection = (collectionId, fileId) => api.post(`/collections/${collectionId}/remove-file/`, { file_id: fileId });
