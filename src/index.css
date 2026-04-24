@@ -16,3 +16,13 @@ body {
     scrollbar-width: none;
   }
 }
+
+.flex-grow::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.flex-grow {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

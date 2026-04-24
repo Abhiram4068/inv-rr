@@ -8,6 +8,7 @@ const Collections = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('');
   const [collectionDesc, setCollectionDesc] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -17,7 +18,7 @@ const Collections = () => {
       if (current !== theme) setTheme(current);
     }, 100);
     return () => {
-      window.removeEventListener('stocreateCollectionrage', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
   }, [theme]);
@@ -44,14 +45,14 @@ const fetchCollections=async () =>{
 };
 fetchCollections();
 },[]);
+
 const formatSize = (bytes) => {
   if (!bytes || bytes === 0) return "0 B";
-
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
-
   return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i];
 };
+
 const handleCreate=async()=>{
   if(!collectionName.trim()){
     alert("Enter the collection name!")
@@ -79,7 +80,6 @@ const handleCreate=async()=>{
 };
 
   return (
-    /* Main Background: bg-black for dark, bg-[#E6EBF2] for light */
     <div className={`flex-1 min-w-0 overflow-y-auto no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
       <div className="p-6 lg:p-[24px_40px]">
         
@@ -93,12 +93,23 @@ const handleCreate=async()=>{
               className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}
             />
           </div>
-          <button 
-            onClick={() => setModalOpen(true)}
-            className="bg-[#3b82f6] text-white px-5 py-[10px] rounded-[10px] font-semibold text-sm flex items-center gap-[10px] whitespace-nowrap hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20"
-          >
-            <i className="fa fa-folder-plus"></i> New Collection
-          </button>
+          
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+              className={`p-[10px] rounded-[10px] border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#808080] hover:text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-blue-500'}`}
+              title={viewMode === 'grid' ? "Switch to List View" : "Switch to Grid View"}
+            >
+              <i className={`fa-solid ${viewMode === 'grid' ? 'fa-list' : 'fa-grip'}`}></i>
+            </button>
+
+            <button 
+              onClick={() => setModalOpen(true)}
+              className="bg-[#3b82f6] text-white px-5 py-[10px] rounded-[10px] font-semibold text-sm flex items-center gap-[10px] whitespace-nowrap hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20"
+            >
+              <i className="fa fa-folder-plus"></i> New Collection
+            </button>
+          </div>
         </div>
 
         {/* PAGE HEADER */}
@@ -107,7 +118,7 @@ const handleCreate=async()=>{
           <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>{totalCollections} collections</div>
         </div>
 
-{/* FOLDER GRID */}
+{/* CONTENT AREA */}
 {loading ? (
   <div className="py-16 flex items-center justify-center">
     <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -124,7 +135,8 @@ const handleCreate=async()=>{
       No collections found.
     </div>
   </div>
-) : (
+) : viewMode === 'grid' ? (
+  /* GRID VIEW */
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
     {collections.map((folder) => (
       <Link 
@@ -147,6 +159,43 @@ const handleCreate=async()=>{
         </div>
       </Link>
     ))}
+  </div>
+) : (
+  /* LIST VIEW (TABLE FORMAT) */
+  <div className="overflow-x-auto mb-10">
+    <table className="w-full text-left border-collapse">
+      <thead>
+        <tr className={`border-b ${isDark ? 'border-[#1a1a1a] text-[#808080]' : 'border-slate-200 text-slate-500'} text-[12px] uppercase tracking-wider`}>
+          <th className="px-4 py-3 font-semibold">Name</th>
+          <th className="px-4 py-3 font-semibold">Size</th>
+          <th className="px-4 py-3 font-semibold">Owner</th>
+          <th className="px-4 py-3 font-semibold">Created At</th>
+        </tr>
+      </thead>
+      <tbody className={`text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
+        {collections.map((folder) => (
+          <tr key={folder.id} className={`group border-b last:border-0 transition-colors ${isDark ? 'border-[#1a1a1a] hover:bg-[#ffffff05]' : 'border-slate-100 hover:bg-white/50'}`}>
+            <td className="px-4 py-4">
+              <Link to={`/viewcollection/${folder.id}`} className="flex items-center gap-3">
+                <i className="fa-solid fa-folder text-lg text-[#3b82f6]"></i>
+                <span className="font-medium truncate max-w-[200px]">{folder.name}</span>
+              </Link>
+            </td>
+            <td className="px-4 py-4 whitespace-nowrap">
+              {folder.total_size ? formatSize(folder.total_size) : "0 B"}
+            </td>
+            <td className="px-4 py-4 whitespace-nowrap">
+               <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>Me</span>
+            </td>
+            <td className="px-4 py-4 whitespace-nowrap">
+              <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+                {folder.created_at ? new Date(folder.created_at).toLocaleDateString() : '—'}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </div>
 )}
 
@@ -218,9 +267,7 @@ const handleCreate=async()=>{
         </div>
       )}
     </div>
-    
   );
-  
 };
 
 export default Collections;

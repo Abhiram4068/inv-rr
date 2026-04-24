@@ -90,7 +90,6 @@ const CollectionDetails = () => {
         setFileLoading(true);
         try {
           const res = await getFiles(filePage, fileSearch);
-          // Adjusting for common DRF pagination wrappers
           setAllFiles(res.data.results || res.data.files || []); 
           setTotalFilePages(Math.ceil((res.data.count || 0) / 10));
         } catch (err) {
@@ -113,7 +112,7 @@ const CollectionDetails = () => {
       setTotalFiles(fileRes.data.count);
       setIsAddFileOpen(false); 
     } catch (err) {
-      alert("This file might already be in the collection or an error occurred.");
+      alert("Error adding file. It may already exist in this collection.");
     }
   };
 
@@ -174,7 +173,7 @@ const CollectionDetails = () => {
           </div>
         </div>
               
-        {/* Page Title */}
+        {/* Page Title Area */}
         <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <div className="page-title-area" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <i className="fa-solid fa-arrow-left back-btn" style={{ color: isDark ? '#808080' : '#64748b', cursor: 'pointer', fontSize: '18px' }} onClick={() => navigate(-1)}></i>
@@ -183,36 +182,143 @@ const CollectionDetails = () => {
           <div style={{ color: isDark ? '#808080' : '#64748b', fontSize: '14px' }}>{totalFiles} item(s) in this collection</div>
         </div>
 
-        {/* Collection Files Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
-          {collectionFile.map((file, idx) => (
-            <div
-              key={idx}
-              onClick={() => handleFileClick(file.file_id)}
-              className={`cursor-pointer border rounded-xl overflow-hidden transition-all ${
-                isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'
-              }`}
-            >
-              <div className={`h-[140px] flex items-center justify-center relative border-b ${isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-[#f8fafc] border-[#E6EBF2]'}`}>
-                <i className={`fa-solid ${file.icon || 'fa-file'} text-[40px] ${isDark ? 'text-[#333]' : 'text-[#3b82f6]'}`}></i>
-              </div>
-              <div className="p-4">
-                <span className={`text-sm font-semibold mb-2 block truncate ${isDark ? 'text-[#ccc]' : 'text-[#334155]'}`}>
-                  {file.file_name || file.original_name}
-                </span>
-                <div className={`flex justify-between text-xs ${isDark ? 'text-[#444]' : 'text-[#94a3b8]'}`}>
-                  <span>{file.file_size}</span>
-                  <span>{file.added_at}</span>
+        {/* Collection Files Content */}
+        {loading ? (
+          <div className="py-20 text-center text-gray-500 italic">Loading collection...</div>
+        ) : collectionFile.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
+            {collectionFile.map((file, idx) => (
+              <div
+                key={idx}
+                onClick={() => handleFileClick(file.file_id)}
+                className={`cursor-pointer border rounded-xl overflow-hidden transition-all ${
+                  isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'
+                }`}
+              >
+                <div className={`h-[140px] flex items-center justify-center relative border-b ${isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-[#f8fafc] border-[#E6EBF2]'}`}>
+                  <i className={`fa-solid ${file.icon || 'fa-file'} text-[40px] ${isDark ? 'text-[#333]' : 'text-[#3b82f6]'}`}></i>
+                </div>
+                <div className="p-4">
+                  <span className={`text-sm font-semibold mb-2 block truncate ${isDark ? 'text-[#ccc]' : 'text-[#334155]'}`}>
+                    {file.file_name || file.original_name}
+                  </span>
+                  <div className={`flex justify-between text-xs ${isDark ? 'text-[#444]' : 'text-[#94a3b8]'}`}>
+                    <span>{file.file_size}</span>
+                    <span>{file.added_at}</span>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          /* Empty State View */
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'}`}>
+              <i className="fa-solid fa-folder-open text-3xl text-gray-400 opacity-50"></i>
             </div>
-          ))}
-        </div>
+            <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>This collection is empty</h3>
+            <p className={`text-sm max-w-xs mb-8 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>You haven't added any files to this collection yet.</p>
+            <button 
+              onClick={() => setIsAddFileOpen(true)}
+              className="text-[#3b82f6] border border-[#3b82f6]/30 px-6 py-2 rounded-lg font-medium hover:bg-[#3b82f6] hover:text-white transition-all text-sm"
+            >
+              <i className="fa-solid fa-plus mr-2"></i> Add files 
+            </button>
+          </div>
+        )}
       </main>
 
-      {/* --- Modals --- */}
+      {/* --- ADD FILES MODAL (List Mode Table) --- */}
+      {isAddFileOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
+          <div className={`${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'} border p-6 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl transition-all`}>
+            
+            <div className="flex justify-between items-center mb-6">
+              <h3 className={`${isDark ? 'text-white' : 'text-slate-900'} text-xl font-semibold`}>Select Files to Add</h3>
+              <button onClick={() => setIsAddFileOpen(false)} className="text-gray-500 hover:text-red-500 transition-colors">
+                <i className="fa-solid fa-xmark text-xl"></i>
+              </button>
+            </div>
 
-      {/* Manage Modal */}
+            {/* Search Input */}
+            <div className={`mb-6 flex items-center px-4 py-2.5 rounded-xl border transition-all ${isDark ? 'bg-black border-[#1a1a1a]' : 'bg-slate-50 border-slate-200'}`}>
+              <i className="fa fa-search text-gray-500 mr-3"></i>
+              <input 
+                type="text" 
+                placeholder="Search your library..." 
+                className="bg-transparent border-none outline-none w-full text-sm"
+                value={fileSearch}
+                onChange={(e) => { setFileSearch(e.target.value); setFilePage(1); }}
+              />
+            </div>
+
+            {/* List Mode Table */}
+            <div className="flex-grow overflow-x-auto overflow-y-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                  <tr className={`border-b ${isDark ? 'border-[#1a1a1a] text-[#808080]' : 'border-slate-200 text-slate-500'} text-[12px] uppercase tracking-wider`}>
+                    <th className="px-4 py-3 font-semibold">Name</th>
+                    <th className="px-4 py-3 font-semibold">Size</th>
+                    <th className="px-4 py-3 font-semibold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className={`text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                  {fileLoading ? (
+                    <tr><td colSpan="5" className="text-center py-20 text-gray-500 italic">Loading your library...</td></tr>
+                  ) : allFiles.length > 0 ? (
+                    allFiles.map((file) => (
+                      <tr key={file.id} className={`group border-b last:border-0 transition-colors ${isDark ? 'border-[#1a1a1a] hover:bg-[#ffffff05]' : 'border-slate-50 hover:bg-slate-50/50'}`}>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <i className={`fa-solid ${file.icon || 'fa-file'} text-lg text-[#3b82f6]`}></i>
+                            <span className="font-medium truncate max-w-[200px]">{file.original_name || file.file_name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-[#808080]">
+                          {file.file_size || "0 B"}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <button 
+                            onClick={() => handleAddFile(file.id)}
+                            className="bg-[#3b82f6] hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md"
+                          >
+                            Add
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan="5" className="text-center py-20 text-gray-500">No files found matching your search.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Modal Pagination */}
+            <div className={`mt-6 pt-4 border-t flex items-center justify-between ${isDark ? 'border-[#1a1a1a]' : 'border-slate-100'}`}>
+              <div className="text-xs text-gray-500 font-medium">Page {filePage} of {totalFilePages}</div>
+              <div className="flex gap-2">
+                <button 
+                  disabled={filePage === 1}
+                  onClick={() => setFilePage(p => p - 1)}
+                  className={`px-4 py-1.5 rounded-lg border text-xs font-medium transition-all ${isDark ? 'border-[#1a1a1a] hover:bg-[#111] text-gray-400 disabled:opacity-20' : 'border-slate-200 hover:bg-white text-slate-600 disabled:opacity-40'}`}
+                >
+                  Previous
+                </button>
+                <button 
+                  disabled={filePage >= totalFilePages}
+                  onClick={() => setFilePage(p => p + 1)}
+                  className={`px-4 py-1.5 rounded-lg border text-xs font-medium transition-all ${isDark ? 'border-[#1a1a1a] hover:bg-[#111] text-gray-400 disabled:opacity-20' : 'border-slate-200 hover:bg-white text-slate-600 disabled:opacity-40'}`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MANAGE MODAL --- */}
       {isManageOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">
           <div className={`${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'} border p-8 rounded-2xl w-full max-w-md shadow-2xl`}>
@@ -232,83 +338,21 @@ const CollectionDetails = () => {
             </div>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setIsManageOpen(false)} className={`px-4 py-2 rounded-lg border ${isDark ? 'border-[#1a1a1a] text-gray-400 hover:text-white' : 'border-slate-200 text-slate-500'}`}>Cancel</button>
-              <button onClick={handleSave} className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold">Save</button>
+              <button onClick={handleSave} className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">Save</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Modal */}
+      {/* --- DELETE MODAL --- */}
       {isDeleteOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">
           <div className={`${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'} border p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl`}>
             <h3 className={`${isDark ? 'text-white' : 'text-slate-900'} text-lg font-bold mb-3`}>Delete Collection?</h3>
-            <p className="text-sm text-slate-500 mb-6">This action cannot be undone. Files will remain safe but the group will be deleted.</p>
+            <p className="text-sm text-slate-500 mb-6">This action cannot be undone. All files will remain safe in your library.</p>
             <div className="flex gap-3">
-              <button onClick={() => setIsDeleteOpen(false)} className={`flex-1 py-2 border rounded-lg ${isDark ? 'border-[#1a1a1a] text-gray-400' : 'border-slate-200 text-slate-500'}`}>Cancel</button>
-              <button onClick={handleDeleteCollection} className="flex-1 py-2 bg-red-600 text-white rounded-lg font-semibold">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Files Modal */}
-      {isAddFileOpen && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
-          <div className={`${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'} border p-6 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl`}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className={`${isDark ? 'text-white' : 'text-slate-900'} text-lg font-semibold`}>Select Files to Add</h3>
-              <button onClick={() => setIsAddFileOpen(false)} className="text-gray-500 hover:text-red-500"><i className="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <div className={`mb-4 flex items-center px-3 py-2 rounded-lg border ${isDark ? 'bg-black border-[#1a1a1a]' : 'bg-slate-50 border-slate-200'}`}>
-              <i className="fa fa-search text-gray-500 mr-2"></i>
-              <input 
-                type="text" 
-                placeholder="Search your library..." 
-                className="bg-transparent border-none outline-none w-full text-sm"
-                value={fileSearch}
-                onChange={(e) => { setFileSearch(e.target.value); setFilePage(1); }}
-              />
-            </div>
-
-            <div className="flex-grow overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-              {fileLoading ? (
-                <div className="text-center py-10 text-gray-500">Loading files...</div>
-              ) : allFiles.length > 0 ? (
-                allFiles.map((file) => (
-                  <div key={file.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${isDark ? 'hover:bg-[#111] border-[#1a1a1a]' : 'hover:bg-slate-50 border-slate-100'}`}>
-                    <div className="flex items-center gap-3">
-                      <i className={`fa-solid ${file.icon || 'fa-file'} text-blue-500`}></i>
-                      <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-                        {file.original_name || file.file_name}
-                      </span>
-                    </div>
-                    <button 
-                      onClick={() => handleAddFile(file.id)}
-                      className="text-xs bg-blue-600/10 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition-colors font-bold"
-                    >
-                      Add
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-10 text-gray-500">No files found.</div>
-              )}
-            </div>
-
-            <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-800">
-              <button 
-                disabled={filePage === 1}
-                onClick={() => setFilePage(p => p - 1)}
-                className={`text-sm px-3 py-1 border rounded-md disabled:opacity-30 ${isDark ? 'text-white border-gray-700' : 'text-slate-600'}`}
-              >Previous</button>
-              <span className="text-xs text-gray-500 font-medium">Page {filePage} of {totalFilePages}</span>
-              <button 
-                disabled={filePage >= totalFilePages}
-                onClick={() => setFilePage(p => p + 1)}
-                className={`text-sm px-3 py-1 border rounded-md disabled:opacity-30 ${isDark ? 'text-white border-gray-700' : 'text-slate-600'}`}
-              >Next</button>
+              <button onClick={() => setIsDeleteOpen(false)} className={`flex-1 py-2 border rounded-lg transition-colors ${isDark ? 'border-[#1a1a1a] text-gray-400' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>Cancel</button>
+              <button onClick={handleDeleteCollection} className="flex-1 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">Delete</button>
             </div>
           </div>
         </div>
