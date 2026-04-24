@@ -101,7 +101,7 @@ const ViewAllShares = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
             <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>All Shared Files</h1>
-            <p className={`text-sm mt-1 font-medium ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>Managing shared assets across your workspace</p>
+            <p className={`text-sm mt-1 font-medium ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>Managing shared files across your hivedrive</p>
           </div>
           
           <div className="relative group">
@@ -121,12 +121,12 @@ const ViewAllShares = () => {
         </div>
 
         {/* DATA TABLE CONTAINER */}
-        <div className={`border rounded-2xl overflow-hidden shadow-2xl transition-colors ${isDark ? 'bg-[#0a0a0a] border-neutral-900' : 'bg-white border-slate-200'}`}>
+        <div className={`border rounded-xl overflow-hidden shadow-2xl transition-colors ${isDark ? 'border-neutral-900' : 'border-slate-200'}`}>
           
           {/* TOP PAGINATION BAR */}
-          <div className={`p-6 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${isDark ? 'border-neutral-900 bg-[#080808]/50' : 'border-slate-100 bg-slate-50/50'}`}>
+          <div className={`p-6 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
             <div>
-              <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared Assets Log</h3>
+              <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared Files</h3>
               <p className={`text-[10px] font-bold mt-1 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
                 Showing {totalShares === 0 ? 0 : indexOfFirstRow + 1}-{indexOfFirstRow + filteredFiles.length} of {totalShares}
               </p>
@@ -158,7 +158,7 @@ const ViewAllShares = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className={`text-[10px] uppercase tracking-[0.15em] border-b ${isDark ? 'text-neutral-500 border-neutral-900 bg-[#080808]' : 'text-slate-400 border-slate-100 bg-slate-50/50'}`}>
+                <tr className={`text-[10px] uppercase tracking-[0.15em] border-b ${isDark ? 'text-neutral-500 border-neutral-900 bg-[#080808]/70' : 'text-slate-400 border-slate-100 bg-slate-50/50'}`}>
                   <th className="py-4 pl-6 font-bold">File Name</th>
                   <th className="py-4 font-bold">Recipient</th>
                   <th className="py-4 font-bold">Send Date & Time</th>
@@ -174,10 +174,12 @@ const ViewAllShares = () => {
                     <tr key={file.id} className={`group transition-colors ${isDark ? 'hover:bg-neutral-900/40' : 'hover:bg-slate-50'}`}>
                       <td className="py-5 pl-6 text-sm">
                         <div className="flex items-center gap-4">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${isDark ? 'bg-neutral-900' : 'bg-slate-100'}`}>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors`}>
                             <i className={`fa-solid ${visuals.icon} text-base`} style={{ color: visuals.color }}></i>
                           </div>
-                          <span className={`font-bold block line-clamp-2 break-all max-w-[250px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.file_name}</span>
+                          <Link to={`/file/${file.file_id}`}>
+                            <span className={`font-bold block line-clamp-2 break-all max-w-[250px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.file_name}</span>
+                          </Link>
                         </div>
                       </td>
                       <td className="py-5 text-sm">
@@ -200,7 +202,7 @@ const ViewAllShares = () => {
                           >
                             <i className="fa-solid fa-eye"></i>
                           </button>
-                          {!hasBeenAccessed ? (
+                          {!hasBeenAccessed && !file.revoked_at && file.status !== 'Revoked' ? (
                             <button 
                               onClick={() => { setSelectedFile(file); setModalOpen(true); }}
                               className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-neutral-800 text-red-400' : 'hover:bg-slate-100 text-red-500'}`}

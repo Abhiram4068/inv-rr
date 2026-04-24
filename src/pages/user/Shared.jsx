@@ -83,42 +83,52 @@ fetchSharedFiles();
         </div>
       )}
 
-      <div className="py-10 px-12 lg:px-24 max-w-[1600px] mx-auto">
-        
+      <div className="p-6 lg:p-10 pb-60 max-w-6xl mx-auto">
+        {/* BREADCRUMB */}
+    
         {/* TOP LABEL */}
-        <div className={`text-[10px] uppercase font-bold tracking-[0.2em] mb-4 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Recent</div>
 
-        {/* SEARCH AND ACTION BAR */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
-          <div className={`w-full max-w-[450px] p-[10px_16px] rounded-xl flex items-center border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <i className={`fa fa-search ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}></i>
-            <input 
-              type="text" 
-              placeholder="Search Your Files..." 
-              className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`} 
-            />
-            </div>
-          <button className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
-            <i className="fa-plus fa"></i> New Document
-          </button>
+   {/* BREADCRUMB / BACK LINK */}
+        <Link 
+          to="/dashboard" 
+          className={`flex items-center gap-2 transition-colors text-xs group w-fit mb-4 ${
+            isDark ? 'text-neutral-500 hover:text-white' : 'text-slate-500 hover:text-blue-600'
+          }`}
+        >
+          <i className="fa-solid fa-arrow-left text-[10px] group-hover:-translate-x-1 transition-transform"></i>
+          <span className="font-bold tracking-wide uppercase">Back to Dashboard</span>
+        </Link>
+
+        {/* --- MAIN HEADER & SEARCH BAR --- */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div>
+            <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared Summary</h1>
+            <p className={`text-sm mt-1 font-medium ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>See your recent shares and files shared with you.</p>
+          </div>
+          
+          <div className="flex flex-row items-center gap-4">
+            <button className="bg-[#3b82f6] text-white p-[10px_20px] rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+              <i className="fa-plus fa"></i> <span className="hidden sm:inline">New Document</span>
+            </button>
+          </div>
         </div>
 
-  {/* PAGE HEADER */}
-<div className="flex justify-between items-end mb-6">
-  <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared Files</h1>
-  <div className="flex items-center gap-4">
-    <div className={`${isDark ? 'text-neutral-500' : 'text-slate-500'} text-sm`}>
-      {totalShares} items shared
-    </div>
-    <Link 
-      to="/viewallshares"
-      className={`flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
-    >
-      <span>View All</span>
-      <i className="fa-solid fa-chevron-right text-[8px]"></i>
-    </Link>
-  </div>
-</div>
+        {/* SECTION SUB-LABEL */}
+        <div className="flex justify-between items-end mb-6">
+          <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>View Shared Files</h2>
+          <div className="flex items-center gap-4">
+            <div className={`${isDark ? 'text-neutral-500' : 'text-slate-500'} text-sm`}>
+              {totalShares} items shared
+            </div>
+            <Link 
+              to="/viewallshares"
+              className={`flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+            >
+              <span>View All</span>
+              <i className="fa-solid fa-chevron-right text-[8px]"></i>
+            </Link>
+          </div>
+        </div>
 
         {/* SECTION 1: ACTIVELY SHARED */}
         <div className={`overflow-x-auto rounded-lg border ${isDark ? 'border-neutral-900 bg-transparent' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -139,17 +149,17 @@ fetchSharedFiles();
 
                 return (
                   <tr key={file.id} className={`group transition-colors ${isDark ? 'hover:bg-neutral-900/30' : 'hover:bg-slate-50/50'}`}>
-                    <td className="p-4 text-sm font-medium">
-                      <div className="flex items-center gap-3">
-                        <i className={`fa-solid ${visuals.icon}`} style={{ color: visuals.color }}></i>
-<Link to={`/file/${file.file_id}`}>
-  <span className={`
-    block line-clamp-2 break-all max-w-[250px] leading-tight
-    ${isDark ? 'text-white' : 'text-slate-700'}
-  `}>
-    {file.file_name}
-  </span>
-</Link>                      </div>
+                    <td className="py-5 pl-6 text-sm">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-neutral-900' : 'bg-slate-100'}`}>
+                          <i className={`fa-solid ${visuals.icon} text-base`} style={{ color: visuals.color }}></i>
+                        </div>
+                        <Link to={`/file/${file.file_id}`}>
+                          <span className={`font-bold block line-clamp-2 break-all max-w-[280px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                            {file.file_name}
+                          </span>
+                        </Link>
+                      </div>
                     </td>
                     <td className={`p-4 text-sm ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>{file.recipient_email}</td>
                     <td className={`p-4 text-sm ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>{formatDateTime(file.created_at)}</td>
@@ -174,7 +184,7 @@ fetchSharedFiles();
                     </button>
                     
                     {/* REVOKE ACTION OR PLACEHOLDER */}
-                    {!hasBeenAccessed ? (
+                    {!hasBeenAccessed && !file.revoked_at && file.status !== 'Revoked' && file.status !== 'Expired'? (
                       <button 
                         onClick={() => { setSelectedFile(file); setModalOpen(true); }} 
                         className={`p-2 rounded-lg transition-colors ${
