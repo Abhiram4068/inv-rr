@@ -6,7 +6,10 @@ body {
   background-color: #0e131c;
 }
 
-
+html, body, #root {
+  height: 100%;
+  overflow: hidden;  /* 🔥 THIS removes outer scrollbar */
+}
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -17,12 +20,3 @@ body {
   }
 }
 
-.flex-grow::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-}
-
-.flex-grow {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
