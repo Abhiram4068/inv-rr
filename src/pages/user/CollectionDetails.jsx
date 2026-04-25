@@ -39,9 +39,24 @@ const CollectionDetails = () => {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ name: "", description: "" });
 
+  const [search, setSearch]=useState("")
+
+  // Toast State
+  const [toast, setToast] = useState({ visible: false, message: '' });
+
   const isDark = theme === 'dark';
 
-  // --- Helpers for Consistent FileCard (Replicated from PaginatedFiles) ---
+const showToast = (msg) => {
+  setToast({ visible: true, message: msg });
+};
+
+useEffect(() => {
+  if (toast.visible) {
+    const timer = setTimeout(() => setToast({ ...toast, visible: false }), 3000);
+    return () => clearTimeout(timer);
+  }
+}, [toast.visible]);
+
   const timeFormatter = (isoOrDate) => {
     if (!isoOrDate) return "-";
     const d = new Date(isoOrDate);
@@ -91,7 +106,7 @@ const CollectionDetails = () => {
       setLoading(true);
       const [collectionRes, fileRes] = await Promise.all([
         getCollectionById(id),
-        getCollectionFiles(id, collectionPage)
+        getCollectionFiles(id, collectionPage, search)
       ]);
       setCollectionInfo(collectionRes.data);
       setCollectionFile(fileRes.data.results || fileRes.data.collection_files || []);
@@ -114,7 +129,7 @@ const CollectionDetails = () => {
 
   useEffect(() => {
     if (id) fetchCollectionContent();
-  }, [id, collectionPage]);
+  }, [id, collectionPage, search]);
 
   // --- Fetch Global Files (For Modal) ---
   useEffect(() => {
@@ -139,7 +154,6 @@ const CollectionDetails = () => {
   const handleAddFile = async (fileId) => {
     try {
       await addFileToCollection(id, fileId);
-      // Refresh current view
       const fileRes = await getCollectionFiles(id, collectionPage);
       setCollectionFile(fileRes.data.results || fileRes.data.collection_files || []);
       setTotalFiles(fileRes.data.count || 0);
@@ -147,7 +161,8 @@ const CollectionDetails = () => {
         ? collectionPage + 1 
         : collectionPage
       );
-            setIsAddFileOpen(false); 
+      setIsAddFileOpen(false); 
+      showToast("File added to collection successfully!");
     } catch (err) {
       alert("Error adding file. It may already exist in this collection.");
     }
@@ -157,6 +172,12 @@ const CollectionDetails = () => {
     handleUpdateCollection(formData);
     setCollectionInfo({ ...collectionInfo, ...formData });
     setIsManageOpen(false);
+    showToast("Collection updated successfully!");
+  };
+
+  const onConfirmDelete = async () => {
+    await handleDeleteCollection();
+    showToast("Collection deleted successfully!");
   };
 
   const handleToggleStar = async () => {
@@ -164,6 +185,7 @@ const CollectionDetails = () => {
       const newState = !collectionInfo?.is_starred;
       await updateCollection(id, { is_starred: newState });
       setCollectionInfo(prev => ({ ...prev, is_starred: newState }));
+      showToast(newState ? "Collection starred" : "Removed from starred");
     } catch (error) {
       console.error("Failed to update star:", error);
     }
@@ -173,6 +195,17 @@ const CollectionDetails = () => {
   return (
     <div className="collection-container transition-colors duration-300" style={{ width: '100%', height: '100%', overflowY: 'hidden', display: 'flex', flexDirection: 'column', background: isDark ? 'transparent' : '#E6EBF2' }}>
       
+      
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className={`${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'} px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3`}>
+            <i className="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
+            {toast.message}
+          </div>
+        </div>
+      )}
+
       <main className="file-explorer-main no-scrollbar" style={{ padding: '24px 40px', flexGrow: 1, overflowY: 'auto' }}>
         
         {/* Header Actions */}
@@ -181,6 +214,8 @@ const CollectionDetails = () => {
             <i className="fa fa-search" style={{ color: isDark ? '#808080' : '#94a3b8' }}></i>
             <input 
               type="text" 
+              value={search}
+  onChange={(e) => { setSearch(e.target.value); setCollectionPage(1); }}
               placeholder={`Search in '${collectionInfo?.name || ""}'...`}
               style={{ background: 'transparent', border: 'none', color: isDark ? 'white' : '#1e293b', marginLeft: '12px', width: '100%', outline: 'none', fontSize: '14px' }} 
             />
@@ -207,7 +242,6 @@ const CollectionDetails = () => {
           </div>
         </div>
               
-        {/* Page Title Area (With Relocated Pagination) */}
         {/* Page Title Area */}
 <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
   <div className="page-title-area" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -215,7 +249,6 @@ const CollectionDetails = () => {
     <div className="page-title" style={{ fontSize: '20px', fontWeight: 600, color: isDark ? 'white' : '#1e293b' }}>{collectionInfo?.name}</div>
   </div>
   
-  {/* Right Side: Item count on top, Pagination below */}
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
     <div style={{ color: isDark ? '#808080' : '#64748b', fontSize: '14px', fontWeight: 500 }}>
       {totalFiles} item(s) in this collection
@@ -258,7 +291,7 @@ const CollectionDetails = () => {
                   key={file.file}
                   id={file.file}
                   title={file.file_name || file.original_name}
-                  display_name={file.file_name}
+                  display_name={file.display_name}
                   size={sizeFormatter(file.file_size)}
                   time={timeFormatter(file.added_at)}
                   iconClass={iconClassForFile(file)}
@@ -269,24 +302,32 @@ const CollectionDetails = () => {
             </div>
           </>
         ) : (
-          /* Empty State View */
-          <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'}`}>
-              <i className="fa-solid fa-folder-open text-3xl text-gray-400 opacity-50"></i>
-            </div>
-            <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>This collection is empty</h3>
-            <p className={`text-sm max-w-xs mb-8 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>You haven't added any files to this collection yet.</p>
-            <button 
-              onClick={() => setIsAddFileOpen(true)}
-              className="text-[#3b82f6] border border-[#3b82f6]/30 px-6 py-2 rounded-lg font-medium hover:bg-[#3b82f6] hover:text-white transition-all text-sm"
-            >
-              <i className="fa-solid fa-plus mr-2"></i> Add files 
-            </button>
-          </div>
+           <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+    <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'}`}>
+      <i className={`fa-solid ${search ? 'fa-magnifying-glass' : 'fa-folder-open'} text-3xl text-gray-400 opacity-50`}></i>
+    </div>
+    <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+      {search ? 'No results found' : 'This collection is empty'}
+    </h3>
+    <p className={`text-sm max-w-xs mb-8 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+      {search 
+        ? `No files matched "${search}". Try a different search term.` 
+        : "You haven't added any files to this collection yet."
+      }
+    </p>
+    {!search && (
+      <button 
+        onClick={() => setIsAddFileOpen(true)}
+        className="text-[#3b82f6] border border-[#3b82f6]/30 px-6 py-2 rounded-lg font-medium hover:bg-[#3b82f6] hover:text-white transition-all text-sm"
+      >
+        <i className="fa-solid fa-plus mr-2"></i> Add files 
+      </button>
+    )}
+  </div>
         )}
       </main>
 
-      {/* --- ADD FILES MODAL (List Mode Table) --- */}
+      {/* --- ADD FILES MODAL --- */}
       {isAddFileOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
           <div className={`${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'} border p-6 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl transition-all`}>
@@ -298,19 +339,17 @@ const CollectionDetails = () => {
               </button>
             </div>
 
-            {/* Search Input */}
             <div className={`mb-6 flex items-center px-4 py-2.5 rounded-xl border transition-all ${isDark ? 'bg-black border-[#1a1a1a]' : 'bg-slate-50 border-slate-200'}`}>
               <i className="fa fa-search text-gray-500 mr-3"></i>
               <input 
                 type="text" 
                 placeholder="Search your library..." 
-                className="bg-transparent border-none outline-none w-full text-sm"
                 value={fileSearch}
+                className="bg-transparent border-none outline-none w-full text-sm"
                 onChange={(e) => { setFileSearch(e.target.value); setFilePage(1); }}
               />
             </div>
 
-            {/* List Mode Table */}
             <div className="flex-grow overflow-x-auto overflow-y-auto no-scrollbar">
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
@@ -352,7 +391,6 @@ const CollectionDetails = () => {
               </table>
             </div>
 
-            {/* Modal Pagination */}
             <div className={`mt-6 pt-4 border-t flex items-center justify-between ${isDark ? 'border-[#1a1a1a]' : 'border-slate-100'}`}>
               <div className="text-xs text-gray-500 font-medium">Page {filePage} of {totalFilePages}</div>
               <div className="flex gap-2">
@@ -434,7 +472,7 @@ const CollectionDetails = () => {
             <p className="text-sm text-slate-500 mb-6">This action cannot be undone. All files will remain safe in your system.</p>
             <div className="flex gap-3">
               <button onClick={() => setIsDeleteOpen(false)} className={`flex-1 py-2 border rounded-lg transition-colors ${isDark ? 'border-[#1a1a1a] text-gray-400' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>Cancel</button>
-              <button onClick={handleDeleteCollection} className="flex-1 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">Delete</button>
+              <button onClick={onConfirmDelete} className="flex-1 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">Delete</button>
             </div>
           </div>
         </div>

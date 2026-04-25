@@ -22,7 +22,7 @@ export const addFileToCollection = (collectionId, fileId) => api.post(`/collecti
 export const removeFileFromCollection = (collectionId, fileId) => api.post(`/collections/${collectionId}/remove-file/`, { file_id: fileId });
 
 //GET /collections/:id/files/
-export const getCollectionFiles = (collectionId, page = 1) => api.get(`/collections/${collectionId}/files/`, { params: { page } });
+export const getCollectionFiles = (collectionId, page = 1, search="") => api.get(`/collections/${collectionId}/files/`, { params: { page, search } });
 
 
 //GET /collections/starred/
