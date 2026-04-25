@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
+import { formatDateTime } from '../utils/dateFormatter';
+import { sizeFormatter } from '../utils/sizeFormatter';
 
 const CollectionRightSidebar = ({ collectionInfo, onManage, onDelete }) => {
   // 1. Theme State Sync
@@ -49,12 +51,12 @@ if (!collectionInfo) {
         <div className="space-y-3">
           <div className="flex justify-between items-center text-sm">
             <span className={`${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Created on:</span>
-            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{collectionInfo?.created_at}</span>
+            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{formatDateTime(collectionInfo?.created_at)}</span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className={`${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Total Size</span>
             
-            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{collectionInfo?.total_size}</span>
+            <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{sizeFormatter(collectionInfo?.total_size)}</span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className={`${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Files</span>

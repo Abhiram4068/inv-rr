@@ -1,7 +1,7 @@
 import api from "../api/axios";
 
-//GET /collections/
-export const getCollections = () => api.get("/collections/");
+export const getCollections = (search = "", sortBy = "created_at", sortOrder = "desc") => 
+  api.get("/collections/", { params: { search, sort_by: sortBy, sort_order: sortOrder } });
 
 //GET /collections/:id/
 export const getCollectionById = (collectionId) => api.get(`/collections/${collectionId}/`);
@@ -22,7 +22,7 @@ export const addFileToCollection = (collectionId, fileId) => api.post(`/collecti
 export const removeFileFromCollection = (collectionId, fileId) => api.post(`/collections/${collectionId}/remove-file/`, { file_id: fileId });
 
 //GET /collections/:id/files/
-export const getCollectionFiles = (collectionId) => api.get(`/collections/${collectionId}/files/`);
+export const getCollectionFiles = (collectionId, page = 1) => api.get(`/collections/${collectionId}/files/`, { params: { page } });
 
 
 //GET /collections/starred/

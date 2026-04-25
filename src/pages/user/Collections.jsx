@@ -8,7 +8,7 @@ const Collections = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('');
   const [collectionDesc, setCollectionDesc] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState(localStorage.getItem('viewMode') || 'grid'); // 'grid' or 'list'
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -29,12 +29,15 @@ const Collections = () => {
   const [totalCollections, setTotalCollections] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
 
 useEffect(()=>{
 const fetchCollections=async () =>{
   try{
     setLoading(true);
-    const res = await getCollections()
+    const res = await getCollections(search, sortBy, sortOrder)
     setCollections(res.data.collections);
     setTotalCollections(res.data.total_collections);    
   }catch{
@@ -44,7 +47,7 @@ const fetchCollections=async () =>{
   }
 };
 fetchCollections();
-},[]);
+},[search, sortBy, sortOrder]);
 
 const formatSize = (bytes) => {
   if (!bytes || bytes === 0) return "0 B";
@@ -65,7 +68,7 @@ const handleCreate=async()=>{
       description: collectionDesc
     };
     await createCollection(payload);
-    const res=await getCollections();
+    const res=await getCollections(search, sortBy, sortOrder);
     setCollections(res.data.collections);
     setTotalCollections(res.data.total_collections); 
     setModalOpen(false);
@@ -87,17 +90,23 @@ const handleCreate=async()=>{
         <div className="flex justify-between items-center mb-[30px] gap-4">
           <div className={`flex-1 max-w-[450px] border px-4 py-[10px] rounded-[12px] flex items-center shadow-sm transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
             <i className={`fa fa-search ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}></i>
-            <input 
-              type="text" 
-              placeholder="Search Drive" 
-              className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}
-            />
+        <input 
+        type="text"
+        placeholder="Search Collections"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}
+      />
           </div>
           
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-              className={`p-[10px] rounded-[10px] border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#808080] hover:text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-blue-500'}`}
+              onClick={() => {
+                const next = viewMode === 'grid' ? 'list' : 'grid';
+                setViewMode(next);
+                localStorage.setItem('viewMode', next);
+              }}
+              className={`p-[10px] rounded-[10px]  transition-all ${isDark ? ' text-[#808080] hover:text-white' : 'text-slate-500 hover:text-blue-500'}`}
               title={viewMode === 'grid' ? "Switch to List View" : "Switch to Grid View"}
             >
               <i className={`fa-solid ${viewMode === 'grid' ? 'fa-list' : 'fa-grip'}`}></i>
@@ -115,9 +124,40 @@ const handleCreate=async()=>{
         {/* PAGE HEADER */}
         <div className="flex justify-between items-center mb-5">
           <div className={`text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>My Collections</div>
-          <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>{totalCollections} collections</div>
+          <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>{totalCollections} collection(s)</div>
         </div>
-
+<div className="flex items-center gap-2 mb-5 flex-wrap">
+  {[
+    { label: "Date Created", value: "created_at" },
+    { label: "Name", value: "name" },
+    { label: "Size", value: "total_size" },
+    { label: "Files", value: "total_files" },
+  ].map((opt) => (
+    <button
+      key={opt.value}
+      onClick={() => {
+        if (sortBy === opt.value) {
+          setSortOrder(o => o === "asc" ? "desc" : "asc");
+        } else {
+          setSortBy(opt.value);
+          setSortOrder("desc");
+        }
+      }}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+        sortBy === opt.value
+          ? 'bg-blue-500/10 border-blue-500/40 text-blue-400'
+          : isDark
+            ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]'
+            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+      }`}
+    >
+      {opt.label}
+      {sortBy === opt.value && (
+        <i className={`fa-solid fa-arrow-${sortOrder === "asc" ? "up" : "down"} text-[10px]`}></i>
+      )}
+    </button>
+  ))}
+</div>
 {/* CONTENT AREA */}
 {loading ? (
   <div className="py-16 flex items-center justify-center">
