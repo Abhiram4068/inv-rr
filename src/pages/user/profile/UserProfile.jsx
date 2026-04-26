@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { profile } from '../../../services/authService';
-
+import { sizeFormatter } from '../../../utils/sizeFormatter';
 const UserProfile = () => {
   // --- THEME STATE SYNC (Untouched) ---
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
@@ -117,7 +117,7 @@ const UserProfile = () => {
                   </p>
                   <div className="flex flex-wrap justify-center md:justify-start gap-4">
                      <Stat pill label="Joined" value={userProfile.date_joined} isDark={isDark} />
-                     <Stat pill label="Storage" value={userProfile.total_files + " of 1GB"} isDark={isDark} />
+                     <Stat pill label="Storage" value={sizeFormatter(userProfile.storage_used_bytes) + " used of 1GB"} isDark={isDark} />
                   </div>
                 </div>
               </div>

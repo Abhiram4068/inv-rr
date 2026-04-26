@@ -122,7 +122,7 @@ const handleZoneClick = () => {
         fileInputRef.current.value = null;
       }
     }catch(err){
-      const backendError = err?.response?.data?.files?.[0] || err?.response?.data?.non_field_errors?.[0] || err?.response?.data?.[0];
+      const backendError = err?.response?.data?.error || err?.response?.data?.files?.[0] || err?.response?.data?.non_field_errors?.[0] || err?.response?.data?.[0];
       if (backendError) {
         showToast(backendError, 'error'); 
       } else {
