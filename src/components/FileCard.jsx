@@ -1,8 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from "react-router-dom";
+import * as pdfjsLib from 'pdfjs-dist';
 
-const FileCard = ({ id, title, display_name, originalName, size, time, iconClass, isLink = false }) => {
-  // 1. Theme State Sync
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
+
+const PdfThumb = ({ fileUrl }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (!fileUrl || !canvasRef.current) return;
+    let cancelled = false;
+
+    const render = async () => {
+      try {
+        const pdf = await pdfjsLib.getDocument(fileUrl).promise;
+        if (cancelled) return;
+        const page = await pdf.getPage(1);
+        if (cancelled) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const viewport = page.getViewport({ scale: 0.5 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      } catch (e) {
+        console.warn('PDF preview failed:', e);
+      }
+    };
+
+    render();
+    return () => { cancelled = true; };
+  }, [fileUrl]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full object-contain"
+      style={{ background: '#fff' }}
+    />
+  );
+};
+
+const FileCard = ({ id, title, display_name, originalName, size, time, iconClass, isLink = false, fileUrl, contentType }) => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
@@ -19,26 +61,44 @@ const FileCard = ({ id, title, display_name, originalName, size, time, iconClass
   }, [theme]);
 
   const isDark = theme === 'dark';
+  const isImage = contentType?.startsWith('image/');
+  const isPdf = contentType === 'application/pdf';
+
+  const PreviewArea = () => {
+    if (isImage && fileUrl) {
+      return (
+        <img
+          src={fileUrl}
+          alt={title}
+          className="w-full h-full object-cover absolute inset-0"
+        />
+      );
+    }
+    if (isPdf && fileUrl) {
+      return <PdfThumb fileUrl={fileUrl} />;
+    }
+    return null;
+  };
 
   const Content = (
     <>
-      <div className={`h-[140px] flex items-center justify-center relative border-b transition-colors duration-300
+      <div className={`h-[140px] flex items-center justify-center relative border-b transition-colors duration-300 overflow-hidden
         ${isDark ? 'bg-[#111] border-[#555]' : 'bg-slate-50 border-slate-100'}`}>
-        
-        <i className={`fa-solid ${iconClass} text-[40px] absolute z-10 group-hover:scale-110 transition-all
-          ${isDark ? 'text-[#808080]' : 'text-blue-500'}`}></i>
-        
-        <div className={`w-full h-full object-cover opacity-40 ${isDark ? 'bg-[#111]' : 'bg-white'}`}></div>
+
+        <PreviewArea />
+
+        {!isImage && !isPdf && (
+          <i className={`fa-solid ${iconClass} text-[40px] absolute z-10 group-hover:scale-110 transition-all
+            ${isDark ? 'text-[#808080]' : 'text-blue-500'}`}></i>
+        )}
       </div>
 
       <div className="p-4">
-        {/* Original Name - Now Main Title & Larger */}
         <span className={`block text-base font-bold truncate transition-colors
           ${isDark ? 'text-white' : 'text-slate-800'}`}>
           {title || 'Untitled File'}
         </span>
 
-        {/* Display Name (title) - Now Subtitle & Smaller */}
         <span className={`block text-[12px] font-medium truncate mb-2
           ${isDark ? 'text-[#aaa]' : 'text-slate-500'}`}>
           {display_name}
@@ -54,12 +114,12 @@ const FileCard = ({ id, title, display_name, originalName, size, time, iconClass
   );
 
   const containerClass = `rounded-lg overflow-hidden transition-all no-underline group cursor-pointer border
-    ${isDark 
-      ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] hover:-translate-y-1' 
+    ${isDark
+      ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] hover:-translate-y-1'
       : 'bg-white border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md hover:-translate-y-1'}`;
 
   return isLink ? (
-   <Link to={`/file/${id}`} className={containerClass}>{Content}</Link> 
+    <Link to={`/file/${id}`} className={containerClass}>{Content}</Link>
   ) : (
     <div className={containerClass}>{Content}</div>
   );

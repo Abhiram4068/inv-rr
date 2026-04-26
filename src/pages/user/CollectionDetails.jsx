@@ -296,6 +296,8 @@ useEffect(() => {
                   time={timeFormatter(file.added_at)}
                   iconClass={iconClassForFile(file)}
                   isLink={true}
+                  fileUrl={file.file_url}
+              contentType={file.content_type}
                    onClick={() => navigate(`/file/${file.file}`)}
                 />
               ))}

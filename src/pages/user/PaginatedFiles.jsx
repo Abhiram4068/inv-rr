@@ -198,6 +198,8 @@ const PaginatedFiles = () => {
               time={timeFormatter(file.created_at)}
               iconClass={iconClassForFile(file)}
               isLink={true}
+              fileUrl={file.file_url}
+              contentType={file.content_type}
             />
           ))}
         </div>
