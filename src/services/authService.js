@@ -66,5 +66,8 @@ export const login    = (data) => api.post("/api/auth/login/", data);
 export const logout   = ()     => api.post("/api/auth/logout/");
 export const register = (data) => api.post("/api/auth/register/", data);
 export const profile = () => api.get("/api/profile/");
+export const getDesignations = () => api.get("/api/designations/");
+export const updateProfile = (data) => api.patch("/api/profile/", data);
+export const changePassword = (data) => api.post("/api/auth/change-password/", data);
 
 export default api;
