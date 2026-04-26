@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { register } from "../../services/authService";
+import { register, getDesignations  } from "../../services/authService";
 import useAuth from "../../hooks/useAuth";
 
 const Register = () => {
@@ -11,9 +11,11 @@ const Register = () => {
     lastName: "",
     email: "",
     dob: "",
+    designation: "",
     password: "",
     confirm_password: "",
   });
+  const [designations , setDesignations] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -56,8 +58,9 @@ const Register = () => {
         first_name: formData.firstName,
         last_name: formData.lastName,
         email: formData.email,
-        dob: formData.dob,
+        date_of_birth: formData.dob,
         username,
+        designation: formData.designation,
         password: formData.password,
         confirm_password: formData.confirm_password,
       };
@@ -75,7 +78,18 @@ const Register = () => {
       setLoading(false);
     }
   };
+useEffect(() => {
+  const fetchDesignations = async () => {
+    try {
+      const res = await getDesignations();
+      setDesignations(res.data);
+    } catch (err) {
+      console.error("Failed to fetch designations", err);
+    }
+  };
 
+  fetchDesignations();
+}, []);
   if (authLoading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -196,7 +210,32 @@ const Register = () => {
                     className="w-full bg-[#0a0a0a] border border-[#1a1a1a] py-3 pl-[45px] pr-4 rounded-[10px] text-white text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
-              </div>
+                      </div>
+                                                {/* Designation */}
+        {/* Designation */}
+        <div className="flex flex-col md:col-span-2">
+          <label className="text-[11px] uppercase tracking-widest text-[#808080] mb-2 font-medium">Designation</label>
+          <div className="relative flex items-center">
+            <i className="fa-solid fa-briefcase absolute left-4 text-[#404040] text-sm pointer-events-none"></i>
+            <select
+              name="designation"
+              required
+              value={formData.designation}
+              onChange={handleChange}
+className="w-full bg-[#0a0a0a] border border-[#1a1a1a] py-3 pl-[45px] pr-10 rounded-2xl text-white text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none cursor-pointer overflow-hidden"            >
+              <option value="" disabled className="bg-[#0a0a0a]">Select designation</option>
+              {designations.map((designation) => (
+                <option key={designation.value} value={designation.value} className="bg-[#0a0a0a]">
+                  {designation.label}
+                </option>
+              ))}
+            </select>
+            {/* Custom Dropdown Arrow */}
+            <div className="absolute right-4 pointer-events-none text-[#404040]">
+              <i className="fa-solid fa-chevron-down text-[10px]"></i>
+            </div>
+          </div>
+        </div>
 
               {/* Password */}
               <div className="flex flex-col">
