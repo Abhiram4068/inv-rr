@@ -49,7 +49,6 @@ const FileDetails = () => {
   }, [id]);
 
 useEffect(() => {
-  console.log('file object:', file);
   if (!file?.file_url) return;
   const ct = file.content_type || '';
   if (!ct.startsWith('image/') && ct !== 'application/pdf') return;
@@ -168,6 +167,11 @@ const saveDetails = async () => {
       showToast("Please add at least one recipient email");
       return;
     }
+    if (!shareData.title || !shareData.title.trim()) {
+      showToast("Title is required");
+      return;
+    }
+
 
     const payload = {
       recipient_emails: validEmails,
@@ -287,6 +291,7 @@ const saveDetails = async () => {
     if (lower.endsWith(".doc") || lower.endsWith(".docx")) return "Word Document";
     if (lower.endsWith(".xls") || lower.endsWith(".xlsx")) return "Excel Spreadsheet";
     if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "Image";
+    if (lower.endsWith(".zip") || lower.endsWith(".rar")) return "Zip File";
     return "File";
   };
 

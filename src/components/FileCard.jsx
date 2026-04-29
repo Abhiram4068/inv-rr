@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from "react-router-dom";
 import * as pdfjsLib from 'pdfjs-dist';
+import { getFileMeta } from "../utils/fileIcons";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
+  'pdfjs-dist/build/pdf.worker.min.js',
   import.meta.url
 ).toString();
 
@@ -18,7 +19,7 @@ const PdfThumb = ({ fileUrl }) => {
       try {
         const pdf = await pdfjsLib.getDocument(fileUrl).promise;
         if (cancelled) return;
-        const page = await pdf.getPage(1);
+        const page = await pdf.getPage(2);
         if (cancelled) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -61,24 +62,25 @@ const FileCard = ({ id, title, display_name, originalName, size, time, iconClass
   }, [theme]);
 
   const isDark = theme === 'dark';
-  const isImage = contentType?.startsWith('image/');
-  const isPdf = contentType === 'application/pdf';
+const fileMeta = getFileMeta(contentType);
 
-  const PreviewArea = () => {
-    if (isImage && fileUrl) {
-      return (
-        <img
-          src={fileUrl}
-          alt={title}
-          className="w-full h-full object-cover absolute inset-0"
-        />
-      );
-    }
-    if (isPdf && fileUrl) {
-      return <PdfThumb fileUrl={fileUrl} />;
-    }
-    return null;
-  };
+const PreviewArea = () => {
+  if (fileMeta.category === "image" && fileUrl) {
+    return (
+      <img
+        src={fileUrl}
+        alt={title}
+        className="w-full h-full object-cover absolute inset-0"
+      />
+    );
+  }
+
+  if (fileMeta.category === "pdf" && fileUrl) {
+    return <PdfThumb fileUrl={fileUrl} />;
+  }
+
+  return null;
+};
 
   const Content = (
     <>
@@ -87,10 +89,17 @@ const FileCard = ({ id, title, display_name, originalName, size, time, iconClass
 
         <PreviewArea />
 
-        {!isImage && !isPdf && (
-          <i className={`fa-solid ${iconClass} text-[40px] absolute z-10 group-hover:scale-110 transition-all
-            ${isDark ? 'text-[#808080]' : 'text-blue-500'}`}></i>
-        )}
+      {!fileMeta.canPreview && (
+        <i
+          className={`fa-solid ${fileMeta.icon} text-[40px] absolute z-10 group-hover:scale-110 transition-all`}
+          style={{
+    color: fileMeta.color,
+    fontSize: "64px",
+    transform: "rotate(-5deg)",
+    filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.4))"
+  }}
+        />
+      )}
       </div>
 
       <div className="p-4">
