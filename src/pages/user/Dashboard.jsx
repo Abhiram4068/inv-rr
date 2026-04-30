@@ -81,7 +81,6 @@ const Dashboard = () => {
       showToast('Please select files first.', 'error');
       return;
     }
-    // Placeholder for backend call
     showToast(`${selectedFiles.length} file(s) ready for upload`, 'success');
   };
 
@@ -114,46 +113,64 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* 2. KPI & UPLOAD GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      {/* 2. TOP SECTION: GRAPH & UPLOAD AREA */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         
-        {/* Left Column: 4 Stat Tiles */}
-        <div className="lg:col-span-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatCard label="Total Sent" value="8,492" sub="Files delivered" isDark={isDark} />
-          <StatCard label="Shared Contacts" value="142" sub="Active recipients" isDark={isDark} />
+        {/* Storage Visualizer */}
+        <div className={`lg:col-span-1 border rounded-3xl p-6 flex flex-col items-center justify-center transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div className="w-full flex justify-between items-center mb-4">
+            <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Storage Overview</span>
+            <button className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-1">
+              Manage <i className="fa-solid fa-chevron-right text-[8px]"></i>
+            </button>
+          </div>
           
-          <div className={`border p-5 rounded-2xl flex flex-col justify-center transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <div className="text-[10px] text-blue-500 uppercase tracking-widest font-black mb-1">Next Report In</div>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>5 <span className={`text-sm ${isDark ? 'text-[#666]' : 'text-slate-400'}`}>days</span></div>
-            <div className={`text-[10px] mt-1 font-bold uppercase ${isDark ? 'text-[#444]' : 'text-slate-300'}`}>Weekly Cycle</div>
+          <div className="relative flex items-center justify-center py-2">
+             <svg className="w-44 h-44 transform -rotate-90">
+                <circle cx="88" cy="88" r="75" stroke="currentColor" strokeWidth="12" fill="transparent" className={`${isDark ? 'text-[#111]' : 'text-slate-100'}`} />
+                <circle cx="88" cy="88" r="75" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray="471" strokeDashoffset={471 - (471 * 0.93)} strokeLinecap="round" className="text-blue-600 transition-all duration-1000" />
+             </svg>
+             <div className="absolute flex flex-col items-center">
+                <span className={`text-4xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>93%</span>
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Used</span>
+             </div>
           </div>
 
-          <div className={`border p-5 rounded-2xl transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <span className={`text-[10px] uppercase font-bold tracking-widest ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Storage used</span>
-            <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>14.08 <span className={`text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>GB</span></div>
-            <div className={`w-full h-1.5 rounded-full mt-3 overflow-hidden ${isDark ? 'bg-[#1a1a1a]' : 'bg-slate-100'}`}>
-              <div className="bg-blue-500 h-full w-[93%] rounded-full"></div>
+          <div className="w-full flex flex-col gap-4 mt-4 px-2">
+            <div className="flex justify-between items-end">
+              <div>
+                <div className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>14.08 <span className="text-xs font-medium opacity-50">GB</span></div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total space used</div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs font-bold text-emerald-500">0.92 GB</div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Remaining</div>
+              </div>
             </div>
+            
+            <button className={`w-full py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isDark ? 'bg-[#111] text-white border border-[#222] hover:bg-[#1a1a1a]' : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-white hover:shadow-md'}`}>
+              Manage Storage
+            </button>
           </div>
         </div>
 
-        {/* Right Column: Functional Drag & Drop */}
+        {/* Functional Drag & Drop Area */}
         <div 
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
-          className={`lg:col-span-2 border-2 border-dashed rounded-3xl p-6 flex flex-col transition-all min-h-[280px] ${
+          className={`lg:col-span-2 border-2 border-dashed rounded-3xl p-6 flex flex-col transition-all min-h-[340px] ${
             isDragging ? 'border-blue-500 bg-blue-500/5' : 
             isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'
           }`}
         >
           {selectedFiles.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center cursor-pointer" onClick={handleZoneClick}>
-               <div className={`w-12 h-12 rounded-2xl mb-3 flex items-center justify-center ${isDark ? 'bg-[#0a0a0a]' : 'bg-blue-50'}`}>
-                <i className="fa-solid fa-cloud-arrow-up text-xl text-blue-500"></i>
+               <div className={`w-14 h-14 rounded-2xl mb-4 flex items-center justify-center ${isDark ? 'bg-[#0a0a0a]' : 'bg-blue-50'}`}>
+                <i className="fa-solid fa-cloud-arrow-up text-2xl text-blue-500"></i>
               </div>
               <h3 className={`font-bold text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>Click or drag file to upload</h3>
-              <p className={`text-[11px] mt-1 ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Max file size 50MB</p>
+              <p className={`text-[11px] mt-1 ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Maximum single file size: 50MB</p>
             </div>
           ) : (
             <div className="flex-1 flex flex-col">
@@ -161,7 +178,7 @@ const Dashboard = () => {
                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">{selectedFiles.length} Files Selected</span>
                 <button onClick={() => setSelectedFiles([])} className="text-[10px] font-bold text-red-500 uppercase">Clear All</button>
               </div>
-              <div className="space-y-2 overflow-y-auto max-h-[160px] pr-2 no-scrollbar">
+              <div className="space-y-2 overflow-y-auto max-h-[200px] pr-2 no-scrollbar">
                 {selectedFiles.map(file => (
                   <div key={file.id} className={`flex items-center justify-between p-3 rounded-xl border ${isDark ? 'bg-black border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'}`}>
                     <div className="flex items-center gap-3">
@@ -177,14 +194,26 @@ const Dashboard = () => {
               </div>
               <button 
                 onClick={handleUpload}
-                className="mt-auto w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all"
+                className="mt-auto w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
               >
-                Confirm & Upload
+                Confirm & Start Upload
               </button>
             </div>
           )}
           <input type="file" ref={fileInputRef} onChange={(e) => handleFiles(e.target.files)} multiple className="hidden" />
         </div>
+      </div>
+
+      {/* 3. KPI ROW (Moved down as requested) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Total Sent" value="8,492" sub="Files delivered" isDark={isDark} />
+          <StatCard label="Shared Contacts" value="142" sub="Active recipients" isDark={isDark} />
+          <div className={`border p-5 rounded-2xl flex flex-col justify-center transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
+            <div className="text-[10px] text-blue-500 uppercase tracking-widest font-black mb-1">Next Report In</div>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>5 <span className={`text-sm ${isDark ? 'text-[#666]' : 'text-slate-400'}`}>days</span></div>
+            <div className={`text-[10px] mt-1 font-bold uppercase ${isDark ? 'text-[#444]' : 'text-slate-300'}`}>Weekly Cycle</div>
+          </div>
+          <StatCard label="Monthly Reach" value="+24%" sub="Growth from last month" isDark={isDark} />
       </div>
 
       {/* 4. ACTIVITY & LINKS GRID */}
