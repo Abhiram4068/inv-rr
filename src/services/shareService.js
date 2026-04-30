@@ -12,10 +12,14 @@ export const getSharedFiles = (page=1, pageSize=10) =>
 export const scheduleShareFile = (fileId, shareData) =>
   api.post(`/files/${fileId}/share/schedule/`, shareData);
 
-
-// GET /files/scheduled/
-export const getScheduledFiles = () =>
-  api.get(`/scheduled-mails/`);
+export const getScheduledFiles = (page = 1, pageSize = 7, statusFilter = 'All') =>
+  api.get(`/scheduled-mails/`, { 
+    params: { 
+      page, 
+      page_size: pageSize,
+      ...(statusFilter !== 'All' && { status: statusFilter.toLowerCase() })
+    } 
+  }); 
 
 //PUT /files/revoke/
 export const revokeShare = (fileId) =>
