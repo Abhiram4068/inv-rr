@@ -1,4 +1,4 @@
-import api from "../api/axios";
+  import api from "../api/axios";
 
 // GET  /file-list/
 export const getFiles = (page = 1, search = "") =>
