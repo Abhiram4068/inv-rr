@@ -32,6 +32,20 @@ export const deleteFile = (fileId) =>
 export const archiveFile = (fileId) =>
   api.post(`/files/${fileId}/archive/`);
 
+// GET /files/archives/
+export const getArchives = (page = 1, search = "") =>
+  api.get("/files/archives/", { params: { page, search } });
+
+// UNARCHIVE /files/:id/unarchive/
+export const unarchiveFile = (fileId) =>
+  api.post(`/files/${fileId}/unarchive/`);
+
+// PUT /files/archive-delete/
+export const deleteArchivedFiles = (fileIds) =>
+  api.put("/files/archives/delete/", {
+    file_ids: fileIds,
+  });
+
 // GET  /files/view-recently-deleted/
 export const getDeletedFiles = () =>
   api.get("/files/view-recently-deleted/");
