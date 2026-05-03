@@ -21,9 +21,16 @@ export const getScheduledFiles = (page = 1, pageSize = 7, statusFilter = 'All') 
     } 
   }); 
 
+export const getScheduledCalendar = (month, year) => {
+  return api.get("/scheduled-mails/calendar/", {
+    params: { month, year }
+  });
+};
+
 //PUT /files/revoke/
 export const revokeShare = (fileId) =>
   api.put(`/files/${fileId}/revoke/`);
 
-
-
+//POST /scheduled-mails/:id/revoke/
+export const revokeScheduledMail = (mailId) =>
+  api.post(`/scheduled-mails/${mailId}/revoke/`);

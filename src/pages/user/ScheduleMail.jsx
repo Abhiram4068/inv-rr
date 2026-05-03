@@ -145,7 +145,7 @@ const ScheduleMail = () => {
     setSearchTerm("");
     showToast(`File updated`);
   };
-
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const handleScheduleSubmit = async () => {
     if (!attachedFile) {
       setActiveModal(null);
@@ -158,6 +158,11 @@ const ScheduleMail = () => {
       showToast("Please add at least one recipient email.", "error");
       return;
     }
+    if (validRecipients.some(email => !isValidEmail(email))) {
+  setActiveModal(null);
+  showToast("Enter valid email addresses", "error");
+  return;
+}
     const selectedDateTime = new Date(`${scheduleDate}T${scheduleTime}:00`);
     const now = new Date();
     if(selectedDateTime <= now){
@@ -218,15 +223,7 @@ setExpirationHours(24);
       )}
 
       <main className="flex-1 overflow-y-auto no-scrollbar p-6 lg:p-10 flex flex-col gap-8">
-                <Link 
-          to="/" 
-          className={`flex items-center gap-2 transition-colors text-xs group w-fit mb-4 ${
-            isDark ? 'text-neutral-500 hover:text-white' : 'text-slate-500 hover:text-blue-600'
-          }`}
-        >
-          <i className="fa-solid fa-arrow-left text-[10px] group-hover:-translate-x-1 transition-transform"></i>
-          <span className="font-bold tracking-wide uppercase">Back to Dashboard</span>
-        </Link>
+               
         {/* Header */}
         <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b ${isDark ? 'border-[#1a1a1a]' : 'border-slate-300'}`}>
           <div className="flex items-center gap-5">
@@ -317,12 +314,23 @@ setExpirationHours(24);
                   value={email} 
                   onChange={(e) => handleEmailChange(i, e.target.value)}
                   placeholder="Recipient email"
-                  className={`bg-transparent outline-none flex-1 min-w-0 ${isDark ? 'text-[#808080]' : 'text-slate-600'}`}
+                  className={`bg-transparent outline-none flex-1 min-w-0 ${
+                    email === "" || isValidEmail(email)
+                      ? (isDark ? 'text-[#808080]' : 'text-slate-600')
+                      : 'text-red-500'
+                  }`}
                 />
+                {email && !isValidEmail(email) && (
+                <p className="text-[10px] text-red-500 mt-1">
+                Invalid email
+                </p>
+                )}
+                
               {email.trim() !== "" && (  <i 
                   onClick={() => removeRecipient(i)} 
                   className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors ml-auto"
                 ></i>)}
+                
               </div>
             ))}
                 <button onClick={addRecipient} className={`border border-dashed p-2.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-slate-600 hover:border-slate-600'}`}>
