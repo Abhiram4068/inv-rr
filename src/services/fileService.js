@@ -26,7 +26,7 @@ export const downloadFile = (fileId) =>
 
 // DELETE /files/:id/file-delete/
 export const deleteFile = (fileId) =>
-  api.delete(`/files/${fileId}/file-delete/`);
+  api.delete(`/files/${fileId}/delete/`);
 
 // ARCHIVE /files/:id/archive/
 export const archiveFile = (fileId) =>
@@ -47,8 +47,12 @@ export const deleteArchivedFiles = (fileIds) =>
   });
 
 // GET  /files/view-recently-deleted/
-export const getDeletedFiles = () =>
-  api.get("/files/view-recently-deleted/");
+export const getDeletedFiles = (page = 1, search = "") =>
+  api.get("/files/view-recently-deleted/", { params: { page, search } });
+
+// DELETE /files/clear-trash/:id/
+export const clearTrashFile = (fileId) =>
+  api.delete(`/files/clear-trash/${fileId}/`);
 
 // POST /files/:id/restore/recently-deleted/
 export const restoreFile = (fileId) =>

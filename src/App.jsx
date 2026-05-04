@@ -73,12 +73,13 @@ function App() {
             <Route path="/schedule-mail" element={<ScheduleMail />} />
             <Route path="/schedules"     element={<SchedulesList />} />
             <Route path="/reports"       element={<ManagerReports />} />
+            <Route path="/storage/trash"           element={<TrashManagement />} />
           </Route>
 
           <Route element={<StorageLayout />}>
             <Route path="/storage/storage-cleanup" element={<ManageStorage />} />
             <Route path="/storage/view-duplicates" element={<DuplicateManager />} />
-            <Route path="/storage/trash"           element={<TrashManagement />} />
+            
             <Route path="/storage/view-oldfiles"   element={<OldFilesManager />} />
           </Route>
 
