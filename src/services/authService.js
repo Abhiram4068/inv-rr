@@ -69,5 +69,17 @@ export const profile = () => api.get("/api/profile/");
 export const getDesignations = () => api.get("/api/designations/");
 export const updateProfile = (data) => api.patch("/api/profile/", data);
 export const changePassword = (data) => api.post("/api/auth/change-password/", data);
+export const forgotPassword = (data) => {
+  return api.post("/api/auth/forgot-password/", data);
+};
+
+export const resetPassword = ({ uid, token, new_password, confirm_password }) => {
+  return api.post("/api/auth/reset-password/confirm/", {
+    uid,
+    token,
+    new_password,
+    confirm_password,
+  });
+};
 
 export default api;

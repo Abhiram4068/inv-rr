@@ -19,7 +19,7 @@ const PdfThumb = ({ fileUrl }) => {
       try {
         const pdf = await pdfjsLib.getDocument(fileUrl).promise;
         if (cancelled) return;
-        const page = await pdf.getPage(2);
+        const page = await pdf.getPage(1);
         if (cancelled) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -46,6 +46,7 @@ const PdfThumb = ({ fileUrl }) => {
 };
 
 const FileCard = ({ id, title, display_name, originalName, size, time, iconClass, isLink = false, fileUrl, contentType }) => {
+  console.log("fileUrl",fileUrl)
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {

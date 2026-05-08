@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
-import { login } from "../../services/authService";
+import { login, forgotPassword } from "../../services/authService";
 import useAuth from "../../hooks/useAuth";
 
 const Login = () => {
@@ -33,7 +33,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
   if (authLoading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -112,9 +111,13 @@ const Login = () => {
                 <label className="text-[11px] uppercase tracking-widest text-[#808080] font-medium">
                   Password
                 </label>
-                <Link to="#" className="text-[11px] text-blue-500 hover:underline">
-                  Forgot password?
-                </Link>
+<Link
+  to="/forgot-password"
+  className="text-[11px] text-blue-500 hover:underline"
+>
+  Forgot password?
+</Link>
+
               </div>
               <div className="relative flex items-center">
                 <i className="fa-solid fa-lock absolute left-4 text-[#404040] text-sm"></i>

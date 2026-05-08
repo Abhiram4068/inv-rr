@@ -90,12 +90,6 @@ const ViewAllShares = () => {
       )}
 
       <div className="p-6 lg:p-10 pb-60 max-w-6xl mx-auto">
-        
-        {/* BREADCRUMB */}
-        <Link to='/shared' className={`flex items-center gap-2 transition-colors mb-6 text-sm group ${isDark ? 'text-neutral-500 hover:text-white' : 'text-slate-500 hover:text-blue-600'}`}>
-          <i className="fa-solid fa-arrow-left text-[10px] group-hover:-translate-x-1 transition-transform"></i>
-          <span className="font-bold">Back to Shared</span>
-        </Link>
 
         {/* HEADER & SEARCH */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
@@ -202,7 +196,7 @@ const ViewAllShares = () => {
                           >
                             <i className="fa-solid fa-eye"></i>
                           </button>
-                          {!hasBeenAccessed && !file.revoked_at && file.status !== 'Revoked' ? (
+                          {!hasBeenAccessed && !file.revoked_at && file.status !== 'Revoked' && file.status !== 'Expired' ? (
                             <button 
                               onClick={() => { setSelectedFile(file); setModalOpen(true); }}
                               className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-neutral-800 text-red-400' : 'hover:bg-slate-100 text-red-500'}`}

@@ -38,7 +38,8 @@ const Sidebar = ({ isOpen }) => {
       {[
         { to: "/", icon: "fa-house", label: "Home" },
         { to: "/files", icon: "fa-folder-open", label: "My Files" },
-        { to: "/shared", icon: "fa-share-nodes", label: "Shares" },
+        { to: "/viewallshares", icon: "fa-share-nodes", label: "Shares" },
+                { to: "/schedules", icon: "fa-calendar-days", label: "Schedules" },
         { to: "/recent", icon: "fa-clock", label: "Recents" },
         { to: "/starred", icon: "fa-star", label: "Starred" },
       ].map((item) => (
@@ -70,7 +71,8 @@ const Sidebar = ({ isOpen }) => {
       
       {[
         { to: "/collections", icon: "fa-folder", label: "Collections" },
-        { to: "/schedules", icon: "fa-calendar-days", label: "Schedules" },
+        { to: "/threads", icon: "fa-code-fork rotate-130", label: "Threads" },
+
         { to: "/reports", icon: "fa-chart-line", label: "Reports" },
         
       ].map((item) => (

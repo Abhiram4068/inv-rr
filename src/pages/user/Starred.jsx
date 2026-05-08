@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { getStarredFiles } from '../../services/fileService';
 import { getStarredCollection } from '../../services/collectionService';
-
+import { getFileMeta } from '../../utils/fileIcons';
+import FileCard from '../../components/FileCard';
 
 const StarredItems = () => {
   // --- THEME STATE SYNC ---
@@ -101,37 +102,6 @@ const StarredItems = () => {
     setStarredCollections(collection.filter(folder => folder.id !== id));
     showToast("Folder unpinned successfully");
   };
-const getFileIcon = (contentType) => {
-  if (!contentType) return { icon: "fa-file", color: "#9ca3af" };
-  // PDF
-  if (contentType.includes("pdf")) {
-    return { icon: "fa-file-pdf", color: "#ff4444" };
-  }
-  // Excel
-  if (
-    contentType.includes("excel") ||
-    contentType.includes("spreadsheet") ||
-    contentType.includes("sheet")
-  ) {
-    return { icon: "fa-file-excel", color: "#00c851" };
-  }
-  // Word
-  if (
-    contentType.includes("word") ||
-    contentType.includes("document")
-  ) {
-    return { icon: "fa-file-word", color: "#3b82f6" };
-  }
-  // Images
-  if (contentType.includes("image")) {
-   return { icon: "fa-file-image", color: "#22c55e" };
-  }
-  // Videos
-  if (contentType.includes("video")) {
-    return { icon: "fa-file-video", color: "#a855f7" };
-  }
-  return { icon: "fa-file", color: "#9ca3af" };
-};
   return (
     <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
       
@@ -147,21 +117,23 @@ const getFileIcon = (contentType) => {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar">
+        {/* --- HEADER --- */}
+<div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-10">
+  <div>
+    <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+      Starred Items
+    </h1>
+
+    <p className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm mt-1`}>
+      Manage your important starred files and collections.
+    </p>
+  </div>
+</div>
         
         {/* Search and Action Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-          <div className={`w-full max-w-[450px] border p-[10px_16px] rounded-xl flex items-center transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <i className={`fa fa-search ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}></i>
-            <input 
-              type="text" 
-              placeholder="Search Starred Files..." 
-              className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`} 
-            />
-          </div>
-          <div className="flex gap-3 w-full md:w-auto">
-             <button className={`flex-1 md:flex-none p-[10px_20px] rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border ${isDark ? 'bg-[#1a1a1a] text-white border-[#333] hover:opacity-80' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-sm'}`}>
-                <i className="fa-solid fa-filter text-xs"></i> Filter
-             </button>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-0 ">
+          <div className={`w-full max-w-[450px] p-[10px_16px] rounded-xl flex items-center transition-all `}>
+            
           </div>
         </div>
 
@@ -185,60 +157,46 @@ const getFileIcon = (contentType) => {
     </div>
   </div>
 ):starredFiles.length === 0?(
-  <div className="py-16 text-center">
+  <div className="py-16 flex flex-col items-center justify-center gap-4">
     <div className={`text-sm font-bold ${isDark ? "text-[#808080]" : "text-slate-500"}`}>
       No starred files found.
     </div>
+    <Link
+      to="/files"
+      className="inline-flex items-center gap-2 text-blue-400 px-5 py-2.5 text-sm font-semibold transition-all hover:underline"
+    >
+      <i className="fa-solid fa-folder-open"></i>
+      Browse Files
+    </Link>
   </div>
 ):(
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                {starredFiles.map((item) => {
-                const { icon, color } = getFileIcon(item.content_type);
-
-                return (
-                <Link key={item.id} to={`/file/${item.id}`}>
-                <div className={`rounded-lg overflow-hidden transition-all hover:-translate-y-1 group cursor-pointer relative border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-200 hover:shadow-md'}`}>
-
-                <div 
-                className="absolute top-3 right-3 z-20 cursor-pointer"
-                onClick={() => handleUnstarItem(item.id)}
-                >
-                <i className="fa-solid fa-star text-[#f59e0b] hover:scale-125 transition-transform"></i>
-                </div>
-
-                <div className={`h-[140px] flex items-center justify-center relative border-b ${isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'}`}>
-                <i 
-                className={`fa-solid ${icon} text-[40px] absolute z-10 group-hover:scale-110 transition-transform`} 
-                style={{ color }}
-                ></i>
-                </div>
-
-                <div className="p-4">
-                <span className={`block text-sm font-bold mb-2 truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                {item.original_name}
-                </span>
-
-                <div className={`flex justify-between text-[12px] ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-                <span> {item.created_at}</span>
-                <span>{item.file_size}</span>
-                </div>
-                </div>
-
-                </div>
-                </Link>
-                );
-                })}
+{starredFiles.map((item) => (
+  <FileCard
+    key={item.id}
+    id={item.id}
+    title={item.original_name}
+    display_name={item.display_name || item.description || "Untitled"}
+    size={item.file_size}
+    time={item.created_at}
+    isLink={true}
+    fileUrl={item.file_url}
+    contentType={item.content_type}
+  />
+))}
           </div>
 )
 }
 
           
-          {/* VIEW ALL STARRED FILES LINK */}
-          <div className="mt-4">
-            <Link to="/starred-files" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-              View all starred files
-            </Link>
-          </div>
+{/* VIEW ALL STARRED FILES LINK */}
+{starredFiles.length > 0 && (
+  <div className="mt-4">
+    <Link to="/starred-files" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+      View all starred files
+    </Link>
+  </div>
+)}
         </div>
 
         {/* SECTION: Pinned Collections */}
@@ -261,10 +219,16 @@ const getFileIcon = (contentType) => {
     </div>
   </div>
 ):starredCollections.length === 0?(
-  <div className="py-16 text-center">
+  <div className="py-16 flex flex-col items-center justify-center gap-4">
     <div className={`text-sm font-bold ${isDark ? "text-[#808080]" : "text-slate-500"}`}>
       No starred collections found.
     </div>
+    <Link
+      to="/collections"
+className="inline-flex items-center gap-2 text-blue-400 px-5 py-2.5 text-sm font-semibold transition-all hover:underline"    >
+      <i className="fa-solid fa-layer-group"></i>
+      Browse Collections
+    </Link>
   </div>
 ):(
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -287,12 +251,15 @@ const getFileIcon = (contentType) => {
             ))}
           </div>
 )}
-          {/* VIEW ALL STARRED FOLDERS LINK */}
-          <div className="mt-4">
-            <Link to="/starred-folders" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-              View all starred Collections
-            </Link>
-          </div>
+{/* VIEW ALL STARRED FOLDERS LINK */}
+{starredCollections.length > 0 && (
+  <div className="mt-4">
+    <Link to="/starred-folders" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+      View all starred Collections
+    </Link>
+  </div>
+)}
+          
         </div>
       </main>
     </div>
