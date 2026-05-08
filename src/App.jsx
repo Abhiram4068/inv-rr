@@ -6,7 +6,6 @@ import PublicRoute from "./routes/PublicRoute";
 
 import UserLayout from "./layouts/UserLayout";
 import StorageLayout from "./layouts/StorageManagement";
-import RecentLayout from "./layouts/RecentLayout";
 import CollectionLayout from "./layouts/CollectionLayout";
 
 import Dashboard from "./pages/user/Dashboard";
@@ -17,14 +16,14 @@ import FileDetails from "./pages/user/FileDetails";
 import RecentFiles from "./pages/user/RecentFiles";
 import Starred from "./pages/user/Starred";
 import StarredFiles from "./pages/user/StarredFiles";
-import Shared from "./pages/user/Shared";
 import ArchivesList from "./pages/user/Archives";
 import Collections from "./pages/user/Collections";
 import CollectionDetails from "./pages/user/CollectionDetails";
 import TrashManagement from "./pages/user/storage/Trash";
 import UploadFilesMain from "./pages/user/UploadFile";
 import StorageDashboard from "./pages/user/StorageDashboard";
-
+import Threads from "./pages/user/Threads";
+import ThreadVisualizer from "./pages/user/ThreadVisualizer";
 import UserProfile from "./pages/user/profile/UserProfile";
 import AccountSettings from "./pages/user/profile/Profilesettings";
 
@@ -32,7 +31,8 @@ import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
 import ExternalShareView from "./pages/public/PublicView";
 import Landing from "./pages/public/Landing";
-
+import ResetPassword from "./pages/public/ResetPassword";
+import ForgotPassword from "./pages/public/ForgotPassword";
 import ManageStorage from "./pages/user/storage/ManageStorage";
 import DuplicateManager from "./pages/user/storage/ViewDuplicates";
 import OldFilesManager from "./pages/user/storage/ViewOldFiles";
@@ -52,7 +52,8 @@ function App() {
           <Route path="/register"     element={<Register />} />
         </Route>
         <Route path="/downloadpage" element={<ExternalShareView />} />
-
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/auth/reset-password/confirm" element={<ResetPassword />} />
         {/* ── Protected routes — cookie checked first ── */}
         <Route element={<ProtectedRoute />}>
 
@@ -63,7 +64,6 @@ function App() {
             <Route path="/file/:id"   element={<FileDetails />} />
             <Route path="/starred"       element={<Starred />} />
             <Route path="/starred-files" element={<StarredFiles />} />
-            <Route path="/shared"        element={<Shared />} />
             <Route path="/collections"   element={<Collections />} />
             <Route path="/upload-file"   element={<UploadFilesMain />} />
             <Route path="/viewallshares" element={<ViewAllShares />} />
@@ -73,7 +73,10 @@ function App() {
             <Route path="/schedule-mail" element={<ScheduleMail />} />
             <Route path="/schedules"     element={<SchedulesList />} />
             <Route path="/reports"       element={<ManagerReports />} />
+            <Route path="/threads"     element={<Threads />} />
+            <Route path="/thread/:id" element={<ThreadVisualizer />} />
             <Route path="/storage/trash"           element={<TrashManagement />} />
+            <Route path="/recent" element={<RecentFiles />} />
           </Route>
 
           <Route element={<StorageLayout />}>
@@ -81,10 +84,6 @@ function App() {
             <Route path="/storage/view-duplicates" element={<DuplicateManager />} />
             
             <Route path="/storage/view-oldfiles"   element={<OldFilesManager />} />
-          </Route>
-
-          <Route element={<RecentLayout />}>
-            <Route path="/recent" element={<RecentFiles />} />
           </Route>
 
           <Route element={<CollectionLayout />}>

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import FileCard from '../../components/FileCard';
 import { Link } from "react-router-dom";
-import { getFiles } from '../../services/fileService';
+import { getStarredFiles } from '../../services/fileService';
 
 const StarredFiles = () => {
   // 1. Theme State Sync
@@ -115,7 +115,7 @@ const StarredFiles = () => {
       setLoading(true);
       setError("");
       try {
-        const res = await getFiles(page, search);
+        const res = await getStarredFiles();
         const data = res.data;
 
         const results = Array.isArray(data)
@@ -196,7 +196,9 @@ const StarredFiles = () => {
               size={sizeFormatter(file.file_size)}
               time={timeFormatter(file.created_at)}
               iconClass={iconClassForFile(file)}
+              fileUrl={file.file_url}
               isLink={true}
+              contentType={file.content_type}
             />
           ))}
         </div>

@@ -98,7 +98,6 @@ const PaginatedFiles = () => {
 
   const pageNumbers = useMemo(() => {
     if (count === null) return [page - 1, page, page + 1].filter((p) => p >= 1);
-    // Fallback if backend doesn't tell us page size.
     const pageSizeFallback = 12;
     const totalPages = Math.max(1, Math.ceil(count / pageSizeFallback));
     const start = Math.max(1, page - 1);
@@ -117,7 +116,6 @@ const PaginatedFiles = () => {
       try {
         const res = await getFiles(page, search);
         const data = res.data;
-        console.log(data);
         const results = Array.isArray(data)
           ? data
           : Array.isArray(data?.results)
@@ -182,9 +180,23 @@ const PaginatedFiles = () => {
         <div className="py-16 text-center">
           <div className={`text-sm font-bold ${isDark ? "text-[#ff6b6b]" : "text-red-600"}`}>{error}</div>
         </div>
-      ) : files.length === 0 ? (
-        <div className="py-16 text-center">
-          <div className={`text-sm font-bold ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No files found.</div>
+) : files.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'}`}>
+            <i className="fa-solid fa-folder-open text-3xl text-gray-400 opacity-50"></i>
+          </div>
+          <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            No Files Added Yet
+          </h3>
+          <p className={`text-sm max-w-xs mb-8 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+            Your workspace is empty.
+          </p>
+          <Link
+            to="/upload-file"
+            className="text-[#3b82f6] border border-[#3b82f6]/30 px-6 py-2 rounded-lg font-medium hover:bg-[#3b82f6] hover:text-white transition-all text-sm no-underline"
+          >
+            <i className="fa-solid fa-plus mr-2"></i> Upload Files
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
@@ -205,62 +217,64 @@ const PaginatedFiles = () => {
         </div>
       )}
 
-      {/* Pagination */}
-      <div className="flex flex-wrap justify-center items-center gap-2 py-6">
-        <button
-          type="button"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1 || loading}
-          className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-            page === 1 || loading
-              ? isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
-                : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
-              : isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
-        >
-          <i className="fa fa-chevron-left text-xs" />
-        </button>
-
-        {pageNumbers.map((p) => (
+      {/* ✅ FIX 2: Pagination hidden when no files */}
+      {files.length > 0 && (
+        <div className="flex flex-wrap justify-center items-center gap-2 py-6">
           <button
-            key={p}
             type="button"
-            onClick={() => setPage(p)}
-            disabled={loading}
-            className={`w-10 h-10 rounded-lg font-semibold border transition-all ${
-              p === page
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1 || loading}
+            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+              page === 1 || loading
                 ? isDark
-                  ? "bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]"
-                  : "bg-blue-600 border-blue-600 text-white"
+                  ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
+                  : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
                 : isDark
                   ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
             }`}
           >
-            {p}
+            <i className="fa fa-chevron-left text-xs" />
           </button>
-        ))}
 
-        <button
-          type="button"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={!hasNext || loading}
-          className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-            !hasNext || loading
-              ? isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
-                : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
-              : isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
-        >
-          <i className="fa fa-chevron-right text-xs" />
-        </button>
-      </div>
+          {pageNumbers.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPage(p)}
+              disabled={loading}
+              className={`w-10 h-10 rounded-lg font-semibold border transition-all ${
+                p === page
+                  ? isDark
+                    ? "bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]"
+                    : "bg-blue-600 border-blue-600 text-white"
+                  : isDark
+                    ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!hasNext || loading}
+            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+              !hasNext || loading
+                ? isDark
+                  ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
+                  : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
+                : isDark
+                  ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
+                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <i className="fa fa-chevron-right text-xs" />
+          </button>
+        </div>
+      )}
 
       {/* Mobile Storage Warning */}
       <div className="lg:hidden mt-8 space-y-4">
