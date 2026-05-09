@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
-import { getStorageSummary } from "../../services/storageService";
+import { getStorageSummary, getStorageFiles } from "../../services/storageService";
 import { sizeFormatter } from '../../utils/sizeFormatter';
 const CATEGORY_CONFIG = {
   images:       { label: "Images",       color: "#10b981", icon: "fa-image" },
@@ -15,6 +15,9 @@ const StorageDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const [storageSummary, setStorageSummary] = useState(null)
+  const [files, setFiles] = useState([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [sortBy, setSortBy] = useState("-size");
 
   const isDark = theme === 'dark';
     useEffect(() => {
@@ -55,11 +58,8 @@ useEffect(() => {
 
   const fetchStorageSummary = async () => {
     try {
-
       const response = await getStorageSummary();
-
       setStorageSummary(response.data);
-
     } catch (error) {
       console.error("FULL ERROR:", error);
     }
@@ -68,30 +68,38 @@ useEffect(() => {
   fetchStorageSummary();
 }, []);
 
+useEffect(() => {
+  const fetchFiles = async () => {
+    setIsLoadingFiles(true);
+    try {
+      const response = await getStorageFiles({
+        filter_type: 'category',
+        category: selectedCategory,
+        sort_by: sortBy,
+        page: 1, // StorageDashboard might just show top 10
+        page_size: 10
+      });
+      setFiles(response.data.results || []);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
+  fetchFiles();
+}, [selectedCategory, sortBy]);
 
-  const allFiles = [
-    { name: "Raw_Footage_4K.mp4", size: "2.4 GB", type: "Videos", icon: "fa-video" },
-    { name: "Backup_Database_March.sql", size: "1.8 GB", type: "Others", icon: "fa-database" },
-    { name: "Summer_Vacation_01.jpg", size: "12 MB", type: "Images", icon: "fa-image" },
-    { name: "Product_Photos_HighRes.zip", size: "950 MB", type: "Others", icon: "fa-file-zipper" },
-    { name: "Marketing_Video_Final.mp4", size: "1.1 GB", type: "Videos", icon: "fa-video" },
-    { name: "Annual_Report_2025.pdf", size: "420 MB", type: "Documents", icon: "fa-file-pdf" },
-    { name: "Old_Project_Assets.iso", size: "380 MB", type: "Others", icon: "fa-compact-disc" },
-    { name: "Hero_Banner_v2.png", size: "45 MB", type: "Images", icon: "fa-image" },
-    { name: "Legal_Contract_Final.docx", size: "2 MB", type: "Documents", icon: "fa-file-word" },
-  ];
-
-  const storageByFormat = [
-    { format: "All", size: "14.08 GB", color: isDark ? "#ffffff" : "#1e293b", icon: "fa-layer-group" },
-    { format: "Videos", size: "8.4 GB", color: "#3b82f6", icon: "fa-video" },
-    { format: "Images", size: "3.2 GB", color: "#10b981", icon: "fa-image" },
-    { format: "Documents", size: "1.5 GB", color: "#f59e0b", icon: "fa-file-lines" },
-    { format: "Others", size: "0.98 GB", color: "#8b5cf6", icon: "fa-ellipsis-h" },
-  ];
-
-  const filteredFiles = selectedCategory === "All"
-    ? allFiles.slice(0, 6)
-    : allFiles.filter(file => file.type === CATEGORY_CONFIG[selectedCategory]?.label);
+  // Handle icon mapping based on content type
+  const getIconForContentType = (contentType) => {
+    if (!contentType) return "fa-file";
+    if (contentType.includes("image")) return "fa-image";
+    if (contentType.includes("video")) return "fa-video";
+    if (contentType.includes("pdf")) return "fa-file-pdf";
+    if (contentType.includes("word")) return "fa-file-word";
+    if (contentType.includes("zip") || contentType.includes("tar") || contentType.includes("rar")) return "fa-file-zipper";
+    if (contentType.includes("excel") || contentType.includes("spreadsheet") || contentType.includes("csv")) return "fa-table";
+    return "fa-file-lines";
+  };
 
   return (
     <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 min-h-screen ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
@@ -206,28 +214,30 @@ useEffect(() => {
 
         {/* RIGHT SIDE: Files List */}
         <div className="lg:col-span-8">
-          <div className="flex justify-between items-center mb-4 px-2">
+            <div className="flex justify-between items-center mb-4 px-2">
             <div className="flex items-center gap-3">
               <h3 className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-                {selectedCategory} Files
+                {CATEGORY_CONFIG[selectedCategory]?.label || "All"} Files
               </h3>
-              <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${isDark ? 'bg-[#111] text-[#555]' : 'bg-white text-slate-400 border border-slate-200'}`}>{filteredFiles.length} Items</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${isDark ? 'bg-[#111] text-[#555]' : 'bg-white text-slate-400 border border-slate-200'}`}>{files.length} Items</span>
             </div>
-            <button className="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6] hover:text-blue-400 transition-colors">
-              Sort by Size <i className="fa-solid fa-arrow-down-wide-short ml-1"></i>
+            <button onClick={() => setSortBy(sortBy === '-size' ? 'size' : '-size')} className="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6] hover:text-blue-400 transition-colors">
+              Sort by Size <i className={`fa-solid ${sortBy === '-size' ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'} ml-1`}></i>
             </button>
           </div>
 
           <div className="space-y-2">
-            {filteredFiles.map((file, i) => (
-              <ActivityItem key={i} icon={file.icon} title={file.name} type={file.type} size={file.size} isDark={isDark} />
-            ))}
-            
-            {filteredFiles.length === 0 && (
-              <div className={`flex flex-col items-center justify-center py-20 rounded-3xl border border-dashed ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                <i className={`fa-solid fa-folder-open text-4xl mb-3 ${isDark ? 'text-[#1a1a1a]' : 'text-slate-100'}`}></i>
-                <p className={`text-sm font-medium ${isDark ? 'text-[#333]' : 'text-slate-400'}`}>No files found here.</p>
-              </div>
+            {isLoadingFiles ? (
+                <div className="py-10 text-center"><i className="fa-solid fa-spinner fa-spin text-blue-500"></i></div>
+            ) : files.length > 0 ? (
+                files.map((file, i) => (
+                  <ActivityItem key={i} icon={getIconForContentType(file.content_type)} title={file.original_name} type={file.content_type || "Unknown"} size={sizeFormatter(file.file_size)} isDark={isDark} />
+                ))
+            ) : (
+                <div className={`flex flex-col items-center justify-center py-20 rounded-3xl border border-dashed ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+                  <i className={`fa-solid fa-folder-open text-4xl mb-3 ${isDark ? 'text-[#1a1a1a]' : 'text-slate-100'}`}></i>
+                  <p className={`text-sm font-medium ${isDark ? 'text-[#333]' : 'text-slate-400'}`}>No files found here.</p>
+                </div>
             )}
           </div>
         </div>

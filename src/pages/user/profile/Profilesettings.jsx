@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { profile, updateProfile, getDesignations, changePassword  } from '../../../services/authService';
+import useAuth from '../../../hooks/useAuth';
 
 const EditAccount = () => {
   // --- THEME STATE SYNC (Untouched) ---
@@ -9,6 +10,7 @@ const EditAccount = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [designations, setDesignations] = useState([]);
+  const { user, login } = useAuth();
 
   // --- Modal States ---
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -95,6 +97,16 @@ const EditAccount = () => {
         last_name: profileRes.data.last_name,
         designation: matchedDesig ? matchedDesig.value : userDesigLabel,
       });
+
+      // Update global user state so TopNavbar re-renders
+      if (user) {
+        login({
+          ...user,
+          first_name: profileRes.data.first_name,
+          last_name: profileRes.data.last_name,
+          designation: userDesigLabel
+        });
+      }
     } catch (err) {
        console.log(err.response?.data);
       setError(err.response?.data?.detail || "Failed to update profile");

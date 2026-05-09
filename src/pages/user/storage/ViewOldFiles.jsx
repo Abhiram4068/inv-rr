@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
+import { getStorageFiles, permanentDeleteFiles } from "../../../services/storageService";
+import { sizeFormatter } from '../../../utils/sizeFormatter';
 
 const OldFilesManager = () => {
   // --- THEME STATE SYNC ---
@@ -7,6 +9,11 @@ const OldFilesManager = () => {
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -23,22 +30,62 @@ const OldFilesManager = () => {
 
   const isDark = theme === 'dark';
 
-  // Mock Data focused on old, unaccessed files
-  const oldFiles = [
-    { id: 1, name: "Legacy_Project_Assets_2022.zip", type: "archive", size: "1.4 GB", lastAccessed: "14 months ago", date: "Jan 12, 2022", color: "#808080", icon: "fa-file-zipper" },
-    { id: 2, name: "Old_Financial_Spreadsheet.xlsx", type: "document", size: "12 MB", lastAccessed: "2 years ago", date: "Mar 20, 2021", color: "#10b981", icon: "fa-file-excel" },
-    { id: 3, name: "Draft_Video_Outtakes.mov", type: "video", size: "3.2 GB", lastAccessed: "11 months ago", date: "May 05, 2023", color: "#3b82f6", icon: "fa-file-video" },
-    { id: 4, name: "Temporary_SQL_Export.sql", type: "database", size: "450 MB", lastAccessed: "9 months ago", date: "Aug 18, 2023", color: "#8b5cf6", icon: "fa-database" },
-    { id: 5, name: "Unused_HighRes_Textures.rar", type: "archive", size: "890 MB", lastAccessed: "18 months ago", date: "Oct 30, 2022", color: "#ffa900", icon: "fa-file-zipper" },
-  ];
+  const fetchFiles = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getStorageFiles({
+        filter_type: 'old',
+        search: searchQuery,
+        sort_by: 'last_accessed',
+        page: page,
+        page_size: 10
+      });
+      setFiles(response.data.results || []);
+      const total = response.data.count || 0;
+      setTotalItems(total);
+      setTotalPages(Math.ceil(total / 10) || 1);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const filteredFiles = oldFiles.filter(file => 
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    fetchFiles();
+  }, [searchQuery, page]);
 
   const handleDeleteClick = (file) => {
     setSelectedFile(file);
     setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedFile) return;
+    try {
+      await permanentDeleteFiles([selectedFile.id]);
+      setDeleteModalOpen(false);
+      setSelectedFile(null);
+      // refetch
+      if (files.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        fetchFiles();
+      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+    }
+  };
+
+  const getIconForContentType = (contentType) => {
+    if (!contentType) return "fa-file";
+    if (contentType.includes("image")) return "fa-file-image";
+    if (contentType.includes("video")) return "fa-file-video";
+    if (contentType.includes("pdf")) return "fa-file-pdf";
+    if (contentType.includes("word")) return "fa-file-word";
+    if (contentType.includes("zip") || contentType.includes("tar") || contentType.includes("rar")) return "fa-file-zipper";
+    if (contentType.includes("excel") || contentType.includes("spreadsheet") || contentType.includes("csv")) return "fa-database";
+    return "fa-file-lines";
   };
 
   return (
@@ -65,7 +112,7 @@ const OldFilesManager = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Old Files</h1>
-          <p className={`text-sm mt-1 font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>Review files that haven't been opened in over 6 months</p>
+          <p className={`text-sm mt-1 font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>Review files that haven't been opened in over 6 months ({totalItems} files found)</p>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
           <div className={`flex-1 md:w-[300px] p-[10px_16px] rounded-xl flex items-center border transition-all ${
@@ -96,7 +143,9 @@ const OldFilesManager = () => {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDark ? 'divide-[#111]' : 'divide-slate-200/50'}`}>
-            {filteredFiles.map((file) => (
+            {isLoading ? (
+                <tr><td colSpan="5" className="p-10 text-center"><i className="fa-solid fa-spinner fa-spin text-blue-500 text-2xl"></i></td></tr>
+            ) : files.map((file) => (
               <tr 
                 key={file.id} 
                 className={`group transition-all duration-200 ${isDark ? 'hover:bg-[#111]' : 'hover:bg-white/50'}`}
@@ -104,11 +153,11 @@ const OldFilesManager = () => {
                 <td className="p-4 text-sm font-bold">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isDark ? 'bg-[#111] group-hover:bg-[#1a1a1a]' : 'bg-white shadow-sm'}`}>
-                      <i className={`fa-solid ${file.icon} text-base`} style={{ color: file.color }}></i>
+                      <i className={`fa-solid ${getIconForContentType(file.content_type)} text-base text-blue-500`}></i>
                     </div>
                     <div className="flex flex-col">
-                      <span className={`truncate max-w-[200px] ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.name}</span>
-                      <span className={`text-[10px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Created {file.date}</span>
+                      <span className={`truncate max-w-[200px] ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.original_name}</span>
+                      <span className={`text-[10px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Created {new Date(file.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </td>
@@ -118,10 +167,10 @@ const OldFilesManager = () => {
                     ? 'text-[#808080]' 
                     : ' text-slate-500'
                   }`}>
-                    {file.lastAccessed}
+                    {new Date(file.last_accessed || file.created_at).toLocaleDateString()}
                   </span>
                 </td>
-                <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.size}</td>
+                <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{sizeFormatter(file.file_size)}</td>
                 <td className="p-4 text-sm text-center">
                   <button className={`p-2 rounded-lg transition-colors ${isDark ? 'text-[#808080] hover:text-white bg-[#111] hover:bg-[#1a1a1a]' : 'text-slate-400 hover:text-blue-600 bg-white shadow-sm hover:shadow-md'}`}>
                     <i className="fa-solid fa-eye text-xs"></i>
@@ -132,7 +181,7 @@ const OldFilesManager = () => {
                     onClick={() => handleDeleteClick(file)}
                     className="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm"
                   >
-                    Archive
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -140,7 +189,7 @@ const OldFilesManager = () => {
           </tbody>
         </table>
         
-        {filteredFiles.length === 0 && (
+        {!isLoading && files.length === 0 && (
           <div className="py-20 text-center">
             <i className={`fa-solid fa-box-archive text-4xl mb-4 ${isDark ? 'text-[#333]' : 'text-slate-200'}`}></i>
             <p className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>No old files detected. Everything is current!</p>
@@ -151,30 +200,38 @@ const OldFilesManager = () => {
       {/* Footer Stats */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 mb-10">
         <p className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-          Found {filteredFiles.length} files for review
+          Showing {files.length} of {totalItems} files for review
         </p>
         <div className="flex gap-6 items-center">
-          <span className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-            Recoverable Space: <span className={`font-bold ml-1 ${isDark ? 'text-white' : 'text-blue-600'}`}>5.94 GB</span>
-          </span>
-          <button className={`px-5 py-2.5 text-[10px] uppercase tracking-widest rounded-lg border transition-all font-bold shadow-sm ${
-            isDark ? 'text-white border-[#1a1a1a] bg-[#0a0a0a] hover:bg-[#111]' : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50'
+          <button 
+            disabled={page === 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            className={`px-5 py-2.5 text-[10px] uppercase tracking-widest rounded-lg border transition-all font-bold shadow-sm ${
+            isDark ? 'text-white border-[#1a1a1a] bg-[#0a0a0a] hover:bg-[#111] disabled:opacity-50' : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50 disabled:opacity-50'
           }`}>
-            Sort by Date
+            Previous
+          </button>
+          <button 
+            disabled={page === totalPages}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            className={`px-5 py-2.5 text-[10px] uppercase tracking-widest rounded-lg border transition-all font-bold shadow-sm ${
+            isDark ? 'text-white border-[#1a1a1a] bg-[#0a0a0a] hover:bg-[#111] disabled:opacity-50' : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50 disabled:opacity-50'
+          }`}>
+            Next Page
           </button>
         </div>
       </div>
 
-      {/* ARCHIVE CONFIRMATION MODAL */}
+      {/* DELETE CONFIRMATION MODAL */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
           <div className={`p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
             <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-500/10 text-red-500`}>
-               <i className="fa-solid fa-box-open text-xl"></i>
+               <i className="fa-solid fa-trash-can text-xl"></i>
             </div>
-            <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Move to Archive?</h3>
+            <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Permanently Delete?</h3>
             <p className={`text-sm mb-8 leading-relaxed font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-              You haven't opened <span className={isDark ? 'text-white' : 'text-slate-800'}>{selectedFile?.name}</span> in over a year. Archiving it will free up space while keeping it safe.
+              You are about to permanently delete <span className={isDark ? 'text-white' : 'text-slate-800'}>{selectedFile?.original_name}</span>. This will free up {sizeFormatter(selectedFile?.file_size)} of storage.
             </p>
             <div className="flex gap-3">
               <button 
@@ -185,14 +242,17 @@ const OldFilesManager = () => {
               </button>
               <button 
                 className="flex-1 py-3.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-colors shadow-lg shadow-red-500/20"
-                onClick={() => setDeleteModalOpen(false)}
+                onClick={confirmDelete}
               >
-                Confirm
+                Delete
               </button>
             </div>
           </div>
         </div>
       )}
+      <div className={`p-4 rounded-xl text-xs font-bold ${isDark ? 'bg-[#111] text-[#808080]' : 'bg-blue-50 text-blue-600'} flex items-center justify-center gap-2 mt-4`}>
+        <i className="fa-solid fa-circle-info"></i> Files deleted from this page are permanently removed and will not go to the trash.
+      </div>
     </main>
   );
 };
