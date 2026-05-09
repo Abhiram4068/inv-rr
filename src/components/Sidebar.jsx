@@ -71,7 +71,7 @@ const Sidebar = ({ isOpen }) => {
       
       {[
         { to: "/collections", icon: "fa-folder", label: "Collections" },
-        { to: "/threads", icon: "fa-code-fork rotate-130", label: "Threads" },
+        { to: "/threads", icon: "fa-code-branch", label: "Threads" },
 
         { to: "/reports", icon: "fa-chart-line", label: "Reports" },
         

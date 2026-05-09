@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from "react-router-dom";
+import { dashboardService } from '../../services/dashboardService';
 
 const Dashboard = () => {
   // --- THEME STATE ---
@@ -10,6 +11,23 @@ const Dashboard = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const data = await dashboardService.getDashboardData();
+        setDashboardData(data);
+      } catch (error) {
+        showToast("Failed to fetch dashboard data", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
 
   // Theme Sync Logic
   useEffect(() => {
@@ -99,14 +117,24 @@ const Dashboard = () => {
 
       {/* 1. TOP BAR */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div className={`w-full max-w-[500px] border p-[12px_20px] rounded-2xl flex items-center shadow-sm transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-          <i className={`fa fa-search ${isDark ? 'text-[#444]' : 'text-slate-400'}`}></i>
-          <input type="text" placeholder="Search files, logs, or schedules..." className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`} />
+        <div className="flex flex-wrap gap-3 w-full md:w-auto">
+          <Link to="/schedules" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 hover:bg-[#111] hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'}`}>
+            <i className="fa-regular fa-calendar-days text-blue-500"></i> Schedules
+          </Link>
+          <Link to="/reports" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 hover:bg-[#111] hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'}`}>
+            <i className="fa-solid fa-chart-line text-emerald-500"></i> View Reports
+          </Link>
+          <Link to="/threads" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 hover:bg-[#111] hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'}`}>
+          <i className="fa-solid fa-code-branch text-red-500"></i> Threads
+          </Link>
+          <Link to="/starred" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 hover:bg-[#111] hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'}`}>
+            <i className="fa-solid fa-star text-yellow-300"></i> Starred
+          </Link>
+          <Link to="/reports?tab=downloads" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 hover:bg-[#111] hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'}`}>
+            <i className="fa-solid fa-download text-purple-500"></i> Report Downloads
+          </Link>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
-          <button className={`flex-1 md:flex-none border p-[10px_20px] rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#808080] hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-            <i className="fa-solid fa-gear"></i> Settings
-          </button>
           <Link to="/upload-file" className="flex-1 md:flex-none bg-blue-600 text-white p-[10px_24px] rounded-xl font-bold text-xs transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
             <i className="fa fa-plus text-[10px]"></i> New Document
           </Link>
@@ -128,10 +156,10 @@ const Dashboard = () => {
           <div className="relative flex items-center justify-center py-2">
              <svg className="w-44 h-44 transform -rotate-90">
                 <circle cx="88" cy="88" r="75" stroke="currentColor" strokeWidth="12" fill="transparent" className={`${isDark ? 'text-[#111]' : 'text-slate-100'}`} />
-                <circle cx="88" cy="88" r="75" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray="471" strokeDashoffset={471 - (471 * 0.93)} strokeLinecap="round" className="text-blue-600 transition-all duration-1000" />
+                <circle cx="88" cy="88" r="75" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray="471" strokeDashoffset={471 - (471 * ((dashboardData?.storage_summary?.percentage_used || 0) / 100))} strokeLinecap="round" className="text-blue-600 transition-all duration-1000" />
              </svg>
              <div className="absolute flex flex-col items-center">
-                <span className={`text-4xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>93%</span>
+                <span className={`text-4xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>{dashboardData?.storage_summary?.percentage_used || 0}%</span>
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Used</span>
              </div>
           </div>
@@ -139,11 +167,11 @@ const Dashboard = () => {
           <div className="w-full flex flex-col gap-4 mt-4 px-2">
             <div className="flex justify-between items-end">
               <div>
-                <div className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>14.08 <span className="text-xs font-medium opacity-50">GB</span></div>
+                <div className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>{dashboardData?.storage_summary?.storage_used_human || '0 B'}</div>
                 <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total space used</div>
               </div>
               <div className="text-right">
-                <div className="text-xs font-bold text-emerald-500">0.92 GB</div>
+                <div className="text-xs font-bold text-emerald-500">{dashboardData?.storage_summary?.free_storage_human || '0 B'}</div>
                 <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Remaining</div>
               </div>
             </div>
@@ -206,14 +234,14 @@ const Dashboard = () => {
 
       {/* 3. KPI ROW (Moved down as requested) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Sent" value="8,492" sub="Files delivered" isDark={isDark} />
-          <StatCard label="Shared Contacts" value="142" sub="Active recipients" isDark={isDark} />
+          <StatCard label="Total Files in System" value={dashboardData?.kpi?.total_files || 0} sub="Total Files in System" isDark={isDark} />
+          <StatCard label="Total Sent" value={dashboardData?.kpi?.total_sent || 0} sub="Files delivered" isDark={isDark} />
+          <StatCard label="Shared Contacts" value={dashboardData?.kpi?.shared_contacts || 0} sub="Active recipients" isDark={isDark} />
           <div className={`border p-5 rounded-2xl flex flex-col justify-center transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
             <div className="text-[10px] text-blue-500 uppercase tracking-widest font-black mb-1">Next Report In</div>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>5 <span className={`text-sm ${isDark ? 'text-[#666]' : 'text-slate-400'}`}>days</span></div>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{dashboardData?.kpi?.next_report_days !== null && dashboardData?.kpi?.next_report_days !== undefined ? dashboardData.kpi.next_report_days : '-'} <span className={`text-sm ${isDark ? 'text-[#666]' : 'text-slate-400'}`}>days</span></div>
             <div className={`text-[10px] mt-1 font-bold uppercase ${isDark ? 'text-[#444]' : 'text-slate-300'}`}>Weekly Cycle</div>
           </div>
-          <StatCard label="Monthly Reach" value="+24%" sub="Growth from last month" isDark={isDark} />
       </div>
 
       {/* 4. ACTIVITY & LINKS GRID */}
@@ -224,9 +252,12 @@ const Dashboard = () => {
             <div className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline">View all logs</div>
           </div>
           <div className="space-y-3">
-            <ActivityItem icon="fa-folder" title="Q1_Financial_Review" sub="Folder • Shared with 8 people" time="2h ago" isDark={isDark} />
-            <ActivityItem icon="fa-file-pdf" title="Project_Brief_V2" sub="PDF Document • Modified 5h ago" time="5h ago" isDark={isDark} />
-            <ActivityItem icon="fa-file-zipper" title="Assets_Export" sub="Archive • Downloaded 12 times" time="Yesterday" isDark={isDark} />
+            {dashboardData?.recent_activities?.map((act, index) => (
+                <ActivityItem key={index} icon={act.icon} title={act.title} sub={act.sub} time={act.time} isDark={isDark} />
+            ))}
+            {(!dashboardData?.recent_activities || dashboardData.recent_activities.length === 0) && (
+                <div className={`text-sm font-medium ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>No recent activities</div>
+            )}
           </div>
         </div>
 
@@ -236,9 +267,12 @@ const Dashboard = () => {
             <div className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline">Manage links</div>
           </div>
           <div className="space-y-3">
-            <SharedLinkItem title="hivedrive.io/s/bk82k9" expiry="Expires in 2 days" clicks="124" active={true} isDark={isDark} />
-            <SharedLinkItem title="hivedrive.io/s/pw15x2" expiry="Expired" clicks="45" active={false} isDark={isDark} />
-            <SharedLinkItem title="hivedrive.io/s/ml09z4" expiry="Expires in 5 days" clicks="12" active={true} isDark={isDark} />
+            {dashboardData?.active_links?.map((link, index) => (
+                <SharedLinkItem key={index} title={link.title} expiry={link.expiry} clicks={link.clicks} active={link.active} isDark={isDark} />
+            ))}
+            {(!dashboardData?.active_links || dashboardData.active_links.length === 0) && (
+                <div className={`text-sm font-medium ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>No active links</div>
+            )}
           </div>
         </div>
       </div>
