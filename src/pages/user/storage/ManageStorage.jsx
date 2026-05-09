@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
+import { getStorageFiles, permanentDeleteFiles } from "../../../services/storageService";
+import { sizeFormatter } from '../../../utils/sizeFormatter';
 
 const ManageStorage = () => {
   // --- THEME STATE SYNC ---
@@ -7,6 +9,11 @@ const ManageStorage = () => {
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -23,24 +30,64 @@ const ManageStorage = () => {
 
   const isDark = theme === 'dark';
 
-  const storageFiles = [
-    { id: 1, name: "Raw_Footage_4K.mp4", type: "video", size: "2.4 GB", category: "Large File", date: "Oct 12, 2023", color: "#3b82f6", icon: "fa-file-video" },
-    { id: 2, name: "Backup_Database_March.sql", type: "database", size: "1.8 GB", category: "Old File", date: "Mar 10, 2023", color: "#808080", icon: "fa-database" },
-    { id: 3, name: "Product_Photos_HighRes.zip", type: "archive", size: "950 MB", category: "Large File", date: "Oct 08, 2023", color: "#ffa900", icon: "fa-file-zipper" },
-    { id: 4, name: "Logo_Final_v2_COPY.png", type: "image", size: "12 MB", category: "Duplicate", date: "Sep 05, 2023", color: "#10b981", icon: "fa-file-image" },
-    { id: 5, name: "Project_Proposal_Draft.pdf", type: "pdf", size: "420 MB", category: "Unused", date: "Jan 28, 2022", color: "#ff4444", icon: "fa-file-pdf" },
-    { id: 6, name: "Windows_System_Image.iso", type: "image", size: "4.2 GB", category: "Large File", date: "Aug 15, 2023", color: "#8b5cf6", icon: "fa-compact-disc" },
-    { id: 7, name: "Cache_Logs_Old.txt", type: "text", size: "85 MB", category: "Trash", date: "Feb 22, 2023", color: "#808080", icon: "fa-file-lines" },
-  ];
+  const fetchFiles = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getStorageFiles({
+        filter_type: 'category',
+        category: 'All',
+        search: searchQuery,
+        sort_by: '-size',
+        page: page,
+        page_size: 10
+      });
+      setFiles(response.data.results || []);
+      const total = response.data.count || 0;
+      setTotalItems(total);
+      setTotalPages(Math.ceil(total / 10) || 1);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const filteredFiles = storageFiles.filter(file => 
-    file.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    file.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    fetchFiles();
+  }, [searchQuery, page]);
 
   const handleDeleteClick = (file) => {
     setSelectedFile(file);
     setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedFile) return;
+    try {
+      await permanentDeleteFiles([selectedFile.id]);
+      setDeleteModalOpen(false);
+      setSelectedFile(null);
+      // refetch
+      if (files.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        fetchFiles();
+      }
+      // Assuming a toast event or similar is used elsewhere for success
+    } catch (error) {
+      console.error("Error deleting file:", error);
+    }
+  };
+
+  const getIconForContentType = (contentType) => {
+    if (!contentType) return "fa-file";
+    if (contentType.includes("image")) return "fa-file-image";
+    if (contentType.includes("video")) return "fa-file-video";
+    if (contentType.includes("pdf")) return "fa-file-pdf";
+    if (contentType.includes("word")) return "fa-file-word";
+    if (contentType.includes("zip") || contentType.includes("tar") || contentType.includes("rar")) return "fa-file-zipper";
+    if (contentType.includes("excel") || contentType.includes("spreadsheet") || contentType.includes("csv")) return "fa-database";
+    return "fa-file-lines";
   };
 
   return (
@@ -67,7 +114,7 @@ const ManageStorage = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Cleanup Recommendations</h1>
-          <p className={`text-sm mt-1 font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>Reviewing {storageFiles.length} files that are consuming significant space</p>
+          <p className={`text-sm mt-1 font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>Reviewing {totalItems} files that are consuming significant space</p>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
           <div className={`flex-1 md:w-[300px] p-[10px_16px] rounded-xl flex items-center border transition-all ${
@@ -99,18 +146,20 @@ const ManageStorage = () => {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-[#111]' : 'divide-slate-100'}`}>
-              {filteredFiles.map((file) => (
+              {isLoading ? (
+                <tr><td colSpan="5" className="p-10 text-center"><i className="fa-solid fa-spinner fa-spin text-blue-500 text-2xl"></i></td></tr>
+              ) : files.map((file) => (
                 <tr key={file.id} className={`group transition-all duration-200 ${isDark ? 'hover:bg-[#111]' : 'hover:bg-slate-50'}`}>
                   <td className="p-4 text-sm">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isDark ? 'bg-[#111] group-hover:bg-[#1a1a1a]' : 'bg-slate-100'}`}>
-                        <i className={`fa-solid ${file.icon} text-base`} style={{ color: file.color }}></i>
+                        <i className={`fa-solid ${getIconForContentType(file.content_type)} text-base text-blue-500`}></i>
                       </div>
-                      <span className={`font-bold truncate max-w-[200px] ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.name}</span>
+                      <span className={`font-bold truncate max-w-[200px] ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.original_name}</span>
                     </div>
                   </td>
-                  <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.size}</td>
-                  <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>{file.date}</td>
+                  <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{sizeFormatter(file.file_size)}</td>
+                  <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>{new Date(file.created_at).toLocaleDateString()}</td>
                   <td className="p-4 text-sm text-center">
                     <button className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#111] text-[#808080] hover:text-white hover:bg-[#1a1a1a]' : 'bg-slate-100 text-slate-400 hover:text-blue-600 hover:bg-slate-200'}`}>
                       <i className="fa-solid fa-eye text-xs"></i>
@@ -129,7 +178,7 @@ const ManageStorage = () => {
             </tbody>
           </table>
           
-          {filteredFiles.length === 0 && (
+          {!isLoading && files.length === 0 && (
             <div className="py-20 text-center">
               <i className={`fa-solid fa-broom text-4xl mb-4 ${isDark ? 'text-[#333]' : 'text-slate-100'}`}></i>
               <p className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>No files found to clean up.</p>
@@ -141,17 +190,27 @@ const ManageStorage = () => {
       {/* Footer Stats */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 mb-10">
         <p className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-          Showing {filteredFiles.length} recommended actions
+          Showing {files.length} of {totalItems} recommended actions
         </p>
         <div className="flex gap-6 items-center">
-          <span className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-            Potential Saving: <span className={`font-bold ml-1 ${isDark ? 'text-white' : 'text-blue-600'}`}>11.2 GB</span>
-          </span>
-          <button className={`px-5 py-2.5 text-[10px] uppercase tracking-widest rounded-lg border transition-all font-bold shadow-sm ${
-            isDark ? 'text-white border-[#1a1a1a] bg-[#0a0a0a] hover:bg-[#111]' : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50'
-          }`}>
-            Next Page
-          </button>
+          <div className="flex gap-2">
+            <button 
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className={`px-5 py-2.5 text-[10px] uppercase tracking-widest rounded-lg border transition-all font-bold shadow-sm ${
+              isDark ? 'text-white border-[#1a1a1a] bg-[#0a0a0a] hover:bg-[#111] disabled:opacity-50' : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50 disabled:opacity-50'
+            }`}>
+              Previous
+            </button>
+            <button 
+              disabled={page === totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className={`px-5 py-2.5 text-[10px] uppercase tracking-widest rounded-lg border transition-all font-bold shadow-sm ${
+              isDark ? 'text-white border-[#1a1a1a] bg-[#0a0a0a] hover:bg-[#111] disabled:opacity-50' : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50 disabled:opacity-50'
+            }`}>
+              Next Page
+            </button>
+          </div>
         </div>
       </div>
 
@@ -164,7 +223,7 @@ const ManageStorage = () => {
             </div>
             <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Permanently Delete?</h3>
             <p className={`text-sm mb-8 leading-relaxed font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-              You are about to delete <span className={isDark ? 'text-white' : 'text-slate-800'}>{selectedFile?.name}</span>. This will free up {selectedFile?.size} of storage.
+              You are about to permanently delete <span className={isDark ? 'text-white' : 'text-slate-800'}>{selectedFile?.original_name}</span>. This will free up {sizeFormatter(selectedFile?.file_size)} of storage.
             </p>
             <div className="flex gap-3">
               <button 
@@ -175,7 +234,7 @@ const ManageStorage = () => {
               </button>
               <button 
                 className="flex-1 py-3.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-colors shadow-lg shadow-red-500/20"
-                onClick={() => setDeleteModalOpen(false)}
+                onClick={confirmDelete}
               >
                 Delete
               </button>
@@ -183,6 +242,10 @@ const ManageStorage = () => {
           </div>
         </div>
       )}
+      {/* Informative message */}
+      <div className={`p-4 rounded-xl text-xs font-bold ${isDark ? 'bg-[#111] text-[#808080]' : 'bg-blue-50 text-blue-600'} flex items-center justify-center gap-2 mt-4`}>
+        <i className="fa-solid fa-circle-info"></i> Files deleted from this page are permanently removed and will not go to the trash.
+      </div>
     </main>
   );
 };

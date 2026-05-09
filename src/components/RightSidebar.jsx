@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from "react-router-dom";
+import { getStorageSummary } from "../services/storageService";
 
 const RightSidebar = () => {
   const navigate = useNavigate();
@@ -21,6 +22,19 @@ const RightSidebar = () => {
   }, [theme]);
 
   const isDark = theme === 'dark';
+  const [storageData, setStorageData] = useState(null);
+
+  useEffect(() => {
+    const fetchStorage = async () => {
+      try {
+        const response = await getStorageSummary();
+        setStorageData(response.data);
+      } catch (error) {
+        console.error("Error fetching storage summary", error);
+      }
+    };
+    fetchStorage();
+  }, []);
 
   return (
     <aside className={`hidden lg:block w-[320px] p-[24px_20px] border-l transition-colors duration-300 overflow-y-auto no-scrollbar 
@@ -70,28 +84,37 @@ const RightSidebar = () => {
         </Link>
       </div>
 
-      {/* Storage Critical Section */}
-      <div className={`border rounded-xl p-5 transition-colors 
-        ${isDark ? 'bg-[#0a0a0a] border-[#555]' : 'bg-white border-slate-200 shadow-sm'}`}>
-        <div className="flex items-center gap-[10px] text-[#ff4444] text-[13px] font-bold">
-          <i className="fa-solid fa-bullhorn"></i>
-          <span>STORAGE CRITICAL</span>
-        </div>
-        <div className={`h-1.5 rounded-full my-3 ${isDark ? 'bg-[#222]' : 'bg-slate-100'}`}>
-          <div className="w-[93%] h-full bg-[#ff4444] rounded-full shadow-[0_0_8px_rgba(255,68,68,0.4)]"></div>
-        </div>
-        <p className={`text-[12px] mb-5 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-          14.08 GB of 15 GB used (93%)
-        </p>
+      {/* Storage Critical/Status Section */}
+      {storageData && (
+        <div className={`border rounded-xl p-5 transition-colors 
+          ${isDark ? 'bg-[#0a0a0a] border-[#555]' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div className={`flex items-center gap-[10px] text-[13px] font-bold ${storageData.is_storage_critical ? 'text-[#ff4444]' : (isDark ? 'text-white' : 'text-slate-800')}`}>
+            <i className={`fa-solid ${storageData.is_storage_critical ? 'fa-bullhorn' : 'fa-hard-drive'}`}></i>
+            <span>{storageData.is_storage_critical ? 'STORAGE CRITICAL' : 'STORAGE STATUS'}</span>
+          </div>
+          <div className={`h-1.5 rounded-full my-3 ${isDark ? 'bg-[#222]' : 'bg-slate-100'}`}>
+            <div 
+              style={{ width: `${Math.min(storageData.percentage_used, 100)}%` }} 
+              className={`h-full rounded-full transition-all duration-500 ${
+                storageData.is_storage_critical 
+                  ? 'bg-[#ff4444] shadow-[0_0_8px_rgba(255,68,68,0.4)]' 
+                  : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]'
+              }`}
+            ></div>
+          </div>
+          <p className={`text-[12px] mb-5 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+            {storageData.storage_used_human} of {storageData.storage_limit_human} used ({storageData.percentage_used}%)
+          </p>
 
-        <Link 
-          to="/storage"
-          className={`block w-full p-2.5 rounded-[20px] font-semibold text-center text-sm transition-all
-            ${isDark ? 'text-white hover:bg-[#111]' : 'text-blue-600 hover:bg-blue-50'}`}
-        >
-          View Storage
-        </Link>
-      </div>
+          <Link 
+            to="/storage"
+            className={`block w-full p-2.5 rounded-[20px] font-semibold text-center text-sm transition-all
+              ${isDark ? 'text-white border border-[#1a1a1a] hover:bg-[#111]' : 'text-blue-600 bg-blue-50 hover:bg-blue-100'}`}
+          >
+            View Storage
+          </Link>
+        </div>
+      )}
     </aside>
   );
 };

@@ -46,10 +46,6 @@ const Sidebar = ({ isOpen }) => {
           <i className="fa-solid fa-house w-5 mr-3 text-base"></i> Home
         </NavLink>
 
-        <NavLink to="/cleanup" className={getNavLinkClass}>
-          <i className="fa-solid fa-wand-magic-sparkles w-5 mr-3 text-base"></i> Cleanup
-        </NavLink>
-
         <NavLink to="/storage/view-duplicates" className={getNavLinkClass}>
           <i className="fa-solid fa-copy w-5 mr-3 text-base"></i> Duplicates
         </NavLink>

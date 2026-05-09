@@ -9,6 +9,10 @@ const TopNavbar = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
+  const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email?.split('@')[0] || 'User';
+  const initials = fullName.split(' ').map(n => n[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U';
+  const roleName = user?.designation?.name || user?.designation || 'Member';
+  
   // 1. Initialize theme from localStorage or default to 'dark'
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -74,10 +78,10 @@ const TopNavbar = ({ toggleSidebar }) => {
              onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
           
           <div className="flex items-center gap-[10px]">
-            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0 shadow-sm">JD</div>
+            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0 shadow-sm">{initials}</div>
             <div className="hidden md:flex flex-col text-left">
-              <span className={`text-[13px] font-medium transition-colors ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>John Doe</span>
-              <span className="text-[10px] text-[#808080]">Project Manager</span>
+              <span className={`text-[13px] font-medium transition-colors ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{fullName}</span>
+              <span className="text-[10px] text-[#808080] capitalize">{roleName}</span>
             </div>
             <i className="fa-solid fa-chevron-down text-[10px] text-[#808080] ml-1"></i>
           </div>
