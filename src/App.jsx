@@ -26,7 +26,7 @@ import Threads from "./pages/user/Threads";
 import ThreadVisualizer from "./pages/user/ThreadVisualizer";
 import UserProfile from "./pages/user/profile/UserProfile";
 import AccountSettings from "./pages/user/profile/Profilesettings";
-
+import ThreadLayout from "./layouts/ThreadLayout";
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
 import ExternalShareView from "./pages/public/PublicView";
@@ -74,10 +74,13 @@ function App() {
             <Route path="/schedules"     element={<SchedulesList />} />
             <Route path="/reports"       element={<ManagerReports />} />
             <Route path="/threads"     element={<Threads />} />
-            <Route path="/thread/:id" element={<ThreadVisualizer />} />
             <Route path="/storage/trash"           element={<TrashManagement />} />
             <Route path="/recent" element={<RecentFiles />} />
           </Route>
+
+         <Route element={<ThreadLayout />}>
+          <Route path="/thread/:id" element={<ThreadVisualizer />} />
+         </Route>
 
           <Route element={<StorageLayout />}>
             <Route path="/storage/storage-cleanup" element={<ManageStorage />} />
