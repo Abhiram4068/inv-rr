@@ -189,7 +189,7 @@ function Dots({ onEdit, onFiles, onDelete }) {
 function StageLane({ data }) {
   const { label, isRoot, height, nodeCount } = data;
   return (
-    <div style={{ width: SW, height, background: isRoot ? "#eff6ff" : "#f8fafc", border: `1.5px solid ${isRoot ? "#bfdbfe" : "#e2e8f0"}`, borderRadius: 11, pointerEvents: "none", fontFamily: ff, overflow: "hidden" }}>
+    <div style={{ width: SW, height,   pointerEvents: "none", fontFamily: ff, overflow: "hidden" }}>
       <div style={{ padding: "8px 12px", background: isRoot ? "#185fa5" : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: isRoot ? "#fff" : "#475569", textTransform: "uppercase", letterSpacing: "0.08em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", maxWidth: "80%" }}>
           {label}
