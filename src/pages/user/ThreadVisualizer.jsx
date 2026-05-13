@@ -63,24 +63,72 @@ const api = {
 // ── Design tokens (image-matching) ─────────────────────────────────────────────
 const ff = "'Inter', 'DM Sans', system-ui, sans-serif";
 
+const ThemeStyles = ({ isDark }) => (
+  <style>{`
+    .theme-wrapper {
+      --t-sidebarBg: ${isDark ? "#050505" : "#f8fafc"};
+      --t-sidebarBorder: ${isDark ? "#1a1a1a" : "#e2e8f0"};
+      --t-sidebarText: ${isDark ? "#e2e8f0" : "#475569"};
+      --t-sidebarTextMuted: ${isDark ? "#64748b" : "#94a3b8"};
+      --t-sidebarActiveBg: ${isDark ? "#1a1a1a" : "#eff6ff"};
+      --t-sidebarActiveText: #3b82f6;
+      --t-pageBg: ${isDark ? "#000000" : "#eff2f6"};
+      --t-cardBg: ${isDark ? "#0d0d0d" : "#ffffff"};
+      --t-border: ${isDark ? "#262626" : "#e2e8f0"};
+      --t-borderSoft: ${isDark ? "#1a1a1a" : "#f1f5f9"};
+      --t-text: ${isDark ? "#ffffff" : "#0f172a"};
+      --t-textMuted: ${isDark ? "#94a3b8" : "#64748b"};
+      --t-textFaint: ${isDark ? "#4b5563" : "#94a3b8"};
+      --t-accent: #3b82f6;
+      --t-accentSoft: ${isDark ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.08)"};
+      --t-hoverRowBg: ${isDark ? "#1a1a1a" : "#f8fafc"};
+      --t-modalOverlay: ${isDark ? "rgba(0,0,0,0.9)" : "rgba(15,23,42,0.45)"};
+      --t-btnGhostBg: ${isDark ? "transparent" : "#ffffff"};
+      --t-btnGhostHover: ${isDark ? "#1a1a1a" : "#f1f5f9"};
+      --t-btnSoftBg: ${isDark ? "#1a1a1a" : "#f1f5f9"};
+      --t-dangerBg: ${isDark ? "#1a0a0a" : "#fff1f2"};
+      --t-dangerBorder: ${isDark ? "#331111" : "#ffe4e6"};
+      --t-dangerText: ${isDark ? "#f87171" : "#e11d48"};
+      --t-inputBg: ${isDark ? "#050505" : "#ffffff"};
+      --t-dotsBg: ${isDark ? "rgba(10,10,10,0.95)" : "rgba(255,255,255,0.95)"};
+      --t-iconBg: ${isDark ? "#1a1a1a" : "#f1f5f9"};
+      --t-iconColor: ${isDark ? "#94a3b8" : "#64748b"};
+      --t-stageBg: ${isDark ? "rgba(255, 255, 255, 0.03)" : "rgba(255, 255, 255, 0.6)"};
+      --t-stageHeaderBg: ${isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(255, 255, 255, 0.9)"};
+      --t-edgeColor: ${isDark ? "#64748b" : "#cbd5e1"};
+      --t-statusActiveBg: ${isDark ? "rgba(30, 58, 138, 0.3)" : "#eff6ff"};
+      --t-statusActiveColor: ${isDark ? "#93c5fd" : "#1d4ed8"};
+      --t-statusInactiveBg: ${isDark ? "#111111" : "#f1f5f9"};
+      --t-statusInactiveColor: ${isDark ? "#64748b" : "#475569"};
+      --t-statusReviewBg: ${isDark ? "rgba(69, 26, 3, 0.3)" : "#fefce8"};
+      --t-statusReviewColor: ${isDark ? "#fde68a" : "#854d0e"};
+      --t-statusBlockedBg: ${isDark ? "rgba(69, 10, 10, 0.3)" : "#fef2f2"};
+      --t-statusBlockedColor: ${isDark ? "#fca5a5" : "#991b1b"};
+      --t-statusCompletedBg: ${isDark ? "rgba(6, 78, 59, 0.3)" : "#f0fdf4"};
+      --t-statusCompletedColor: ${isDark ? "#6ee7b7" : "#166534"};
+      --t-shadowSoft: ${isDark ? "0 10px 30px rgba(0,0,0,0.9)" : "0 4px 12px rgba(2,6,23,0.06)"};
+      --t-shadowCard: ${isDark ? "0 0 0 1px rgba(255,255,255,0.08), 0 10px 20px rgba(0,0,0,0.7)" : "0 1px 2px rgba(2,6,23,0.04), 0 6px 16px rgba(2,6,23,0.04)"};
+    }
+  `}</style>
+);
+
 const T = {
-  // Surfaces
-  sidebarBg: "#0B1020",
-  sidebarBorder: "#1a2138",
-  sidebarText: "#cbd5e1",
-  sidebarTextMuted: "#7a8398",
-  sidebarActiveBg: "#1a2240",
-  sidebarActiveText: "#a78bfa",
-  pageBg: "#f6f7fb",
-  cardBg: "#ffffff",
-  border: "#e6e8ee",
-  borderSoft: "#eef0f5",
-  text: "#0f172a",
-  textMuted: "#64748b",
-  textFaint: "#94a3b8",
-  accent: "#7c5cff",
-  accentSoft: "#efeaff",
-  // Status colors per image legend
+  sidebarBg: "var(--t-sidebarBg)",
+  sidebarBorder: "var(--t-sidebarBorder)",
+  sidebarText: "var(--t-sidebarText)",
+  sidebarTextMuted: "var(--t-sidebarTextMuted)",
+  sidebarActiveBg: "var(--t-sidebarActiveBg)",
+  sidebarActiveText: "var(--t-sidebarActiveText)",
+  pageBg: "var(--t-pageBg)",
+  cardBg: "var(--t-cardBg)",
+  border: "var(--t-border)",
+  borderSoft: "var(--t-borderSoft)",
+  text: "var(--t-text)",
+  textMuted: "var(--t-textMuted)",
+  textFaint: "var(--t-textFaint)",
+  accent: "var(--t-accent)",
+  accentSoft: "var(--t-accentSoft)",
+  // Status colors 
   statusCompleted: "#22c55e",
   statusInProgress: "#3b82f6",
   statusInReview: "#f59e0b",
@@ -88,21 +136,20 @@ const T = {
   statusNotStarted: "#94a3b8",
 };
 
-// Map existing status keys to image legend
 const STATUS_CFG = {
-  INACTIVE:    { label: "Not Started", color: "#475569", bg: "#eef1f6", dot: T.statusNotStarted, top: T.statusNotStarted },
-  ACTIVE:      { label: "Active", color: "#1d4ed8", bg: "#e7f0ff", dot: T.statusInProgress, top: T.statusInProgress },
-  NEEDS_REVIEW:{ label: "In Review",   color: "#92400e", bg: "#fef4e2", dot: T.statusInReview,   top: T.statusInReview },
-  OUTDATED:    { label: "Blocked",     color: "#b91c1c", bg: "#fde8e8", dot: T.statusBlocked,    top: T.statusBlocked },
-  BLOCKED:     { label: "Blocked",     color: "#b91c1c", bg: "#fde8e8", dot: T.statusBlocked,    top: T.statusBlocked },
-  ARCHIVED:    { label: "Completed",   color: "#15803d", bg: "#e6f7ec", dot: T.statusCompleted,  top: T.statusCompleted },
+  INACTIVE: { label: "Inactive", color: "var(--t-statusInactiveColor)", bg: "var(--t-statusInactiveBg)", dot: T.statusNotStarted, top: T.statusNotStarted },
+  ACTIVE: { label: "Active", color: "var(--t-statusActiveColor)", bg: "var(--t-statusActiveBg)", dot: T.statusInProgress, top: T.statusInProgress },
+  NEEDS_REVIEW: { label: "Needs Review", color: "var(--t-statusReviewColor)", bg: "var(--t-statusReviewBg)", dot: T.statusInReview, top: T.statusInReview },
+  OUTDATED: { label: "Outdated", color: "var(--t-statusBlockedColor)", bg: "var(--t-statusBlockedBg)", dot: T.statusBlocked, top: T.statusBlocked },
+  BLOCKED: { label: "Blocked", color: "var(--t-statusBlockedColor)", bg: "var(--t-statusBlockedBg)", dot: T.statusBlocked, top: T.statusBlocked },
+  ARCHIVED: { label: "Completed", color: "var(--t-statusCompletedColor)", bg: "var(--t-statusCompletedBg)", dot: T.statusCompleted, top: T.statusCompleted },
 };
 
 const SW = 240;
 const SG = 80;
 const NH = 96;
-const NG = 18;
-const PT = 24;
+const NG = 58;
+const PT = 54;
 
 // ── Theme sync (preserved) ─────────────────────────────────────────────────────
 function useThemeSync() {
@@ -147,9 +194,9 @@ function Btn({ children, onClick, variant = "primary", small, disabled, style: e
   };
   const v = {
     primary: { background: T.accent, color: "#fff", boxShadow: "0 1px 2px rgba(124,92,255,.35)" },
-    ghost:   { background: "#fff", border: `1px solid ${T.border}`, color: T.text },
-    soft:    { background: "#f1f3f9", color: T.text },
-    danger:  { background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" },
+    ghost: { background: "var(--t-btnGhostBg)", border: `1px solid ${T.border}`, color: T.text },
+    soft: { background: "var(--t-btnSoftBg)", color: T.text },
+    danger: { background: "var(--t-dangerBg)", color: "var(--t-dangerText)", border: "1px solid var(--t-dangerBorder)" },
   };
   return <button onClick={onClick} disabled={disabled} style={{ ...base, ...v[variant], ...ex }}>{children}</button>;
 }
@@ -158,7 +205,7 @@ function Inp({ value, onChange, placeholder, multiline, autoFocus, style: ex }) 
   const s = {
     width: "100%", padding: "10px 12px", fontSize: 13,
     border: `1px solid ${T.border}`, borderRadius: 8, outline: "none",
-    fontFamily: ff, color: T.text, boxSizing: "border-box", background: "#fff", ...ex,
+    fontFamily: ff, color: T.text, boxSizing: "border-box", background: "var(--t-inputBg)", ...ex,
   };
   return multiline
     ? <textarea style={{ ...s, minHeight: 80, resize: "vertical" }} value={value} onChange={onChange} placeholder={placeholder} />
@@ -178,11 +225,11 @@ function Fld({ label, children }) {
 function Modal({ open, onClose, title, children, width = 440 }) {
   if (!open) return null;
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 14, width, maxWidth: "94vw", maxHeight: "90vh", overflow: "auto", boxShadow: "0 25px 70px rgba(2,6,23,0.25)", border: `1px solid ${T.border}`, fontFamily: ff }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, background: "var(--t-modalOverlay)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div style={{ background: T.cardBg, borderRadius: 14, width, maxWidth: "94vw", maxHeight: "90vh", overflow: "auto", boxShadow: "var(--t-shadowSoft)", border: `1px solid ${T.border}`, fontFamily: ff }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${T.borderSoft}` }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: T.text }}>{title}</span>
-          <button onClick={onClose} style={{ background: "#f1f3f9", border: "none", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 16, color: T.textMuted, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+          <button onClick={onClose} style={{ background: "var(--t-btnSoftBg)", border: "none", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 16, color: T.textMuted, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
         </div>
         <div style={{ padding: 20 }}>{children}</div>
       </div>
@@ -203,8 +250,8 @@ function Dots({ onEdit, onFiles, onDelete }) {
 
   const row = (icon, label, fn, danger) => (
     <button onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); fn(); setOpen(false); }}
-      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 12, color: danger ? "#b91c1c" : T.text, textAlign: "left", fontFamily: ff }}
-      onMouseEnter={e => e.currentTarget.style.background = danger ? "#fef2f2" : "#f6f7fb"}
+      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 12, color: danger ? "var(--t-dangerText)" : T.text, textAlign: "left", fontFamily: ff }}
+      onMouseEnter={e => e.currentTarget.style.background = danger ? "var(--t-dangerBg)" : "var(--t-hoverRowBg)"}
       onMouseLeave={e => e.currentTarget.style.background = "none"}>
       <span>{icon}</span>{label}
     </button>
@@ -213,11 +260,11 @@ function Dots({ onEdit, onFiles, onDelete }) {
   return (
     <div ref={ref} style={{ position: "absolute", top: 8, right: 8, zIndex: 20 }}>
       <button onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setOpen(p => !p); }}
-        style={{ background: "rgba(255,255,255,0.95)", border: `1px solid ${T.border}`, borderRadius: 6, width: 22, height: 22, cursor: "pointer", fontSize: 13, color: T.textMuted, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        style={{ background: "var(--t-dotsBg)", border: `1px solid ${T.border}`, borderRadius: 6, width: 22, height: 22, cursor: "pointer", fontSize: 13, color: T.textMuted, display: "flex", alignItems: "center", justifyContent: "center" }}>
         ⋯
       </button>
       {open && (
-        <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: "#fff", borderRadius: 10, border: `1px solid ${T.border}`, boxShadow: "0 8px 24px rgba(2,6,23,0.12)", minWidth: 150, overflow: "hidden", fontFamily: ff }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+        <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: T.cardBg, borderRadius: 10, border: `1px solid ${T.border}`, boxShadow: "var(--t-shadowSoft)", minWidth: 150, overflow: "hidden", fontFamily: ff }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
           {row("✏️", "Edit", onEdit)}
           {row("📎", "Files", onFiles)}
           {onDelete && <><div style={{ borderTop: `1px solid ${T.borderSoft}`, margin: "3px 0" }} />{row("🗑", "Archive", onDelete, true)}</>}
@@ -231,37 +278,60 @@ function Dots({ onEdit, onFiles, onDelete }) {
 function StageLane({ data }) {
   const { label, height, nodeCount } = data;
   return (
-    <div style={{ width: SW, height, pointerEvents: "none", fontFamily: ff }}>
-      {/* Subtle column stripe */}
-      <div style={{ height: "100%", borderRadius: 14, background: "transparent" }} />
+    <div style={{ width: SW, height, pointerEvents: "none", fontFamily: ff, position: "relative" }}>
+      {/* Box grouping the nodes */}
+      <div style={{
+        width: "100%",
+        height: "100%",
+        border: `2px solid var(--t-borderSoft)`,
+        borderRadius: 14,
+        background: "var(--t-stageBg)",
+        boxSizing: "border-box"
+      }}>
+        {/* Label for the stage */}
+        <div style={{
+          padding: "12px 16px",
+          fontSize: 13,
+          fontWeight: 700,
+          color: T.text,
+          borderBottom: `2px solid var(--t-borderSoft)`,
+          background: "var(--t-stageHeaderBg)",
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+        }}>
+          {label}
+        </div>
+      </div>
     </div>
   );
 }
 
 // ── Thread node card (image-style) ─────────────────────────────────────────────
-function nodeIcon(node, isRoot) {
-  const t = (node.title || "").toLowerCase();
-  if (isRoot) return { emoji: "📋", bg: "#e6f7ec", color: "#15803d" };
-  if (t.includes("design") && t.includes("system")) return { emoji: "🎨", bg: "#efeaff", color: T.accent };
-  if (t.includes("design") || t.includes("ui") || t.includes("ux")) return { emoji: "🖼️", bg: "#efeaff", color: T.accent };
-  if (t.includes("requirement") || t.includes("doc") || t.includes("analysis")) return { emoji: "📄", bg: "#e7f0ff", color: "#1d4ed8" };
-  if (t.includes("frontend") || t.includes("backend") || t.includes("dev") || t.includes("code")) return { emoji: "💻", bg: "#e7f0ff", color: "#1d4ed8" };
-  if (t.includes("test") || t.includes("qa")) return { emoji: "🧪", bg: "#fde8e8", color: "#b91c1c" };
-  if (t.includes("deploy") || t.includes("launch")) return { emoji: "🚀", bg: "#e6f7ec", color: "#15803d" };
-  if (t.includes("alt") || t.includes("concept")) return { emoji: "🧪", bg: "#fef4e2", color: "#92400e" };
-  return { emoji: "🗂️", bg: "#eef1f6", color: T.textMuted };
-}
+// function nodeIcon(node, isRoot) {
+//   const t = (node.title || "").toLowerCase();
+//   if (isRoot) return { emoji: "📋", bg: "var(--t-statusCompletedBg)", color: "var(--t-statusCompletedColor)" };
+//   if (t.includes("design") && t.includes("system")) return { emoji: "🎨", bg: T.accentSoft, color: T.accent };
+//   if (t.includes("design") || t.includes("ui") || t.includes("ux")) return { emoji: "🖼️", bg: T.accentSoft, color: T.accent };
+//   if (t.includes("requirement") || t.includes("doc") || t.includes("analysis")) return { emoji: "📄", bg: "var(--t-statusActiveBg)", color: "var(--t-statusActiveColor)" };
+//   if (t.includes("frontend") || t.includes("backend") || t.includes("dev") || t.includes("code")) return { emoji: "💻", bg: "var(--t-statusActiveBg)", color: "var(--t-statusActiveColor)" };
+//   if (t.includes("test") || t.includes("qa")) return { emoji: "🧪", bg: "var(--t-statusBlockedBg)", color: "var(--t-statusBlockedColor)" };
+//   if (t.includes("deploy") || t.includes("launch")) return { emoji: "🚀", bg: "var(--t-statusCompletedBg)", color: "var(--t-statusCompletedColor)" };
+//   if (t.includes("alt") || t.includes("concept")) return { emoji: "🧪", bg: "var(--t-statusReviewBg)", color: "var(--t-statusReviewColor)" };
+//   return { emoji: "🗂️", bg: "var(--t-iconBg)", color: "var(--t-iconColor)" };
+// }
 
 function ThreadNode({ data, selected }) {
   const { node, isRoot, onEdit, onFiles, onDelete, indexLabel } = data;
   const sc = STATUS_CFG[node.status] || STATUS_CFG.ACTIVE;
-  const ic = nodeIcon(node, isRoot);
+  // const ic = nodeIcon(node, isRoot);
 
   return (
     <div style={{
       width: SW - 24,
       minHeight: NH,
-      background: "#fff",
+      background: T.cardBg,
       border: `1px solid ${selected ? T.accent : T.border}`,
       borderRadius: 14,
       paddingTop: 0,
@@ -269,19 +339,19 @@ function ThreadNode({ data, selected }) {
       position: "relative",
       boxSizing: "border-box",
       boxShadow: selected
-        ? `0 0 0 3px ${T.accent}33, 0 8px 24px rgba(2,6,23,0.06)`
-        : "0 1px 2px rgba(2,6,23,0.04), 0 6px 16px rgba(2,6,23,0.04)",
-      overflow: "hidden",
+        ? `0 0 0 3px ${T.accent}33, var(--t-shadowSoft)`
+        : "var(--t-shadowCard)",
+      overflow: "visible",
       cursor: "default",
     }}>
       {/* Top color bar */}
-      <div style={{ height: 4, background: sc.top, width: "100%" }} />
+      <div style={{ height: 4, background: sc.top, width: "100%", borderTopLeftRadius: 13, borderTopRightRadius: 13 }} />
 
       {/* Status check pill (top-right corner circle like image) */}
       <div style={{
         position: "absolute", top: 10, right: 10,
         width: 18, height: 18, borderRadius: "50%",
-        background: "#fff", border: `1.5px solid ${sc.dot}`,
+        background: T.cardBg, border: `1.5px solid ${sc.dot}`,
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 10, color: sc.dot, fontWeight: 800, zIndex: 5,
       }}>
@@ -290,9 +360,9 @@ function ThreadNode({ data, selected }) {
 
       {/* Handles */}
       <Handle type="target" position={Position.Left}
-        style={{ width: 10, height: 10, background: T.textFaint, border: "2px solid #fff", left: -6 }} />
+        style={{ width: 10, height: 10, background: T.textFaint, border: `2px solid ${T.cardBg}`, left: -6 }} />
       <Handle type="source" position={Position.Right}
-        style={{ width: 10, height: 10, background: T.accent, border: "2px solid #fff", right: -6, cursor: "crosshair" }} />
+        style={{ width: 10, height: 10, background: T.accent, border: `2px solid ${T.cardBg}`, right: -6, cursor: "crosshair" }} />
 
       <div style={{ padding: "10px 12px 12px" }}>
         {/* Index number top-left */}
@@ -301,13 +371,6 @@ function ThreadNode({ data, selected }) {
         </div>
 
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: ic.bg, color: ic.color,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 16, flexShrink: 0,
-          }}>{ic.emoji}</div>
-
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{
               fontWeight: 700, fontSize: 12.5, color: T.text,
@@ -325,18 +388,7 @@ function ThreadNode({ data, selected }) {
         {/* Footer: avatars stub + status */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
           <div style={{ display: "flex" }}>
-            {[0,1,2].map(i => (
-              <div key={i} style={{
-                width: 18, height: 18, borderRadius: "50%",
-                background: ["#fca5a5","#93c5fd","#fcd34d"][i],
-                border: "2px solid #fff", marginLeft: i === 0 ? 0 : -6,
-                fontSize: 9, fontWeight: 700, color: "#fff",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>{["A","S","R"][i]}</div>
-            ))}
-            {node.file_count > 0 && (
-              <span style={{ fontSize: 10, color: T.textMuted, marginLeft: 6, fontWeight: 600 }}>+{node.file_count}</span>
-            )}
+            <p style={{ fontSize: 10.5, color: T.textFaint, fontWeight: 500 }}>File count : <span style={{ color: T.text, fontWeight: 700 }}>{node.file_count}</span></p>
           </div>
           <StatusPill status={node.status} />
         </div>
@@ -370,7 +422,7 @@ const DEPENDENCY_TYPES = [
 ];
 
 // ── File modal ─────────────────────────────────────────────────────────────────
-function FileModal({ open, onClose, node }) {
+function FileModal({ open, onClose, node, onChange }) {
   const [files, setFiles] = useState([]);
   const [staged, setStaged] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -382,11 +434,16 @@ function FileModal({ open, onClose, node }) {
 
   const upload = async () => {
     setBusy(true);
+    let changed = false;
     for (const f of staged) {
       const fd = new FormData(); fd.append("file", f);
-      try { const r = await api.uploadFile(node.id, fd); setFiles(p => [r, ...p]); } catch { }
+      try { const r = await api.uploadFile(node.id, fd); setFiles(p => [r, ...p]); changed = true; } catch { }
     }
     setStaged([]); setBusy(false);
+    if (changed) {
+      if (onChange) onChange();
+      onClose();
+    }
   };
 
   return (
@@ -411,7 +468,7 @@ function FileModal({ open, onClose, node }) {
           <span>📎</span>
           <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.original_name}</div>
           {f.file_url && <a href={f.file_url} download style={{ fontSize: 12, color: T.accent }}>⬇</a>}
-          <button onClick={() => api.deleteFile(f.id).then(() => setFiles(p => p.filter(x => x.id !== f.id)))} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 15 }}>×</button>
+          <button onClick={() => api.deleteFile(f.id).then(() => { setFiles(p => p.filter(x => x.id !== f.id)); if (onChange) onChange(); })} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 15 }}>×</button>
         </div>
       ))}
       {!files.length && !staged.length && <div style={{ color: T.textFaint, fontSize: 12, textAlign: "center", paddingTop: 4 }}>No files yet</div>}
@@ -429,7 +486,7 @@ function NodeFormModal({ open, onClose, onSubmit, initial, title }) {
       <Fld label="Title"><Inp value={form.title} onChange={set("title")} placeholder="Node name" autoFocus /></Fld>
       <Fld label="Description"><Inp value={form.description} onChange={set("description")} placeholder="What happens here?" multiline /></Fld>
       <Fld label="Status">
-        <select value={form.status} onChange={set("status")} style={{ width: "100%", padding: "10px 12px", fontSize: 13, border: `1px solid ${T.border}`, borderRadius: 8, fontFamily: ff, color: T.text, background: "#fff" }}>
+        <select value={form.status} onChange={set("status")} style={{ width: "100%", padding: "10px 12px", fontSize: 13, border: `1px solid ${T.border}`, borderRadius: 8, fontFamily: ff, color: T.text, background: "var(--t-inputBg)" }}>
           {Object.entries(STATUS_CFG)
             .filter(([k]) => !["INACTIVE", "BLOCKED"].includes(k))
             .map(([k, v]) => (<option key={k} value={k}>{v.label}</option>))}
@@ -453,24 +510,24 @@ function NodePanel({ node, onClose, onEdit, onFiles }) {
     if (!node) return;
     api.getActivity(node.id).then(setActivity).catch(() => setActivity([]));
     api.getFiles(node.id).then(setFiles).catch(() => setFiles([]));
-  }, [node?.id]);
+  }, [node]);
 
   if (!node) return null;
   const sc = STATUS_CFG[node.status] || STATUS_CFG.ACTIVE;
-  const ic = nodeIcon(node, false);
+  // const ic = nodeIcon(node, false);
   const EVT = { CREATED: "🌱", UPDATED: "✏️", FILE_UPLOADED: "📎", FILE_DELETED: "🗑", STATUS_CHANGED: "🔄", DEPENDENCY_ADDED: "🔗" };
 
   return (
-    <div style={{ width: 320, background: "#fff", borderLeft: `1px solid ${T.border}`, display: "flex", flexDirection: "column", flexShrink: 0, fontFamily: ff }}>
+    <div style={{ width: 320, background: T.cardBg, borderLeft: `1px solid ${T.border}`, display: "flex", flexDirection: "column", flexShrink: 0, fontFamily: ff }}>
       {/* Header */}
       <div style={{ padding: "16px 18px", borderBottom: `1px solid ${T.borderSoft}` }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0, flex: 1 }}>
             <div style={{
               width: 34, height: 34, borderRadius: 8,
-              background: ic.bg, color: ic.color,
+              // background: ic.bg, color: ic.color,
               display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0,
-            }}>{ic.emoji}</div>
+            }}></div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: 13.5, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{node.title}</div>
               <div style={{ fontSize: 11, color: T.textFaint, marginTop: 2 }}>
@@ -478,7 +535,7 @@ function NodePanel({ node, onClose, onEdit, onFiles }) {
               </div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: "#f1f3f9", border: "none", borderRadius: 8, width: 26, height: 26, cursor: "pointer", fontSize: 14, color: T.textMuted, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+          <button onClick={onClose} style={{ background: "var(--t-btnSoftBg)", border: "none", borderRadius: 8, width: 26, height: 26, cursor: "pointer", fontSize: 14, color: T.textMuted, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
         </div>
         <StatusPill status={node.status} />
         {node.description && <div style={{ fontSize: 12, color: T.textMuted, marginTop: 10, lineHeight: 1.6 }}>{node.description}</div>}
@@ -550,7 +607,7 @@ function buildGraph(apiNodes, apiEdges, stageLabels, thread, handlers) {
   const laneHeights = {};
   for (let i = 0; i < numStages; i++) {
     const cnt = (stageMap[i] || []).length;
-    laneHeights[i] = Math.max(cnt, 1) * (NH + NG) + PT + 28;
+    laneHeights[i] = Math.max(cnt, 1) * NH + Math.max(cnt - 1, 0) * NG + PT + 28;
   }
 
   const rfNodes = [];
@@ -591,6 +648,7 @@ function buildGraph(apiNodes, apiEdges, stageLabels, thread, handlers) {
         indexLabel: counter,
         ...handlers,
       },
+      draggable: false,
       zIndex: 2,
     });
   });
@@ -604,9 +662,14 @@ function buildGraph(apiNodes, apiEdges, stageLabels, thread, handlers) {
     labelStyle: { fill: T.textMuted, fontSize: 10, fontWeight: 700 },
     labelBgPadding: [6, 3],
     labelBgBorderRadius: 6,
-    labelBgStyle: { fill: "#fff", fillOpacity: 0.95, stroke: T.border, strokeWidth: 1 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: "#cbd5e1" },
-    style: { stroke: "#cbd5e1", strokeWidth: 1.6 },
+    labelBgStyle: { fill: "var(--t-cardBg)", fillOpacity: 0.95, stroke: "var(--t-border)", strokeWidth: 1 },
+    label: formatDependencyLabel(e.dependency_type),
+    labelStyle: { fill: T.textMuted, fontSize: 10, fontWeight: 700 },
+    labelBgPadding: [6, 3],
+    labelBgBorderRadius: 6,
+    labelBgStyle: { fill: "var(--t-cardBg)", fillOpacity: 0.95, stroke: "var(--t-border)", strokeWidth: 1 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: "var(--t-edgeColor)" },
+    style: { stroke: "var(--t-edgeColor)", strokeWidth: 1.6 },
     data: { depId: e.id, type: e.dependency_type || "DEPENDS_ON", sourceTitle: e.source_node_title, targetTitle: e.target_node_title },
   }));
 
@@ -615,68 +678,8 @@ function buildGraph(apiNodes, apiEdges, stageLabels, thread, handlers) {
 
 
 
-// ── Top bar (image-style) ──────────────────────────────────────────────────────
-function TopBar({ thread, onBack, view, setView }) {
-  return (
-    <div style={{
-      height: 60, background: "#fff",
-      borderBottom: `1px solid ${T.border}`,
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 22px", flexShrink: 0, zIndex: 10,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <button onClick={onBack} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 13, color: T.textMuted, fontWeight: 600, fontFamily: ff, display: "flex", alignItems: "center", gap: 4 }}>
-          ‹ Threads
-        </button>
-        <span style={{ color: T.textFaint }}>›</span>
-        <span style={{ fontWeight: 700, fontSize: 14, color: T.text }}>{thread.title}</span>
-        <span style={{ color: T.textFaint, marginLeft: 4, cursor: "pointer" }}>☆</span>
-      </div>
 
-      {/* View tabs centered */}
-      <div style={{ display: "flex", background: "#f1f3f9", borderRadius: 10, padding: 3 }}>
-        {["Graph View", "Timeline View", "List View"].map(v => (
-          <button key={v} onClick={() => setView(v)}
-            style={{
-              padding: "7px 14px", fontSize: 12.5, fontWeight: 600,
-              background: view === v ? "#fff" : "transparent",
-              color: view === v ? T.accent : T.textMuted,
-              border: "none", borderRadius: 8, cursor: "pointer", fontFamily: ff,
-              boxShadow: view === v ? "0 1px 3px rgba(2,6,23,0.08)" : "none",
-            }}>{v}</button>
-        ))}
-      </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-
-        <Btn>+ Invite</Btn>
-        <button style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 16, color: T.textMuted }}>🔔</button>
-        <button style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 16, color: T.textMuted }}>⋮</button>
-      </div>
-    </div>
-  );
-}
-
-// ── Status legend bar ──────────────────────────────────────────────────────────
-function LegendBar() {
-  const items = [
-    { c: T.statusCompleted, l: "Completed" },
-    { c: T.statusInProgress, l: "In Progress" },
-    { c: T.statusInReview, l: "In Review" },
-    { c: T.statusBlocked, l: "Blocked" },
-    { c: T.statusNotStarted, l: "Not Started" },
-  ];
-  return (
-    <div style={{ display: "flex", gap: 18, alignItems: "center", background: "#fff", border: `1px solid ${T.border}`, padding: "8px 14px", borderRadius: 999, boxShadow: "0 1px 3px rgba(2,6,23,0.04)" }}>
-      {items.map(it => (
-        <div key={it.l} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: T.text, fontWeight: 600, fontFamily: ff }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: it.c }} />
-          {it.l}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ── Canvas inner ───────────────────────────────────────────────────────────────
 function CanvasInner({ thread, onBack }) {
@@ -687,7 +690,6 @@ function CanvasInner({ thread, onBack }) {
   const [rawNodes, setRawNodes] = useState([]);
   const [rawEdges, setRawEdges] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [view, setView] = useState("Graph View");
 
   const [addNodeModal, setAddNodeModal] = useState({ open: false, stageIndex: null });
   const [editModal, setEditModal] = useState({ open: false, node: null });
@@ -696,7 +698,7 @@ function CanvasInner({ thread, onBack }) {
   const [stageNameInput, setStageNameInput] = useState("");
   const [edgeEditModal, setEdgeEditModal] = useState({ open: false, edge: null });
 
-  const { fitView } = useReactFlow();
+  const { fitView, zoomIn, zoomOut } = useReactFlow();
 
   const handlers = {
     onEdit: (node) => setEditModal({ open: true, node }),
@@ -805,24 +807,44 @@ function CanvasInner({ thread, onBack }) {
     <div style={{ display: "flex", height: "100vh", background: T.pageBg, fontFamily: ff }}>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <TopBar thread={thread} onBack={onBack} view={view} setView={setView} />
-
-        {/* Sub-header: title + active pill */}
-        <div style={{ background: "#fff", padding: "16px 24px", borderBottom: `1px solid ${T.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: T.text }}>{thread.title}</h1>
-            <span style={{ background: T.accentSoft, color: T.accent, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999 }}>Active</span>
+        {/* Header: title + active pill */}
+        <div style={{ background: T.cardBg, padding: "16px 24px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ marginBottom: 12 }}>
+              <button onClick={onBack} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 13, color: T.textMuted, fontWeight: 600, fontFamily: ff, display: "flex", alignItems: "center", gap: 4, padding: 0 }}>
+                ‹ Back to Threads
+              </button>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: T.text }}>{thread.title}</h1>
+              <span style={{ background: T.accentSoft, color: T.accent, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999 }}>Active</span>
+            </div>
+            <div style={{ fontSize: 12.5, color: T.textMuted, marginTop: 4 }}>Main thread for the {thread.title.toLowerCase()} project</div>
           </div>
-          <div style={{ fontSize: 12.5, color: T.textMuted, marginTop: 4 }}>Main thread for the {thread.title.toLowerCase()} project</div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {stageLabels.map((label, i) => (
+              <button key={i} onClick={() => setAddNodeModal({ open: true, stageIndex: i })}
+                style={{
+                  background: i === 0 ? T.accent : T.cardBg,
+                  color: i === 0 ? "#ffffff" : T.text,
+                  border: `1px solid ${i === 0 ? T.accent : T.border}`,
+                  borderRadius: 8, padding: "6px 12px",
+                  fontSize: 11.5, fontWeight: 600, cursor: "pointer", fontFamily: ff,
+                  boxShadow: "var(--t-shadowCard)",
+                }}>
+                + {i === 0 ? thread.title : label}
+              </button>
+            ))}
+            <Btn onClick={() => setAddStageModal(true)}>+ Add stage</Btn>
+          </div>
         </div>
 
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
           {/* Canvas */}
           <div style={{ flex: 1, position: "relative" }}>
             {/* Floating legend */}
-            <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 5 }}>
-              <LegendBar />
-            </div>
+
 
             <ReactFlow
               nodes={rfNodes}
@@ -835,67 +857,41 @@ function CanvasInner({ thread, onBack }) {
               onNodeClick={onNodeClick}
               nodeTypes={RF_NODE_TYPES}
               fitView
-              defaultEdgeOptions={{ type: "smoothstep", markerEnd: { type: MarkerType.ArrowClosed, color: "#cbd5e1" }, style: { stroke: "#cbd5e1", strokeWidth: 1.6 } }}
+              defaultEdgeOptions={{ type: "smoothstep", markerEnd: { type: MarkerType.ArrowClosed, color: "var(--t-edgeColor)" }, style: { stroke: "var(--t-edgeColor)", strokeWidth: 1.6 } }}
               connectionLineStyle={{ stroke: T.accent, strokeWidth: 2 }}
               connectionLineType="smoothstep"
               deleteKeyCode={null}
               proOptions={{ hideAttribution: true }}
               style={{ background: T.pageBg }}
             >
-              <Background color="#dde1ea" gap={28} size={1.2} />
+              <Background color="var(--t-borderSoft)" gap={28} size={1.2} />
 
               {/* Custom controls (top-left) */}
               <Panel position="top-left" style={{ marginTop: 70, marginLeft: 16 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", gap: 4, boxShadow: "0 1px 3px rgba(2,6,23,0.05)" }}>
-                    <button title="Select" style={iconBtn(true)}>↖</button>
-                  </div>
-                  <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", gap: 4, boxShadow: "0 1px 3px rgba(2,6,23,0.05)" }}>
-                    <button title="Layout" style={iconBtn()}>▦</button>
-                  </div>
-                  <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", gap: 4, boxShadow: "0 1px 3px rgba(2,6,23,0.05)" }}>
-                    <button title="Zoom in" style={iconBtn()}>+</button>
-                    <button title="Zoom out" style={iconBtn()}>−</button>
-                    <button title="Fit" style={iconBtn()}>⛶</button>
-                    <button title="Lock" style={iconBtn()}>🔒</button>
+                  <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", gap: 4, boxShadow: "var(--t-shadowSoft)" }}>
+                    <button title="Zoom in" style={iconBtn()} onClick={() => zoomIn({ duration: 200 })}>+</button>
+                    <button title="Zoom out" style={iconBtn()} onClick={() => zoomOut({ duration: 200 })}>−</button>
                   </div>
                 </div>
               </Panel>
 
-              {/* Stage / add buttons */}
-              <Panel position="top-right" style={{ marginTop: 70, marginRight: 16, display: "flex", flexWrap: "wrap", gap: 7, maxWidth: 360, justifyContent: "flex-end" }}>
-                {stageLabels.map((label, i) => (
-                  <button key={i} onClick={() => setAddNodeModal({ open: true, stageIndex: i })}
-                    style={{
-                      background: i === 0 ? T.accent : "#fff",
-                      color: i === 0 ? "#fff" : T.text,
-                      border: `1px solid ${i === 0 ? T.accent : T.border}`,
-                      borderRadius: 8, padding: "6px 12px",
-                      fontSize: 11.5, fontWeight: 600, cursor: "pointer", fontFamily: ff,
-                      boxShadow: "0 1px 2px rgba(2,6,23,0.04)",
-                    }}>
-                    + {i === 0 ? thread.title : label}
-                  </button>
-                ))}
-                <button onClick={() => setAddStageModal(true)}
-                  style={{ background: "transparent", color: T.textMuted, border: `1px dashed ${T.border}`, borderRadius: 8, padding: "6px 12px", fontSize: 11.5, fontWeight: 600, cursor: "pointer", fontFamily: ff }}>
-                  + Add stage
-                </button>
-              </Panel>
 
-              {/* Mini map (bottom-left like image) */}
+
+              {/* Mini map (top-right) */}
               <MiniMap
+                position="top-right"
                 pannable
                 zoomable
-                nodeColor={(n) => n.type === "threadNode" ? "#cbd5e1" : "transparent"}
+                nodeColor={(n) => n.type === "threadNode" ? "var(--t-edgeColor)" : "transparent"}
                 maskColor="rgba(124,92,255,0.06)"
                 style={{
-                  background: "#fff",
+                  background: T.cardBg,
                   border: `1px solid ${T.border}`,
                   borderRadius: 10,
-                  bottom: 16, left: 16,
                   width: 180, height: 110,
-                  boxShadow: "0 4px 12px rgba(2,6,23,0.06)",
+                  boxShadow: "var(--t-shadowSoft)",
+                  margin: 16
                 }}
               />
             </ReactFlow>
@@ -929,7 +925,7 @@ function CanvasInner({ thread, onBack }) {
         title="Edit node"
       />
 
-      <FileModal open={fileModal.open} onClose={() => setFileModal({ open: false, node: null })} node={fileModal.node} />
+      <FileModal open={fileModal.open} onClose={() => setFileModal({ open: false, node: null })} node={fileModal.node} onChange={loadGraph} />
 
       <Modal open={addStageModal} onClose={() => setAddStageModal(false)} title="Add stage">
         <Fld label="Stage name">
@@ -951,7 +947,7 @@ function CanvasInner({ thread, onBack }) {
               <select
                 defaultValue={initialType}
                 id="_edge_type_select"
-                style={{ width: "100%", padding: "10px 12px", fontSize: 13, border: `1px solid ${T.border}`, borderRadius: 8, fontFamily: ff, color: T.text, background: "#fff" }}
+                style={{ width: "100%", padding: "10px 12px", fontSize: 13, border: `1px solid ${T.border}`, borderRadius: 8, fontFamily: ff, color: T.text, background: "var(--t-inputBg)" }}
               >
                 {DEPENDENCY_TYPES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
@@ -1019,10 +1015,10 @@ function ThreadsView({ onOpen }) {
     <div style={{ display: "flex", minHeight: "100vh", background: T.pageBg, fontFamily: ff }}>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <div style={{ height: 60, background: "#fff", borderBottom: `1px solid ${T.border}`, padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ height: 60, background: T.cardBg, borderBottom: `1px solid ${T.border}`, padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontWeight: 800, fontSize: 16, color: T.text }}>Threads</span>
-            {!loading && <span style={{ fontSize: 11, color: T.textMuted, background: "#f1f3f9", padding: "3px 9px", borderRadius: 999, fontWeight: 700 }}>{threads.length}</span>}
+            {!loading && <span style={{ fontSize: 11, color: T.textMuted, background: "var(--t-btnSoftBg)", padding: "3px 9px", borderRadius: 999, fontWeight: 700 }}>{threads.length}</span>}
           </div>
           <Btn onClick={() => setCreating(true)}>+ New thread</Btn>
         </div>
@@ -1044,13 +1040,13 @@ function ThreadsView({ onOpen }) {
               return (
                 <div key={t.id} onClick={() => onOpen(t)}
                   style={{
-                    background: "#fff", borderRadius: 14, border: `1px solid ${T.border}`,
+                    background: T.cardBg, borderRadius: 14, border: `1px solid ${T.border}`,
                     padding: 18, cursor: "pointer", borderTop: `3px solid ${acc}`,
                     transition: "all 0.15s",
-                    boxShadow: "0 1px 3px rgba(2,6,23,0.04)",
+                    boxShadow: "var(--t-shadowCard)",
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(2,6,23,0.08)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(2,6,23,0.04)"; }}>
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--t-shadowSoft)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--t-shadowCard)"; }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <div style={{ width: 34, height: 34, borderRadius: 8, background: acc + "22", color: acc, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🧵</div>
                     <button onClick={e => handleDel(e, t.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.textFaint, padding: 2 }}>🗑</button>
@@ -1082,7 +1078,11 @@ function ThreadsView({ onOpen }) {
 // ── Root ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [activeThread, setActiveThread] = useState(null);
-  return activeThread
-    ? <ThreadCanvas thread={activeThread} onBack={() => setActiveThread(null)} />
-    : <ThreadsView onOpen={setActiveThread} />;
+  const isDark = useThemeSync();
+  return (
+    <div className="theme-wrapper" style={{ height: "100%" }}>
+      <ThemeStyles isDark={isDark} />
+      {activeThread ? <ThreadCanvas thread={activeThread} onBack={() => setActiveThread(null)} /> : <ThreadsView onOpen={setActiveThread} />}
+    </div>
+  );
 }
