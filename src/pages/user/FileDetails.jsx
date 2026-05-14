@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { updateFile, getFileById,  archiveFile, deleteFile} from '../../services/fileService';
+import { updateFile, getFileById,  archiveFile, deleteFile, getFileViewUrl, downloadFile} from '../../services/fileService';
 import { shareFile } from '../../services/shareService';
+import { getCollections, addFileToCollection } from '../../services/collectionService';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -25,26 +26,28 @@ const FileDetails = () => {
   const [saveError, setSaveError] = useState("");
 
 
+  const fetchFile = async () => {
+    try {
+      const res = await getFileById(id);
+      setFile(res.data);
+      console.log(res.data);
+      setIsStarred(res.data.is_starred);
+      setFileData({
+        display_name: res.data.display_name || res.data.original_name,
+        original_name: res.data.original_name,
+        description:
+          res.data.description || "You haven't added any description yet."
+      });
+      setTempName(res.data.display_name || "");
+      setTempDesc(res.data.description || "");
+    } catch (error) {
+      setFetchError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchFile = async () => {
-      try {
-        const res = await getFileById(id);
-        setFile(res.data);
-        console.log(res.data);
-        setIsStarred(res.data.is_starred);
-        setFileData({
-          display_name: res.data.display_name || res.data.original_name,
-          original_name: res.data.original_name || "Untitled",
-          description: res.data.description || "You haven't added any description yet."
-        });
-        setTempName(res.data.display_name || "");
-        setTempDesc(res.data.description || "");
-      } catch (error) {
-        setFetchError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchFile();
   }, [id]);
 
@@ -115,19 +118,43 @@ useEffect(() => {
     display_name: "",
   });
 
+  const [collections, setCollections] = useState([]);
+  const [organizeSearch, setOrganizeSearch] = useState("");
+  const [organizeLoading, setOrganizeLoading] = useState(false);
+
   const [tempName, setTempName] = useState(fileData.display_name);
   const [tempDesc, setTempDesc] = useState(fileData.description);
 
-  const showToast = (msg) => {
-    setToast({ visible: true, message: msg });
-  };
+const showToast = (msg, duration = 2000) => {
+  setToast({ visible: true, message: msg });
 
+  setTimeout(() => {
+    setToast({ visible: false, message: '' });
+  }, duration);
+};
   useEffect(() => {
     if (toast.visible) {
       const timer = setTimeout(() => setToast({ ...toast, visible: false }), 3000);
       return () => clearTimeout(timer);
     }
   }, [toast.visible]);
+
+  useEffect(() => {
+    if (activeModal === 'organize') {
+      const fetchCollections = async () => {
+        setOrganizeLoading(true);
+        try {
+          const res = await getCollections();
+          setCollections(res.data.collections || []);
+        } catch (error) {
+          showToast("Failed to load collections");
+        } finally {
+          setOrganizeLoading(false);
+        }
+      };
+      fetchCollections();
+    }
+  }, [activeModal]);
 
   const addRecipient = () => setRecipients([...recipients, '']);
   const removeRecipient = (index) => {
@@ -143,19 +170,26 @@ useEffect(() => {
 const saveDetails = async () => {
   setSaveLoading(true);
   setSaveError("");
+    if (!tempName || tempName.trim() === "") {
+    setSaveError("Display name cannot be empty.");
+    setSaveLoading(false);
+    return;
+  }
   try {
-    const res = await updateFile(id, { display_name: tempName, description: tempDesc });
+    const res = await updateFile(id, { display_name: tempName, description: tempDesc?.trim() ? tempDesc.trim() : null });
     setFile(prev => ({ ...prev, ...res.data }));
     
     setFileData({
       display_name: tempName,
       original_name: fileData.original_name,
-      description: tempDesc
+      description: tempDesc?.trim() ? tempDesc : "You haven't added any description yet."
     });
     setActiveModal(null);
+    fetchFile()
     showToast("File details updated successfully");
   } catch (error) {
-    setSaveError(error.message);
+    console.log(error.response?.data.display_name);
+    setSaveError(error.response?.data?.display_name?.[0])
   } finally {
     setSaveLoading(false);
   }
@@ -234,6 +268,45 @@ const saveDetails = async () => {
     }
     
   };
+
+  const handleOrganize = async (collectionId) => {
+    try {
+      await addFileToCollection(collectionId, id);
+      showToast("File added to collection");
+      setActiveModal(null);
+    } catch (error) {
+      const msg = error.response?.data?.detail || "Failed to add to collection";
+      showToast(msg);
+    }
+  };
+
+const handleOpenFile = (e) => {
+  e.preventDefault();
+
+  showToast("Opening file...", 2000);
+
+  const url = getFileViewUrl(id);
+  window.open(url, '_blank');
+};
+
+const handleDownload = async () => {
+  try {
+    showToast("Preparing download...", 2000);
+    const res = await downloadFile(id);
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", file?.original_name || "downloaded_file");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    showToast("Download started", 1000);
+  } catch (error) {
+    showToast("Download failed", 1000);
+  }
+};
+
   const sizeFormatter = (value) => {
     if (value === null || value === undefined) return "-";
     if (typeof value === "string") {
@@ -320,7 +393,16 @@ const saveDetails = async () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto no-scrollbar p-6 lg:p-10 flex flex-col gap-8">
-
+<div className="flex items-center gap-4">
+    <button onClick={() => window.history.back()} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${isDark ? 'hover:bg-[#111] text-[#808080] hover:text-white' : 'hover:bg-white text-slate-400 hover:text-slate-800 shadow-sm'}`}>
+      <i className="fa-solid fa-arrow-left text-sm"></i>
+    </button>
+    <nav className="flex items-center gap-2 text-sm text-[#808080]">
+      <span onClick={() => navigate('/files')} className="hover:text-blue-500 cursor-pointer transition-colors">Files</span>
+      <i className={`fa-solid fa-chevron-left text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
+      <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{fileData.display_name}</span>
+    </nav>
+  </div>
         {/* Top Header Section */}
         <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
           <div className="flex items-center gap-5">
@@ -348,7 +430,10 @@ const saveDetails = async () => {
             >
               <i className="fa-solid fa-share-nodes"></i> Share
             </button>
-            <button className={`flex-1 md:flex-none px-5 py-2.5 border rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+            <button 
+              onClick={() => setActiveModal('organize')}
+              className={`flex-1 md:flex-none px-5 py-2.5 border rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}
+            >
               <i className="fa-solid fa-folder-plus"></i> Organize
             </button>
           </div>
@@ -409,8 +494,8 @@ const saveDetails = async () => {
             </div>
 
             <div className="flex flex-col gap-2">
-              <button onClick={() => showToast("Opening...")} className={`w-full text-left p-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-3 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}><i className="fa-solid fa-eye opacity-50"></i> Open File</button>
-              <button onClick={() => showToast("Downloading...")} className={`w-full text-left p-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-3 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}><i className="fa-solid fa-download opacity-50"></i> Download</button>
+              <button onClick={handleOpenFile} className={`w-full text-left p-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-3 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}><i className="fa-solid fa-eye opacity-50"></i> Open File</button>
+              <button onClick={handleDownload} className={`w-full text-left p-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-3 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}><i className="fa-solid fa-download opacity-50"></i> Download</button>
               <button onClick={() => setActiveModal('edit')} className={`w-full text-left p-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-3 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'}`}><i className="fa-solid fa-pen opacity-50"></i> Edit Details</button>
               <button onClick={() => setActiveModal('archive')} className={`w-full text-left p-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-3 text-blue-500 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-blue-50'}`}><i className="fa-solid fa-box-archive"></i> Archive</button>
               <button onClick={() => setActiveModal('delete')} className={`w-full text-left p-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-3 text-red-500 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-red-50'}`}><i className="fa-solid fa-trash"></i> Move to Trash</button>
@@ -422,13 +507,18 @@ const saveDetails = async () => {
         <div className={`mt-auto border-t pt-8 mb-10 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
           <h3 className={`text-sm font-bold mb-5 ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared With</h3>
           <div className="flex flex-wrap gap-3">
-            {['abhiram@innovaturelabs.com', 'demo@innovaturelabs.com'].map((email, i) => (
-              <div key={i} className={`border px-4 py-2 rounded-full flex items-center gap-3 text-xs transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                <div className="w-5 h-5 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center text-[8px] font-bold">{email[0].toUpperCase()}</div>
-                <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{email}</span>
-                <i className={`fa-solid fa-xmark cursor-pointer transition-colors ${isDark ? 'text-[#444] hover:text-white' : 'text-slate-300 hover:text-red-500'}`}></i>
+            {(file?.shares || []).map((share) => (
+              <div key={share.id} className={`border px-4 py-2 rounded-full flex items-center gap-3 text-xs transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+                <div className="w-5 h-5 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center text-[8px] font-bold">
+                  {share.recipient_email[0].toUpperCase()}
+                </div>
+                <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{share.recipient_email}</span>
+               
               </div>
             ))}
+            {(file?.shares || []).length === 0 && (
+              <p className={`text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Not shared with anyone yet.</p>
+            )}
             <button onClick={() => setActiveModal('share')} className={`border border-dashed px-4 py-2 rounded-full text-xs transition-all flex items-center gap-2 ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-blue-600 hover:border-blue-600'}`}>
               <i className="fa-solid fa-plus"></i> Add Person
             </button>
@@ -440,7 +530,7 @@ const saveDetails = async () => {
 
       {activeModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
-          <div className={`border w-full max-w-[450px] rounded-2xl p-8 shadow-2xl transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+          <div className={`border w-full max-w-[450px] rounded-lg p-8 shadow-2xl transition-colors ${isDark ? 'bg-[#111111] border-[#2a2a2a] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
             {activeModal === 'share' && (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
     {/* Large Modal Container: Background logic updated to match 'edit' modal */}
@@ -647,6 +737,75 @@ const saveDetails = async () => {
                   <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>Cancel</button>
                   <button onClick={activeModal === 'archive' ? handleArchive : handleDelete} className={`flex-1 py-3 text-white rounded-xl font-bold text-xs transition-all ${activeModal === 'archive' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'}`}>
                     {activeModal === 'archive' ? 'Archive' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeModal === 'organize' && (
+              <div className="flex flex-col h-full max-h-[80vh]">
+                <div className="flex justify-between items-center mb-6">
+               <div>
+  <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Add to Collection</h2>
+  <p className={`text-[11px] mt-1 ${isDark ? 'text-white/60' : 'text-slate-500'}`}>{collections.length} collection{collections.length !== 1 ? 's' : ''}</p>
+</div>
+                  <button onClick={() => setActiveModal(null)} className={`text-sm ${isDark ? 'text-[#444] hover:text-white' : 'text-slate-400 hover:text-slate-600'}`}>
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+                
+                <div className="relative mb-6">
+                  <i className={`fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}></i>
+                  <input
+                    type="text"
+                    placeholder="Search collections..."
+                    value={organizeSearch}
+                    onChange={(e) => setOrganizeSearch(e.target.value)}
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl text-xs outline-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500'}`}
+                  />
+                </div>
+
+                <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 min-h-[300px]">
+                  {organizeLoading ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-3 py-10">
+                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-[#444]">Loading Collections</span>
+                    </div>
+                  ) : collections.filter(c => c.name.toLowerCase().includes(organizeSearch.toLowerCase())).length > 0 ? (
+                    collections
+                      .filter(c => c.name.toLowerCase().includes(organizeSearch.toLowerCase()))
+                      .map((col) => (
+                        <button
+                          key={col.id}
+                          onClick={() => handleOrganize(col.id)}
+                          className={`w-full text-left p-4 rounded-xl border flex items-center justify-between group transition-all ${isDark ? 'border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-blue-50/50'}`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm transition-colors ${isDark ? 'bg-[#1a1a1a] text-[#444] group-hover:text-blue-500 group-hover:bg-blue-500/10' : 'bg-slate-50 text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-600/10'}`}>
+                              <i className="fa-solid fa-folder"></i>
+                            </div>
+                            <div>
+                              <p className={`text-xs font-bold transition-colors ${isDark ? 'text-white' : 'text-slate-700 group-hover:text-blue-700'}`}>{col.name}</p>
+                              <p className={`${isDark ? 'text-[#444]' : 'text-slate-400'} text-[10px] mt-0.5`}>{col.total_files || 0} items</p>
+                            </div>
+                          </div>
+                          <i className={`fa-solid fa-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-all ${isDark ? 'text-[#333]' : 'text-blue-300'}`}></i>
+                        </button>
+                      ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full py-10 opacity-40">
+                      <i className="fa-solid fa-folder-open text-3xl mb-4"></i>
+                      <p className="text-xs font-medium">No collections found</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-[#1a1a1a] flex gap-3">
+                  <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-red-600 hover:text-white' : 'border-slate-200 text-slate-500 hover:bg-red-600 hover:text-white'}`}>
+                    Close
+                  </button>
+                  <button onClick={() => navigate('/collections')} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-blue-600/10 text-blue-500 border border-blue-500/30 hover:bg-blue-600 hover:text-white' : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white'}`}>
+                    View all collections
                   </button>
                 </div>
               </div>

@@ -73,3 +73,13 @@ export const getStarredFiles = () => api.get(`/files/starred/`);
 //GET files/recents/
 export const getRecentFiles = () => api.get(`/files/recents/`);
 
+export const getFileViewUrl = (fileId) => {
+  const baseURL = import.meta.env.VITE_API_URL || "/api";
+  return `${baseURL}/${fileId}/file-view-inline/`;
+};
+
+export const getFileDownloadUrl = (fileId) => {
+  const baseURL = import.meta.env.VITE_API_URL || "/api";
+  return `${baseURL}/${fileId}/file-download/`;
+};
+
