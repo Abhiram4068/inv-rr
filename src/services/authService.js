@@ -27,8 +27,11 @@ api.interceptors.response.use(
       original.url?.includes(ep)
     );
 
-    // Don't attempt refresh for auth endpoints or non-401 errors
-    if (error.response?.status !== 401 || isAuthEndpoint || original._retry) {
+    const isOnAuthPage = window.location.pathname.startsWith("/login") || 
+                         window.location.pathname.startsWith("/register");
+
+    // Don't attempt refresh for auth endpoints, non-401 errors, or if already on an auth page
+    if (error.response?.status !== 401 || isAuthEndpoint || original._retry || isOnAuthPage) {
       return Promise.reject(error);
     }
 
@@ -37,7 +40,10 @@ api.interceptors.response.use(
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       })
-        .then(() => api(original))
+        .then(() => {
+          original._retry = true;
+          return api(original);
+        })
         .catch((err) => Promise.reject(err));
     }
 
@@ -50,11 +56,7 @@ api.interceptors.response.use(
       return api(original);
     } catch (refreshError) {
       processQueue(refreshError);
-      // Only redirect if not already on an auth page
-      if (!window.location.pathname.startsWith("/login") &&
-          !window.location.pathname.startsWith("/register")) {
-        window.location.href = "/login";
-      }
+      // Let AuthContext handle the redirection to prevent hard jumps
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

@@ -130,9 +130,6 @@ const Dashboard = () => {
           <Link to="/starred" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 hover:bg-[#111] hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'}`}>
             <i className="fa-solid fa-star text-yellow-300"></i> Starred
           </Link>
-          <Link to="/reports?tab=downloads" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 hover:bg-[#111] hover:text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'}`}>
-            <i className="fa-solid fa-download text-purple-500"></i> Report Downloads
-          </Link>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
           <Link to="/upload-file" className="flex-1 md:flex-none bg-blue-600 text-white p-[10px_24px] rounded-xl font-bold text-xs transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">

@@ -138,9 +138,12 @@ const getStatusStyle = (status) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>Delivery Reports</h1>
-          <p className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm mt-1`}>
-            Tracking recipient activity for <span className="text-blue-500 font-bold uppercase text-[12px]">{reportType}</span> cycle.
-          </p>
+         <p className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm mt-1`}>
+          Tracking recipient activity for <span className="text-blue-500 font-bold uppercase text-[12px]">{reportType}</span> cycle.
+        </p>
+        <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>
+         CSV reports auto-generated each {reportType === 'weekly' ? 'week' : 'month'}
+        </p>
         </div>
         
          <div className="flex items-center justify-center gap-3">

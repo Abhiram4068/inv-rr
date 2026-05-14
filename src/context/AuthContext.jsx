@@ -8,14 +8,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // On every app load/refresh, hit the refresh endpoint.
-    // If the refresh cookie is alive → we're authenticated.
-    // If not → cookies are gone, user must log in.
-    api.post("/api/token/refresh/")
+    // Check if we have an active session by fetching the profile.
+    // If it fails with 401, the interceptor will attempt a token refresh automatically.
+    api.get("/api/profile/")
       .then((res) => {
-        // If your refresh endpoint returns user info, store it.
-        // If it only returns a new access token, just mark as authenticated.
-        setUser(res.data?.user ?? { authenticated: true });
+        setUser(res.data?.user ?? res.data ?? { authenticated: true });
       })
       .catch(() => {
         setUser(null);
