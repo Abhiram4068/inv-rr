@@ -39,6 +39,7 @@ import OldFilesManager from "./pages/user/storage/ViewOldFiles";
 import ScheduleMail from "./pages/user/ScheduleMail";
 import SchedulesList from "./pages/user/SchedulesList";
 import ManagerReports from "./pages/user/ManagerReports";
+import AccountDeactivated from "./pages/public/AccountDeactivated";
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
         <Route path="/auth/reset-password/confirm" element={<ResetPassword />} />
         {/* ── Protected routes — cookie checked first ── */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/account-deactivated" element={<AccountDeactivated />} />
 
           <Route element={<UserLayout />}>
             <Route path="/archives"     element={<ArchivesList />} />

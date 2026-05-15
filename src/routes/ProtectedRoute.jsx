@@ -1,8 +1,9 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -12,7 +13,23 @@ const ProtectedRoute = () => {
     );
   }
 
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Handle Deactivated Account status
+  const isDeactivated = user.account_status?.toLowerCase() === "deactivated";
+  const isDeactivatedPage = location.pathname === "/account-deactivated";
+
+  if (isDeactivated && !isDeactivatedPage) {
+    return <Navigate to="/account-deactivated" replace />;
+  }
+
+  if (!isDeactivated && isDeactivatedPage) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

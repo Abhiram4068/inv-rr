@@ -84,4 +84,6 @@ export const resetPassword = ({ uid, token, new_password, confirm_password }) =>
   });
 };
 
+export const submitReactivationRequest = (data) => api.post("/api/auth/reactivation-request/", data);
+
 export default api;
