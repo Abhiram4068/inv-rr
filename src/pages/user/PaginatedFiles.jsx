@@ -276,16 +276,6 @@ const PaginatedFiles = () => {
         </div>
       )}
 
-      {/* Mobile Storage Warning */}
-      <div className="lg:hidden mt-8 space-y-4">
-        <div className={`border rounded-xl p-5 transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <div className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Storage Status</div>
-          <div className={`h-1.5 rounded-full overflow-hidden mb-3 ${isDark ? 'bg-[#222]' : 'bg-slate-100'}`}>
-            <div className="w-[93%] h-full bg-[#ff4444]"></div>
-          </div>
-          <p className={`text-xs ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>14.08 GB of 15 GB used (93%)</p>
-        </div>
-      </div>
     </main>
   );
 };
