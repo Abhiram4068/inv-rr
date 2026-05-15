@@ -40,6 +40,9 @@ import ScheduleMail from "./pages/user/ScheduleMail";
 import SchedulesList from "./pages/user/SchedulesList";
 import ManagerReports from "./pages/user/ManagerReports";
 import AccountDeactivated from "./pages/public/AccountDeactivated";
+import AdminRoute from "./routes/AdminRoute";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ReactivationRequests from "./pages/admin/ReactivationRequests";
 
 function App() {
   return (
@@ -95,6 +98,13 @@ function App() {
             <Route path="/viewcollection/:id" element={<CollectionDetails />} />
           </Route>
 
+          {/* ── Admin Exclusive Routes ── */}
+          <Route element={<AdminRoute />}>
+           
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/requests" element={<ReactivationRequests />} />
+            </Route>
+          
         </Route>
         {/* ── End protected ── */}
 
