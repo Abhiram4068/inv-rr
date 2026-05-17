@@ -25,16 +25,23 @@ const Login = () => {
     setLoading(true);
     try {
       const res = await login(formData);
-      setUser(res.data?.user || res.data);
-      navigate("/dashboard", { replace: true });
+      const userData = res.data?.user || res.data;
+      setUser(userData);
+      
+      if (userData?.is_staff || userData?.is_superuser) {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || "Invalid email or password");
+      const errorMsg = err.response?.data?.error || err.response?.data?.detail || "Invalid email or password";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
   };
   if (authLoading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to={(user.is_staff || user.is_superuser) ? "/admin/dashboard" : "/dashboard"} replace />;
 
   return (
     <div className="min-h-screen bg-[#141d2a] flex font-['Inter']">

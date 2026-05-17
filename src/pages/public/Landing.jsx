@@ -40,7 +40,7 @@ const Landing = () => {
 
           <div className="flex flex-wrap gap-3">
             <Link
-              to={user ? "/dashboard" : "/login"}
+              to={user ? (user.is_staff || user.is_superuser ? "/admin/dashboard" : "/dashboard") : "/login"}
               className="px-6 py-3 rounded-lg bg-white text-black text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               {user ? "Go to Dashboard" : "Get Started"}

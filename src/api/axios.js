@@ -33,6 +33,17 @@ api.interceptors.response.use(
     const isOnAuthPage = window.location.pathname.startsWith("/login") || 
                          window.location.pathname.startsWith("/register");
 
+    // ✅ Handle 403 Forbidden (e.g. Blocked or Deleted user)
+    // If the backend returns 403 with a "blocked" or "deleted" message, 
+    // we should immediately redirect to login to avoid "need to refresh" bug.
+    if (error.response?.status === 403 && !isOnAuthPage) {
+      const detail = error.response.data?.detail?.toLowerCase() || "";
+      if (detail.includes("blocked") || detail.includes("deleted")) {
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+    }
+
     // Don't attempt refresh for auth endpoints, non-401 errors, or if already on an auth page
     if (error.response?.status !== 401 || isAuthEndpoint || original._retry || isOnAuthPage) {
       return Promise.reject(error);

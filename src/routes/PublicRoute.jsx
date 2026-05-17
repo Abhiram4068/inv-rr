@@ -13,7 +13,11 @@ const PublicRoute = () => {
   }
 
   // If user is authenticated, redirect them away from landing/login pages to dashboard
-  return user ? <Navigate to="/dashboard" replace /> : <Outlet />;
+  if (user) {
+    return <Navigate to={(user.is_staff || user.is_superuser) ? "/admin/dashboard" : "/dashboard"} replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default PublicRoute;

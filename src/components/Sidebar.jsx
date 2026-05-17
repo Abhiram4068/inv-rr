@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 const Sidebar = ({ isOpen }) => {
+  const { user } = useAuth();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
@@ -118,6 +120,32 @@ const Sidebar = ({ isOpen }) => {
           </>
         )}
       </NavLink>
+
+      {/* Admin Section - Only for Staff/Superuser */}
+      {(user?.is_staff || user?.is_superuser) && (
+        <>
+          <div className={`text-[11px] uppercase tracking-widest m-[24px_0_12px_12px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+            Administration
+          </div>
+          <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#3b82f630]' : 'border-blue-100'}`}></div>
+
+          <NavLink to="/admin/dashboard" className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1 ${isActive ? (isDark ? 'bg-[#3b82f610] text-[#3b82f6]' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-[#3b82f6]' : 'text-slate-600 hover:bg-slate-50')}`}>
+            {({ isActive }) => (
+              <>
+                <i className={`fa-solid fa-gauge-high w-5 mr-3 text-base ${isDark ? (isActive ? 'text-[#3b82f6]' : 'text-white') : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i> Dashboard
+              </>
+            )}
+          </NavLink>
+
+          <NavLink to="/admin/requests" className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all ${isActive ? (isDark ? 'bg-[#3b82f610] text-[#3b82f6]' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-[#3b82f6]' : 'text-slate-600 hover:bg-slate-50')}`}>
+            {({ isActive }) => (
+              <>
+                <i className={`fa-solid fa-envelope-open-text w-5 mr-3 text-base ${isDark ? (isActive ? 'text-[#3b82f6]' : 'text-white') : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i> Requests
+              </>
+            )}
+          </NavLink>
+        </>
+      )}
 
     </aside>
   );
