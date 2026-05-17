@@ -7,6 +7,7 @@ import PublicRoute from "./routes/PublicRoute";
 import UserLayout from "./layouts/UserLayout";
 import StorageLayout from "./layouts/StorageManagement";
 import CollectionLayout from "./layouts/CollectionLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 import Dashboard from "./pages/user/Dashboard";
 import PaginatedFiles from "./pages/user/PaginatedFiles";
@@ -42,8 +43,13 @@ import ManagerReports from "./pages/user/ManagerReports";
 import AccountDeactivated from "./pages/public/AccountDeactivated";
 import AdminRoute from "./routes/AdminRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserView";
+import UserDetails from "./pages/admin/UserDetails";
+import PendingApprovals from "./pages/admin/PendingApprovals";
+import RoleChangeRequests from "./pages/admin/RoleChangeRequests";
 import ReactivationRequests from "./pages/admin/ReactivationRequests";
-
+import BlockedUsers from "./pages/admin/BlockedUsers";
+import DeletedUsers from "./pages/admin/DeletedUsers";
 function App() {
   return (
     <AuthProvider>
@@ -99,11 +105,19 @@ function App() {
           </Route>
 
           {/* ── Admin Exclusive Routes ── */}
-          <Route element={<AdminRoute />}>
-           
+          <Route element={<AdminLayout />}>
+            <Route element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/requests" element={<ReactivationRequests />} />
+              <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/user/detail/:id/" element={<UserDetails />} />
+              <Route path="/admin/pending-users" element={<PendingApprovals />} />
+              <Route path="/admin/role-change" element={<RoleChangeRequests />} />
+              <Route path="/admin/blocked-users" element={<BlockedUsers />} />
+              <Route path="/admin/deleted-users" element={<DeletedUsers />} />
+              <Route path="/admin/reactivation-requests" element={<ReactivationRequests />} />
             </Route>
+          </Route>
           
         </Route>
         {/* ── End protected ── */}

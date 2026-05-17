@@ -68,7 +68,11 @@ const Register = () => {
       const createdUser = res.data?.user || null;
       if (createdUser && typeof createdUser === "object") {
         setUser(createdUser);
-        navigate("/dashboard", { replace: true });
+        if (createdUser?.is_staff || createdUser?.is_superuser) {
+          navigate("/admin/dashboard", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
         return;
       }
       navigate("/login", { replace: true });
@@ -91,7 +95,7 @@ useEffect(() => {
   fetchDesignations();
 }, []);
   if (authLoading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to={(user.is_staff || user.is_superuser) ? "/admin/dashboard" : "/dashboard"} replace />;
 
   return (
     <div className="min-h-screen bg-black flex font-['Inter']">
