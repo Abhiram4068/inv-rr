@@ -130,8 +130,8 @@ const UserManagement = () => {
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-bold uppercase tracking-wide ${
-                                                    user.account_status === 'active' ? ' text-emerald-600' :
-                                                    user.account_status === 'blocked' ? ' text-rose-600' :
+                                                    user.account_status === 'active' ||'ACTIVE' ? ' text-emerald-600' :
+                                                    user.account_status === 'blocked' ||'BLOCKED' ? ' text-rose-600' :
                                                     'text-amber-600'
                                                 }`}>
                                                     {user.account_status}
