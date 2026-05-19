@@ -1,38 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-// --- DUMMY DATA ---
-const MOCK_THREADS = [
-  {
-    id: "thread_01",
-    title: "Website Rebranding 2026",
-    objective: "Updating the visual identity across all digital touchpoints including the main landing page and dashboard.",
-    status: "Active",
-    node_count: 5,
-    file_count: 12,
-    updated_at: "2026-05-01T10:00:00Z"
-  },
-  {
-    id: "thread_02",
-    title: "Mobile App API Integration",
-    objective: "Establishing secure handshakes between the new Rust backend and the React Native frontend nodes.",
-    status: "In Progress",
-    node_count: 8,
-    file_count: 4,
-    updated_at: "2026-05-04T15:30:00Z"
-  },
-  {
-    id: "thread_03",
-    title: "Q2 Marketing Campaign",
-    objective: "Sequential rollout of social media assets, email sequences, and dependency tracking for influencer outreach.",
-    status: "Completed",
-    node_count: 3,
-    file_count: 24,
-    updated_at: "2026-04-20T08:15:00Z"
-  }
-];
+const BASE = "/api";
+
+function authHeaders() {
+  const t = localStorage.getItem("access") || localStorage.getItem("access_token") || localStorage.getItem("token");
+  return { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) };
+}
+
+async function apiFetch(url, opts = {}) {
+  const res = await fetch(url, { headers: authHeaders(), ...opts });
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.detail || "API error");
+  return data;
+}
+
+const api = {
+  getThreads: () => apiFetch(`${BASE}/threads/`),
+  createThread: (body) => apiFetch(`${BASE}/threads/`, { method: "POST", body: JSON.stringify(body) }),
+  updateThread: (id, body) => apiFetch(`${BASE}/threads/${id}/`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteThread: (id) => apiFetch(`${BASE}/threads/${id}/`, { method: "DELETE" }),
+};
 
 const Threads = () => {
+  const navigate = useNavigate();
   // Theme & UI Logic
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [isModalOpen, setModalOpen] = useState(false);
@@ -44,11 +36,17 @@ const Threads = () => {
   const [threadObjective, setThreadObjective] = useState('');
 
   // Local Data State
+  const [allThreads, setAllThreads] = useState([]);
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("updated_at");
   const [sortOrder, setSortOrder] = useState("desc");
+
+  // Edit/Delete State
+  const [menuOpenId, setMenuOpenId] = useState(null);
+  const [editingThread, setEditingThread] = useState(null);
+  const [deletingThread, setDeletingThread] = useState(null);
 
   const isDark = theme === 'dark';
 
@@ -70,51 +68,88 @@ const Threads = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // --- LOCAL DATA HANDLING (Simulating API) ---
-  useEffect(() => {
+  const loadThreads = () => {
     setLoading(true);
-    const timer = setTimeout(() => {
-      let filtered = MOCK_THREADS.filter(t => 
-        t.title.toLowerCase().includes(search.toLowerCase()) || 
-        t.objective.toLowerCase().includes(search.toLowerCase())
-      );
-
-      filtered.sort((a, b) => {
-        let valA = a[sortBy];
-        let valB = b[sortBy];
-        if (sortOrder === 'asc') return valA > valB ? 1 : -1;
-        return valA < valB ? 1 : -1;
-      });
-
-      setThreads(filtered);
+    api.getThreads().then((data) => {
+      setAllThreads(data || []);
       setLoading(false);
-    }, 500); // Small delay to feel realistic
-    return () => clearTimeout(timer);
-  }, [search, sortBy, sortOrder]);
+    }).catch((err) => {
+      console.error(err);
+      setLoading(false);
+    });
+  };
 
-  const handleCreateThread = () => {
+  useEffect(() => {
+    loadThreads();
+  }, []);
+
+  useEffect(() => {
+    let filtered = allThreads.filter(t => 
+      t.title?.toLowerCase().includes(search.toLowerCase()) || 
+      t.description?.toLowerCase().includes(search.toLowerCase()) // backend usually uses description
+    );
+
+    filtered.sort((a, b) => {
+      let valA = a[sortBy] || '';
+      let valB = b[sortBy] || '';
+      // Default to created_at if updated_at is requested but missing
+      if (sortBy === 'updated_at') {
+          valA = a.updated_at || a.created_at || '';
+          valB = b.updated_at || b.created_at || '';
+      }
+      if (sortOrder === 'asc') return valA > valB ? 1 : -1;
+      return valA < valB ? 1 : -1;
+    });
+
+    setThreads(filtered);
+  }, [search, sortBy, sortOrder, allThreads]);
+
+  const handleCreateThread = async () => {
     if (!threadTitle.trim()) {
       alert("Please provide a title.");
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      const newThread = {
-        id: `thread_${Math.random().toString(36).substr(2, 5)}`,
-        title: threadTitle,
-        objective: threadObjective,
-        status: "Active",
-        node_count: 0,
-        file_count: 0,
-        updated_at: new Date().toISOString()
-      };
-      setThreads([newThread, ...threads]);
+    try {
+      const newThread = await api.createThread({ title: threadTitle, description: threadObjective });
+      setAllThreads([newThread, ...allThreads]);
       setModalOpen(false);
       setThreadTitle('');
       setThreadObjective('');
-      setLoading(false);
       showToast("Workflow thread initialized successfully");
-    }, 800);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateThread = async (id, data) => {
+    setLoading(true);
+    try {
+      const updated = await api.updateThread(id, data);
+      setAllThreads(prev => prev.map(t => t.id === id ? updated : t));
+      setEditingThread(null);
+      showToast("Thread updated successfully");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteThread = async (id) => {
+    setLoading(true);
+    try {
+      await api.deleteThread(id);
+      setAllThreads(prev => prev.filter(t => t.id !== id));
+      setDeletingThread(null);
+      showToast("Thread deleted successfully");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -208,28 +243,51 @@ const Threads = () => {
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             {threads.map((thread) => (
-              <Link
+              <div
                 key={thread.id}
-                to={`/thread/${thread.id}`}
-                className={`border p-5 rounded-[16px] flex flex-col gap-4 transition-all group ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'}`}
+                onClick={() => navigate(`/thread/${thread.id}`)}
+                className={`border p-5 rounded-[16px] flex flex-col gap-4 transition-all group cursor-pointer ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'}`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between relative" onClick={e => e.stopPropagation()}>
                     <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
                         <i className="fa-solid fa-code-branch text-blue-500 rotate-90"></i>
                     </div>
-                    <div className={`text-[10px] px-2 py-1 rounded-md uppercase font-bold ${isDark ? 'bg-emerald-500/10 text-emerald-500' : 'bg-emerald-50 text-emerald-600'}`}>
-                        {thread.status}
-                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpenId(menuOpenId === thread.id ? null : thread.id);
+                      }}
+                      className={`p-2 rounded-lg hover:bg-white/5 transition-all ${isDark ? 'text-[#666]' : 'text-slate-400'}`}
+                    >
+                      <i className="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+
+                    {menuOpenId === thread.id && (
+                      <div className={`absolute top-10 right-0 z-10 w-40 border rounded-xl shadow-xl p-1.5 ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-slate-200'}`}>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setEditingThread(thread); setMenuOpenId(null); }}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${isDark ? 'hover:bg-[#222] text-[#ccc]' : 'hover:bg-slate-100 text-slate-600'}`}
+                        >
+                          <i className="fa-solid fa-pen-to-square"></i> Rename
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setDeletingThread(thread); setMenuOpenId(null); }}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-rose-500 transition-colors ${isDark ? 'hover:bg-rose-500/10' : 'hover:bg-rose-50'}`}
+                        >
+                          <i className="fa-solid fa-trash"></i> Delete
+                        </button>
+                      </div>
+                    )}
                 </div>
                 <div>
                   <span className={`text-base font-bold truncate block mb-1 ${isDark ? 'text-white' : 'text-slate-700'}`}>{thread.title}</span>
-                  <p className={`text-xs line-clamp-2 leading-relaxed ${isDark ? 'text-[#666]' : 'text-slate-400'}`}>{thread.objective}</p>
+                  <p className={`text-xs line-clamp-2 leading-relaxed ${isDark ? 'text-[#666]' : 'text-slate-400'}`}>{new Date(thread.created_at).toLocaleDateString()}</p>
                 </div>
-                <div className={`flex items-center gap-4 pt-4 border-t ${isDark ? 'border-[#1a1a1a]' : 'border-slate-100'}`}>
-                    <span className="text-[11px] font-medium text-[#808080]"><i className="fa-solid fa-circle-nodes mr-1"></i>{thread.node_count} Nodes</span>
-                    <span className="text-[11px] font-medium text-[#808080]"><i className="fa-solid fa-paperclip mr-1"></i>{thread.file_count} Files</span>
+                <div className={`flex items-center gap-30 pt-4 border-t ${isDark ? 'border-[#1a1a1a]' : 'border-slate-100'}`} style={{ gap: '30px' }}>
+                  <span className="text-[11px] font-medium text-[#808080]"><i className="fa-solid fa-paperclip mr-1"></i>{thread.file_count} Files</span>
+                  <span className="text-[11px] font-medium text-[#808080]"><i className="fa-solid fa-circle-nodes mr-1"></i>{thread.node_count} Nodes</span>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         ) : (
@@ -239,8 +297,9 @@ const Threads = () => {
                 <tr className={`border-b ${isDark ? 'border-[#1a1a1a] bg-[#050505] text-[#666]' : 'border-slate-200 bg-slate-50 text-slate-500'} text-[11px] uppercase font-bold`}>
                   <th className="px-6 py-4">Workflow Thread</th>
                   <th className="px-6 py-4">Nodes</th>
-                  <th className="px-6 py-4">Resources</th>
-                  <th className="px-6 py-4 text-right">Updated</th>
+                  <th className="px-6 py-4">Files</th>
+                  <th className="px-6 py-4">Created</th>
+                  <th className="px-6 py-4 text-right"></th>
                 </tr>
               </thead>
               <tbody className={`text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
@@ -252,15 +311,38 @@ const Threads = () => {
                         <span className="font-semibold">{thread.title}</span>
                       </Link>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex -space-x-2">
-                        {[...Array(Math.min(thread.node_count || 1, 3))].map((_, i) => (
-                            <div key={i} className={`w-6 h-6 rounded-full border-2 ${isDark ? 'border-black bg-[#222]' : 'border-white bg-slate-200'} text-[8px] flex items-center justify-center`}>{i+1}</div>
-                        ))}
+                    <td className="px-6 py-4 text-xs text-[#808080]">{thread.node_count} Nodes</td>
+                    <td className="px-6 py-4 text-xs text-[#808080]">{thread.file_count} Assets</td>
+                    <td className="px-6 py-4 text-xs font-mono text-[#666]">{new Date(thread.created_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right">
+                       <div className="relative inline-block text-left">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMenuOpenId(menuOpenId === thread.id ? null : thread.id);
+                          }}
+                          className={`p-1.5 rounded-lg hover:bg-white/5 transition-all ${isDark ? 'text-[#666]' : 'text-slate-400'}`}
+                        >
+                          <i className="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        {menuOpenId === thread.id && (
+                          <div className={`absolute top-0 right-10 z-[100] w-40 border rounded-xl shadow-xl p-1.5 ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-slate-200'}`}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setEditingThread(thread); setMenuOpenId(null); }}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${isDark ? 'hover:bg-[#222] text-[#ccc]' : 'hover:bg-slate-100 text-slate-600'}`}
+                            >
+                              <i className="fa-solid fa-pen-to-square"></i> Rename/Edit
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setDeletingThread(thread); setMenuOpenId(null); }}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-rose-500 transition-colors ${isDark ? 'hover:bg-rose-500/10' : 'hover:bg-rose-50'}`}
+                            >
+                              <i className="fa-solid fa-trash"></i> Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-xs text-[#808080]">{thread.file_count} Assets</td>
-                    <td className="px-6 py-4 text-right text-xs font-mono text-[#666]">{new Date(thread.updated_at).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -272,8 +354,8 @@ const Threads = () => {
 
       {/* NEW THREAD MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-[6px] flex justify-center items-center z-[2000] p-4">
-          <div className={`border w-full max-w-[460px] p-8 rounded-[24px] shadow-2xl ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-[6px] flex justify-center items-center z-[2000] p-4" onClick={() => setModalOpen(false)}>
+          <div className={`border w-full max-w-[460px] p-8 rounded-[24px] shadow-2xl ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-bold">Initialize Thread</h2>
               <i className="fa-solid fa-xmark text-[#808080] cursor-pointer hover:text-white" onClick={() => setModalOpen(false)}></i>
@@ -293,6 +375,65 @@ const Threads = () => {
           </div>
         </div>
       )}
+
+      {/* EDIT THREAD MODAL */}
+      {editingThread && (
+        <EditModal 
+          thread={editingThread} 
+          isDark={isDark} 
+          onClose={() => setEditingThread(null)} 
+          onSubmit={(data) => handleUpdateThread(editingThread.id, data)} 
+        />
+      )}
+
+      {/* DELETE CONFIRM MODAL */}
+      {deletingThread && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-[6px] flex justify-center items-center z-[2000] p-4" onClick={() => setDeletingThread(null)}>
+          <div className={`border w-full max-w-[400px] p-8 rounded-[24px] shadow-2xl ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                <i className="fa-solid fa-trash"></i>
+              </div>
+              <h2 className="text-xl font-bold mb-2">Delete Thread?</h2>
+              <p className={`text-sm ${isDark ? 'text-[#666]' : 'text-slate-500'}`}>
+                Are you sure you want to delete <span className="font-bold text-rose-500">"{deletingThread.title}"</span>? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button className={`flex-1 py-4 rounded-xl font-bold border ${isDark ? 'border-[#1a1a1a] text-white' : 'border-slate-200 text-slate-700'}`} onClick={() => setDeletingThread(null)}>Cancel</button>
+              <button className="flex-1 bg-rose-500 text-white py-4 rounded-xl font-bold hover:bg-rose-600 shadow-lg" onClick={() => handleDeleteThread(deletingThread.id)}>Yes, Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const EditModal = ({ thread, isDark, onClose, onSubmit }) => {
+  const [title, setTitle] = useState(thread.title);
+  const [desc, setDesc] = useState(thread.description || '');
+
+  return (
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-[6px] flex justify-center items-center z-[2000] p-4" onClick={onClose}>
+      <div className={`border w-full max-w-[460px] p-8 rounded-[24px] shadow-2xl ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-xl font-bold">Edit Thread</h2>
+          <i className="fa-solid fa-xmark text-[#808080] cursor-pointer hover:text-white" onClick={onClose}></i>
+        </div>
+        <div className="mb-6">
+          <label className="block text-[11px] mb-2 uppercase font-bold text-[#666]">Thread Title</label>
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={`w-full border rounded-xl p-4 outline-none ${isDark ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]' : 'bg-slate-50 border-slate-200 text-slate-800'}`} />
+        </div>
+        <div className="mb-8">
+          <label className="block text-[11px] mb-2 uppercase font-bold text-[#666]">Main Objective</label>
+          <textarea rows="4" value={desc} onChange={(e) => setDesc(e.target.value)} className={`w-full border rounded-xl p-4 outline-none resize-none ${isDark ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]' : 'bg-slate-50 border-slate-200 text-slate-800'}`}></textarea>
+        </div>
+        <div className="flex gap-3">
+          <button className="flex-1 py-4 rounded-xl font-bold border border-[#1a1a1a]" onClick={onClose}>Cancel</button>
+          <button className="flex-[2] bg-[#3b82f6] text-white py-4 rounded-xl font-bold hover:bg-blue-600 shadow-lg" onClick={() => onSubmit({ title, description: desc })}>Update Thread</button>
+        </div>
+      </div>
     </div>
   );
 };

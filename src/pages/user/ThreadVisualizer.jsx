@@ -13,6 +13,7 @@ import ReactFlow, {
   MiniMap,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { useParams, useNavigate } from "react-router-dom";
 
 // ── API layer ──────────────────────────────────────────────────────────────────
 const BASE = "/api";
@@ -39,6 +40,10 @@ const api = {
   updateNode: (id, body) => apiFetch(`${BASE}/nodes/${id}/`, { method: "PUT", body: JSON.stringify(body) }),
   deleteNode: (id) => apiFetch(`${BASE}/nodes/${id}/`, { method: "DELETE" }),
   updatePosition: (id, body) => apiFetch(`${BASE}/nodes/${id}/position/`, { method: "PATCH", body: JSON.stringify(body) }),
+  createStage: (threadId, name) => apiFetch(`${BASE}/threads/${threadId}/stages/`, { method: "POST", body: JSON.stringify({ name }) }),
+  updateStage: (id, name) => apiFetch(`${BASE}/stages/${id}/`, { method: "PUT", body: JSON.stringify({ name }) }),
+  deleteStage: (id) => apiFetch(`${BASE}/stages/${id}/`, { method: "DELETE" }),
+  getStages: (id) => apiFetch(`${BASE}/threads/${id}/stages/`),
   addDependency: (src, tgt, type = "DEPENDS_ON") =>
     apiFetch(`${BASE}/nodes/${src}/dependencies/`, {
       method: "POST",
@@ -281,27 +286,20 @@ function StageLane({ data }) {
     <div style={{ width: SW, height, pointerEvents: "none", fontFamily: ff, position: "relative" }}>
       {/* Box grouping the nodes */}
       <div style={{
-        width: "100%",
-        height: "100%",
-        border: `2px solid var(--t-borderSoft)`,
-        borderRadius: 14,
-        background: "var(--t-stageBg)",
-        boxSizing: "border-box"
+        width: "100%", height: "100%", border: `2px solid var(--t-borderSoft)`, borderRadius: 14,
+        background: "var(--t-stageBg)", boxSizing: "border-box"
       }}>
-        {/* Label for the stage */}
         <div style={{
-          padding: "12px 16px",
-          fontSize: 13,
-          fontWeight: 700,
-          color: T.text,
-          borderBottom: `2px solid var(--t-borderSoft)`,
-          background: "var(--t-stageHeaderBg)",
-          borderTopLeftRadius: 12,
-          borderTopRightRadius: 12,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          padding: "12px 16px", fontSize: 13, fontWeight: 700, color: T.text, borderBottom: `2px solid var(--t-borderSoft)`,
+          background: "var(--t-stageHeaderBg)", borderTopLeftRadius: 12, borderTopRightRadius: 12,
+          textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", justifyContent: "space-between", alignItems: "center",
+          pointerEvents: "auto"
         }}>
-          {label}
+          <span>{label}</span>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button onClick={() => data.onRenameStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, padding: 4 }}>✏️</button>
+            <button onClick={() => data.onDeleteStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, padding: 4 }}>🗑</button>
+          </div>
         </div>
       </div>
     </div>
@@ -388,7 +386,7 @@ function ThreadNode({ data, selected }) {
         {/* Footer: avatars stub + status */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
           <div style={{ display: "flex" }}>
-            <p style={{ fontSize: 10.5, color: T.textFaint, fontWeight: 500 }}>File count : <span style={{ color: T.text, fontWeight: 700 }}>{node.file_count}</span></p>
+            <p style={{ fontSize: 10.5, color: T.textFaint, fontWeight: 500 , }}>Total files : <span style={{ color: T.text, fontWeight: 700 }}>{node.file_count}</span></p>
           </div>
           <StatusPill status={node.status} />
         </div>
@@ -500,17 +498,78 @@ function NodeFormModal({ open, onClose, onSubmit, initial, title }) {
   );
 }
 
+// ── Feedback Modals ──────────────────────────────────────────────────────────
+function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText = "Confirm", variant = "primary" }) {
+  return (
+    <Modal open={open} onClose={onClose} title={title} width={380}>
+      <div style={{ fontSize: 13, color: T.text, marginBottom: 20, lineHeight: 1.5 }}>{message}</div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+        <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
+        <Btn variant={variant} onClick={() => { onConfirm(); onClose(); }}>{confirmText}</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function PromptModal({ open, onClose, onSubmit, title, label, initialValue = "", confirmText = "Save" }) {
+  const [val, setVal] = useState(initialValue);
+  useEffect(() => { if (open) setVal(initialValue); }, [open, initialValue]);
+  return (
+    <Modal open={open} onClose={onClose} title={title} width={380}>
+      <Fld label={label}>
+        <Inp value={val} onChange={e => setVal(e.target.value)} autoFocus onKeyDown={e => e.key === "Enter" && val.trim() && (onSubmit(val), onClose())} />
+      </Fld>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+        <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
+        <Btn onClick={() => { onSubmit(val); onClose(); }} disabled={!val.trim()}>{confirmText}</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function AlertModal({ open, onClose, title, message }) {
+  return (
+    <Modal open={open} onClose={onClose} title={title} width={380}>
+      <div style={{ fontSize: 13, color: T.text, marginBottom: 20, lineHeight: 1.5 }}>{message}</div>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <Btn onClick={onClose}>OK</Btn>
+      </div>
+    </Modal>
+  );
+}
+
 // ── Right Detail Panel (image-style) ───────────────────────────────────────────
-function NodePanel({ node, onClose, onEdit, onFiles }) {
+function NodePanel({ node, onClose, onEdit, onFiles, onRefresh, showConfirm, showError }) {
   const [activity, setActivity] = useState([]);
   const [files, setFiles] = useState([]);
   const [tab, setTab] = useState("activity");
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     if (!node) return;
     api.getActivity(node.id).then(setActivity).catch(() => setActivity([]));
     api.getFiles(node.id).then(setFiles).catch(() => setFiles([]));
   }, [node]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const onRemoveFile = (file) => {
+    showConfirm({
+      open: true,
+      title: "Remove File",
+      message: `Are you sure you want to remove "${file.original_name}" from this node?`,
+      confirmText: "Remove",
+      variant: "danger",
+      onConfirm: async () => {
+        try {
+          await api.deleteFile(file.id);
+          loadData();
+          if (onRefresh) onRefresh();
+        } catch (e) {
+          showError(e);
+        }
+      }
+    });
+  };
 
   if (!node) return null;
   const sc = STATUS_CFG[node.status] || STATUS_CFG.ACTIVE;
@@ -573,78 +632,96 @@ function NodePanel({ node, onClose, onEdit, onFiles }) {
         {tab === "files" && (files.length === 0
           ? <div style={{ color: T.textFaint, fontSize: 12, textAlign: "center", marginTop: 18 }}>No files uploaded</div>
           : files.map(f => (
-            <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: `1px solid ${T.borderSoft}` }}>
-              <span>📎</span>
+            <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: `1px solid ${T.borderSoft}` }}>
+              <div style={{ width: 28, height: 28, borderRadius: 6, background: "var(--t-iconBg)", color: T.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>📎</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.original_name}</div>
-                <div style={{ fontSize: 10.5, color: T.textFaint }}>by {f.uploaded_by}</div>
+                <div style={{ fontSize: 10.5, color: T.textFaint }}>{f.uploaded_by}</div>
               </div>
-              {f.file_url && <a href={f.file_url} download style={{ fontSize: 11, color: T.accent }}>⬇</a>}
+              <div style={{ display: "flex", gap: 4 }}>
+                {f.file_url && (
+                  <button onClick={() => window.open(f.file_url, "_blank")} title="View File" style={{ width: 26, height: 26, borderRadius: 6, border: "none", background: "var(--t-btnSoftBg)", color: T.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>👁️</button>
+                )}
+                <button 
+                  onClick={() => onRemoveFile(f)} 
+                  title="Remove from node" 
+                  style={{ width: 26, height: 26, borderRadius: 6, border: "none", background: "var(--t-dangerBg)", color: "var(--t-dangerText)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}
+                >🗑️</button>
+              </div>
             </div>
           ))
         )}
       </div>
 
       {/* Bottom actions */}
-      <div style={{ padding: "12px 16px", borderTop: `1px solid ${T.borderSoft}`, display: "flex", gap: 8 }}>
-        <Btn small variant="ghost" onClick={() => onEdit(node)} style={{ flex: 1 }}>✏️ Edit</Btn>
-        <Btn small variant="ghost" onClick={() => onFiles(node)} style={{ flex: 1 }}>📎 Files</Btn>
+      <div style={{ padding: "12px 16px", borderTop: `1px solid ${T.borderSoft}`, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Btn small variant="ghost" onClick={() => onEdit(node)} style={{ flex: 1 }}>✏️ Rename / Edit</Btn>
+          <Btn small variant="ghost" onClick={() => onFiles(node)} style={{ flex: 1 }}>📎 Files</Btn>
+        </div>
+        <Btn small variant="ghost" onClick={() => onDelete(node)} style={{ color: "var(--t-dangerText)", borderColor: "var(--t-dangerBorder)" }}>🗑 Archive Node</Btn>
       </div>
     </div>
   );
 }
 
 // ── Build RF graph ─────────────────────────────────────────────────────────────
-function buildGraph(apiNodes, apiEdges, stageLabels, thread, handlers) {
+function buildGraph(apiNodes, apiEdges, stages, thread, handlers) {
   const stageMap = {};
   apiNodes.forEach(n => {
-    const s = n.stage || 0;
+    const s = n.stage; // This is the stage ID
     if (!stageMap[s]) stageMap[s] = [];
     stageMap[s].push(n);
   });
 
-  const numStages = stageLabels.length;
+  const numStages = stages.length;
   const laneHeights = {};
-  for (let i = 0; i < numStages; i++) {
-    const cnt = (stageMap[i] || []).length;
-    laneHeights[i] = Math.max(cnt, 1) * NH + Math.max(cnt - 1, 0) * NG + PT + 28;
-  }
+  stages.forEach((stage, i) => {
+    const cnt = (stageMap[stage.id] || []).length;
+    laneHeights[stage.id] = Math.max(cnt, 1) * NH + Math.max(cnt - 1, 0) * NG + PT + 28;
+  });
 
   const rfNodes = [];
 
-  for (let i = 0; i < numStages; i++) {
+  stages.forEach((stage, i) => {
     rfNodes.push({
-      id: `lane-${i}`,
+      id: `lane-${stage.id}`,
       type: "stageLane",
       position: { x: i * (SW + SG), y: 0 },
       data: {
-        label: stageLabels[i] || (i === 0 ? thread.title : `Stage ${i}`),
+        label: stage.name,
         isRoot: i === 0,
-        nodeCount: (stageMap[i] || []).length,
-        height: laneHeights[i],
+        nodeCount: (stageMap[stage.id] || []).length,
+        height: laneHeights[stage.id],
+        id: stage.id,
+        onRenameStage: handlers.onRenameStage,
+        onDeleteStage: handlers.onDeleteStage,
       },
       draggable: false,
       selectable: false,
       zIndex: 0,
     });
-  }
+  });
 
   let counter = 0;
   apiNodes.forEach(n => {
-    const stage = n.stage || 0;
-    const sorted = (stageMap[stage] || []).sort((a, b) => (a.row || 0) - (b.row || 0));
+    const stageId = n.stage;
+    const stageIdx = stages.findIndex(s => s.id === stageId);
+    if (stageIdx === -1) return; // Should not happen
+
+    const sorted = (stageMap[stageId] || []).sort((a, b) => (a.row || 0) - (b.row || 0));
     const rowIdx = sorted.findIndex(x => x.id === n.id);
     counter++;
     rfNodes.push({
       id: String(n.id),
       type: "threadNode",
       position: {
-        x: stage * (SW + SG) + 12,
+        x: stageIdx * (SW + SG) + 12,
         y: PT + rowIdx * (NH + NG),
       },
       data: {
         node: n,
-        isRoot: stage === 0 && rowIdx === 0,
+        isRoot: stageIdx === 0 && rowIdx === 0,
         indexLabel: counter,
         ...handlers,
       },
@@ -686,28 +763,78 @@ function CanvasInner({ thread, onBack }) {
   const isDark = useThemeSync();
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState([]);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState([]);
-  const [stageLabels, setStageLabels] = useState([]);
+  const [stages, setStages] = useState([]);
   const [rawNodes, setRawNodes] = useState([]);
   const [rawEdges, setRawEdges] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
 
-  const [addNodeModal, setAddNodeModal] = useState({ open: false, stageIndex: null });
+  const [addNodeModal, setAddNodeModal] = useState({ open: false, stageId: null });
   const [editModal, setEditModal] = useState({ open: false, node: null });
   const [fileModal, setFileModal] = useState({ open: false, node: null });
   const [addStageModal, setAddStageModal] = useState(false);
   const [stageNameInput, setStageNameInput] = useState("");
   const [edgeEditModal, setEdgeEditModal] = useState({ open: false, edge: null });
 
+  // Feedback states
+  const [alert, setAlert] = useState({ open: false, title: "Alert", message: "" });
+  const [confirm, setConfirm] = useState({ open: false, title: "Confirm", message: "", onConfirm: () => {}, variant: "primary", confirmText: "Confirm" });
+  const [prompt, setPrompt] = useState({ open: false, title: "Rename", label: "Name", initialValue: "", onSubmit: () => {} });
+
+  const showError = (e) => setAlert({ open: true, title: "Error", message: e.message || String(e) });
+
   const { fitView, zoomIn, zoomOut } = useReactFlow();
+
+  async function handleDelete(node) {
+    setConfirm({
+      open: true,
+      title: "Archive Node",
+      message: `Are you sure you want to archive "${node.title}"?`,
+      confirmText: "Archive",
+      variant: "danger",
+      onConfirm: async () => {
+        try { await api.deleteNode(node.id); setSelectedNode(null); loadGraph(); }
+        catch (e) { showError(e); }
+      }
+    });
+  }
+
+  async function handleRenameStage(stageData) {
+    setPrompt({
+      open: true,
+      title: "Rename Stage",
+      label: "Stage Name",
+      initialValue: stageData.label,
+      onSubmit: async (newName) => {
+        try { await api.updateStage(stageData.id, newName); loadGraph(); }
+        catch (e) { showError(e); }
+      }
+    });
+  }
+
+  async function handleDeleteStage(stageData) {
+    setConfirm({
+      open: true,
+      title: "Delete Stage",
+      message: `Delete "${stageData.label}"? All nodes currently in this stage will lose their column mapping and need to be re-positioned.`,
+      confirmText: "Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        try { await api.deleteStage(stageData.id); loadGraph(); }
+        catch (e) { showError(e); }
+      }
+    });
+  }
 
   const handlers = {
     onEdit: (node) => setEditModal({ open: true, node }),
     onFiles: (node) => setFileModal({ open: true, node }),
     onDelete: (node) => handleDelete(node),
+    onRenameStage: handleRenameStage,
+    onDeleteStage: handleDeleteStage,
   };
 
-  const applyGraph = useCallback((nodes, edges, labels) => {
-    const { rfNodes: rn, rfEdges: re } = buildGraph(nodes, edges, labels, thread, handlers);
+  const applyGraph = useCallback((nodes, edges, stgs) => {
+    const { rfNodes: rn, rfEdges: re } = buildGraph(nodes, edges, stgs, thread, handlers);
     setRfNodes(rn);
     setRfEdges(re);
     setTimeout(() => fitView({ padding: 0.18, duration: 350 }), 80);
@@ -717,15 +844,14 @@ function CanvasInner({ thread, onBack }) {
     api.getGraph(thread.id).then(data => {
       const nodes = data?.nodes || [];
       const edges = data?.edges || [];
+      const stgs = data?.stages || [];
       setRawNodes(nodes);
       setRawEdges(edges);
-      const maxS = nodes.length ? Math.max(...nodes.map(n => n.stage || 0)) : 0;
-      const labels = Array.from({ length: maxS + 1 }, (_, i) => i === 0 ? thread.title : `Stage ${i}`);
-      setStageLabels(labels);
-      applyGraph(nodes, edges, labels);
+      setStages(stgs);
+      applyGraph(nodes, edges, stgs);
       setSelectedNode(prev => prev ? nodes.find(n => n.id === prev.id) || null : null);
     }).catch(console.error);
-  }, [thread.id, thread.title, applyGraph]);
+  }, [thread.id, applyGraph]);
 
   useEffect(() => { loadGraph(); }, [loadGraph]);
 
@@ -733,11 +859,28 @@ function CanvasInner({ thread, onBack }) {
     const src = parseInt(params.source);
     const tgt = parseInt(params.target);
     if (src === tgt || isNaN(src) || isNaN(tgt)) return;
+
+    const existing = rfEdges.find(e => 
+      (e.source === params.source && e.target === params.target) ||
+      (e.source === params.target && e.target === params.source)
+    );
+
+    if (existing) {
+      setAlert({
+        open: true,
+        title: "Connection Exists",
+        message: existing.source === params.source 
+          ? "This dependency already exists." 
+          : "An inverse dependency already exists between these nodes."
+      });
+      return;
+    }
+
     try {
       await api.addDependency(src, tgt, "DEPENDS_ON");
       loadGraph();
-    } catch (e) { alert(e.message); }
-  }, [loadGraph]);
+    } catch (e) { showError(e); }
+  }, [loadGraph, rfEdges]);
 
   const onEdgeClick = useCallback((evt, edge) => {
     evt.stopPropagation();
@@ -746,25 +889,36 @@ function CanvasInner({ thread, onBack }) {
 
   const handleUpdateDependency = async (depId, type) => {
     try { await api.updateDependency(depId, type); loadGraph(); }
-    catch (e) { alert(e.message); }
+    catch (e) { showError(e); }
     finally { setEdgeEditModal({ open: false, edge: null }); }
   };
 
   const handleRemoveDependency = async (depId) => {
-    if (!window.confirm("Remove this connection?")) return;
-    try { await api.removeDependency(depId); loadGraph(); }
-    catch (e) { alert(e.message); }
-    finally { setEdgeEditModal({ open: false, edge: null }); }
+    setConfirm({
+      open: true,
+      title: "Remove Connection",
+      message: "Are you sure you want to remove this connection?",
+      confirmText: "Remove",
+      variant: "danger",
+      onConfirm: async () => {
+        try { await api.removeDependency(depId); loadGraph(); }
+        catch (e) { showError(e); }
+        finally { setEdgeEditModal({ open: false, edge: null }); }
+      }
+    });
   };
 
   const onNodeDragStop = useCallback(async (evt, rfNode) => {
     if (rfNode.type !== "threadNode") return;
     const nodeId = parseInt(rfNode.id);
-    const stage = Math.max(0, Math.round(rfNode.position.x / (SW + SG)));
+    const stageIdx = Math.max(0, Math.round(rfNode.position.x / (SW + SG)));
+    const targetStage = stages[stageIdx];
+    if (!targetStage) return loadGraph();
+    
     const row = Math.max(0, Math.round((rfNode.position.y - PT) / (NH + NG)));
-    try { await api.updatePosition(nodeId, { stage, row }); loadGraph(); }
+    try { await api.updatePosition(nodeId, { stage: targetStage.id, row }); loadGraph(); }
     catch { loadGraph(); }
-  }, [loadGraph]);
+  }, [loadGraph, stages]);
 
   const onNodeClick = useCallback((evt, rfNode) => {
     if (rfNode.type !== "threadNode") return;
@@ -773,35 +927,33 @@ function CanvasInner({ thread, onBack }) {
   }, [rawNodes]);
 
   const handleCreateNode = async (form) => {
-    const { stageIndex } = addNodeModal;
-    const inStage = rawNodes.filter(n => (n.stage || 0) === stageIndex);
+    const { stageId } = addNodeModal;
+    const inStage = rawNodes.filter(n => n.stage === stageId);
     const row = inStage.length ? Math.max(...inStage.map(n => n.row || 0)) + 1 : 0;
-    try { await api.createNode(thread.id, { ...form, stage: stageIndex, row }); }
-    catch (e) { alert(e.message); }
-    finally { setAddNodeModal({ open: false, stageIndex: null }); loadGraph(); }
+    try { await api.createNode(thread.id, { ...form, stage: stageId, row }); }
+    catch (e) { showError(e); }
+    finally { setAddNodeModal({ open: false, stageId: null }); loadGraph(); }
   };
 
   const handleEdit = async (form) => {
     try { await api.updateNode(editModal.node.id, form); }
-    catch (e) { alert(e.message); }
+    catch (e) { showError(e); }
     finally { setEditModal({ open: false, node: null }); loadGraph(); }
   };
 
-  const handleDelete = async (node) => {
-    if (!window.confirm("Archive this node?")) return;
-    try { await api.deleteNode(node.id); }
-    catch (e) { alert(e.message); }
-    finally { setSelectedNode(null); loadGraph(); }
+
+  const handleAddStage = async () => {
+    const label = stageNameInput.trim() || `Stage ${stages.length + 1}`;
+    try {
+      await api.createStage(thread.id, label);
+      setStageNameInput("");
+      setAddStageModal(false);
+      loadGraph();
+    } catch (e) { showError(e); }
   };
 
-  const handleAddStage = () => {
-    const label = stageNameInput.trim() || `Stage ${stageLabels.length}`;
-    const newLabels = [...stageLabels, label];
-    setStageLabels(newLabels);
-    applyGraph(rawNodes, rawEdges, newLabels);
-    setStageNameInput("");
-    setAddStageModal(false);
-  };
+
+  const graphHandlers = { onEdit: setEditModal, onFiles: setFileModal, onDelete: handleDelete, onRenameStage: handleRenameStage, onDeleteStage: handleDeleteStage };
 
   return (
     <div style={{ display: "flex", height: "100vh", background: T.pageBg, fontFamily: ff }}>
@@ -823,8 +975,8 @@ function CanvasInner({ thread, onBack }) {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            {stageLabels.map((label, i) => (
-              <button key={i} onClick={() => setAddNodeModal({ open: true, stageIndex: i })}
+            {stages.map((stg, i) => (
+              <button key={stg.id} onClick={() => setAddNodeModal({ open: true, stageId: stg.id })}
                 style={{
                   background: i === 0 ? T.accent : T.cardBg,
                   color: i === 0 ? "#ffffff" : T.text,
@@ -833,7 +985,7 @@ function CanvasInner({ thread, onBack }) {
                   fontSize: 11.5, fontWeight: 600, cursor: "pointer", fontFamily: ff,
                   boxShadow: "var(--t-shadowCard)",
                 }}>
-                + {i === 0 ? thread.title : label}
+                + {i === 0 ? thread.title : stg.name}
               </button>
             ))}
             <Btn onClick={() => setAddStageModal(true)}>+ Add stage</Btn>
@@ -904,6 +1056,9 @@ function CanvasInner({ thread, onBack }) {
               onClose={() => setSelectedNode(null)}
               onEdit={n => setEditModal({ open: true, node: n })}
               onFiles={n => setFileModal({ open: true, node: n })}
+              onRefresh={loadGraph}
+              showConfirm={setConfirm}
+              showError={showError}
             />
           )}
         </div>
@@ -911,10 +1066,10 @@ function CanvasInner({ thread, onBack }) {
 
       <NodeFormModal
         open={addNodeModal.open}
-        onClose={() => setAddNodeModal({ open: false, stageIndex: null })}
+        onClose={() => setAddNodeModal({ open: false, stageId: null })}
         onSubmit={handleCreateNode}
         initial={null}
-        title={`+ Add node — ${stageLabels[addNodeModal.stageIndex] || "stage"}`}
+        title={`+ Add node — ${stages.find(s => s.id === addNodeModal.stageId)?.name || "stage"}`}
       />
 
       <NodeFormModal
@@ -929,7 +1084,7 @@ function CanvasInner({ thread, onBack }) {
 
       <Modal open={addStageModal} onClose={() => setAddStageModal(false)} title="Add stage">
         <Fld label="Stage name">
-          <Inp value={stageNameInput} onChange={e => setStageNameInput(e.target.value)} placeholder={`Stage ${stageLabels.length}`} autoFocus />
+          <Inp value={stageNameInput} onChange={e => setStageNameInput(e.target.value)} placeholder={`Stage ${stages.length + 1}`} autoFocus />
         </Fld>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <Btn variant="ghost" onClick={() => setAddStageModal(false)}>Cancel</Btn>
@@ -962,6 +1117,9 @@ function CanvasInner({ thread, onBack }) {
           </Modal>
         );
       })()}
+      <AlertModal open={alert.open} onClose={() => setAlert(p => ({ ...p, open: false }))} title={alert.title} message={alert.message} />
+      <ConfirmModal open={confirm.open} onClose={() => setConfirm(p => ({ ...p, open: false }))} onConfirm={confirm.onConfirm} title={confirm.title} message={confirm.message} confirmText={confirm.confirmText} variant={confirm.variant} />
+      <PromptModal open={prompt.open} onClose={() => setPrompt(p => ({ ...p, open: false }))} onSubmit={prompt.onSubmit} title={prompt.title} label={prompt.label} initialValue={prompt.initialValue} />
     </div>
   );
 }
@@ -986,103 +1144,47 @@ function ThreadCanvas({ thread, onBack }) {
   );
 }
 
-// ── Threads list view ──────────────────────────────────────────────────────────
-function ThreadsView({ onOpen }) {
-  const [threads, setThreads] = useState([]);
-  const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "" });
+// ── Root ───────────────────────────────────────────────────────────────────────
+export default function ThreadVisualizer() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [activeThread, setActiveThread] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState(null);
+  const isDark = useThemeSync();
 
-  const load = () => { setLoading(true); api.getThreads().then(setThreads).catch(e => setErr(e.message)).finally(() => setLoading(false)); };
-  useEffect(load, []);
+  useEffect(() => {
+    setLoading(true);
+    api.getThreads().then((data) => {
+      const found = (data || []).find(t => String(t.id) === String(id));
+      setActiveThread(found || null);
+    }).catch(err => {
+      console.error(err);
+    }).finally(() => {
+      setLoading(false);
+    });
+  }, [id]);
 
-  const handleCreate = async () => {
-    if (!form.title.trim()) return;
-    try { await api.createThread(form); load(); setCreating(false); setForm({ title: "", description: "" }); }
-    catch (e) { alert(e.message); }
-  };
-
-  const handleDel = async (e, id) => {
-    e.stopPropagation();
-    if (!window.confirm("Delete this thread?")) return;
-    await api.deleteThread(id).catch(() => { }); load();
-  };
-
-  const ACCENTS = [T.statusInProgress, T.statusCompleted, T.statusInReview, T.accent, T.statusBlocked];
-
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", background: T.pageBg, fontFamily: ff }}>
-
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <div style={{ height: 60, background: T.cardBg, borderBottom: `1px solid ${T.border}`, padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontWeight: 800, fontSize: 16, color: T.text }}>Threads</span>
-            {!loading && <span style={{ fontSize: 11, color: T.textMuted, background: "var(--t-btnSoftBg)", padding: "3px 9px", borderRadius: 999, fontWeight: 700 }}>{threads.length}</span>}
-          </div>
-          <Btn onClick={() => setCreating(true)}>+ New thread</Btn>
-        </div>
-
-        <div style={{ padding: 26, flex: 1 }}>
-          {loading && <div style={{ color: T.textMuted, fontSize: 13 }}>Loading…</div>}
-          {err && <div style={{ color: "#dc2626", fontSize: 13 }}>Error: {err}</div>}
-          {!loading && threads.length === 0 && (
-            <div style={{ textAlign: "center", marginTop: 100 }}>
-              <div style={{ fontSize: 44, marginBottom: 12 }}>🕸</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: T.text, marginBottom: 6 }}>No threads yet</div>
-              <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 20 }}>Create your first project thread to get started</div>
-              <Btn onClick={() => setCreating(true)}>+ New thread</Btn>
-            </div>
-          )}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-            {threads.map((t, i) => {
-              const acc = ACCENTS[i % ACCENTS.length];
-              return (
-                <div key={t.id} onClick={() => onOpen(t)}
-                  style={{
-                    background: T.cardBg, borderRadius: 14, border: `1px solid ${T.border}`,
-                    padding: 18, cursor: "pointer", borderTop: `3px solid ${acc}`,
-                    transition: "all 0.15s",
-                    boxShadow: "var(--t-shadowCard)",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--t-shadowSoft)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--t-shadowCard)"; }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 8, background: acc + "22", color: acc, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🧵</div>
-                    <button onClick={e => handleDel(e, t.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.textFaint, padding: 2 }}>🗑</button>
-                  </div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginTop: 12, marginBottom: 4 }}>{t.title}</div>
-                  {t.description && <div style={{ fontSize: 12.5, color: T.textMuted, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t.description}</div>}
-                  <div style={{ marginTop: 12, fontSize: 10.5, color: T.textFaint, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    {new Date(t.created_at).toLocaleDateString()}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <Modal open={creating} onClose={() => setCreating(false)} title="New thread">
-          <Fld label="Project name"><Inp value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Mobile App Launch" autoFocus /></Fld>
-          <Fld label="Description"><Inp value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="What is this project about?" multiline /></Fld>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <Btn variant="ghost" onClick={() => setCreating(false)}>Cancel</Btn>
-            <Btn onClick={handleCreate} disabled={!form.title.trim()}>Create thread</Btn>
-          </div>
-        </Modal>
-      </div>
+  if (loading) return (
+    <div className="theme-wrapper flex items-center justify-center" style={{ height: "100vh", background: "var(--t-pageBg)", color: "var(--t-text)" }}>
+      <ThemeStyles isDark={isDark} />
+      <div className="text-sm font-medium">Loading thread...</div>
     </div>
   );
-}
 
-// ── Root ───────────────────────────────────────────────────────────────────────
-export default function App() {
-  const [activeThread, setActiveThread] = useState(null);
-  const isDark = useThemeSync();
+  if (!activeThread) return (
+    <div className="theme-wrapper flex flex-col items-center justify-center gap-4" style={{ height: "100vh", background: "var(--t-pageBg)", color: "var(--t-text)" }}>
+      <ThemeStyles isDark={isDark} />
+      <div className="text-lg font-bold">Thread not found</div>
+      <button onClick={() => navigate("/threads")} className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+        Go Back
+      </button>
+    </div>
+  );
+
   return (
     <div className="theme-wrapper" style={{ height: "100%" }}>
       <ThemeStyles isDark={isDark} />
-      {activeThread ? <ThreadCanvas thread={activeThread} onBack={() => setActiveThread(null)} /> : <ThreadsView onOpen={setActiveThread} />}
+      <ThreadCanvas thread={activeThread} onBack={() => navigate("/threads")} />
     </div>
   );
 }
