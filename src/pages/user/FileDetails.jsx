@@ -399,7 +399,7 @@ const handleDownload = async () => {
     </button>
     <nav className="flex items-center gap-2 text-sm text-[#808080]">
       <span onClick={() => navigate('/files')} className="hover:text-blue-500 cursor-pointer transition-colors">Files</span>
-      <i className={`fa-solid fa-chevron-left text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
+      <i className={`fa-solid fa-chevron-right text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
       <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{fileData.display_name}</span>
     </nav>
   </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { uploadFile } from '../../services/fileService';
+import { uploadFile, uploadFileChunk } from '../../services/fileService';
 
 // ─── Duplicate Modal ──────────────────────────────────────────────────────────
 const DuplicateModal = ({ isDark, file, onResolve }) => {
@@ -150,6 +150,7 @@ const UploadFilesMain = () => {
         size: (file.size / (1024 * 1024)).toFixed(2),
         raw: file,
         status: 'pending', // pending | uploading | done | error
+        progress: 0,
       }));
     setSelectedFiles(prev => [...prev, ...newFiles]);
   };
@@ -171,17 +172,76 @@ const UploadFilesMain = () => {
 
   const setFileStatus = (id, status) =>
     setSelectedFiles(prev => prev.map(f => f.id === id ? { ...f, status } : f));
+    
+  const setFileProgress = (id, progress) =>
+    setSelectedFiles(prev => prev.map(f => f.id === id ? { ...f, progress } : f));
+
+  const CHUNK_SIZE = 10 * 1024 * 1024; // 5MB
 
   // ── Core upload (single file, with optional action) ───────────────────────
   const uploadSingleFile = async (file, action = null) => {
     setFileStatus(file.id, 'uploading');
+    
+    // For very small files, we still use the chunk API, but it's just 1 chunk!
+    const totalChunks = Math.ceil(file.raw.size / CHUNK_SIZE);
+    
+    // Generate a unique upload session ID
+    const uploadId = `${file.id}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    let lastResponse = null;
 
-    const formData = new FormData();
-    formData.append('files', file.raw);
-    if (action) formData.append('action', action);
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.raw.size);
+      const chunk = file.raw.slice(start, end);
 
-    const response = await uploadFile(formData); // your axios/fetch wrapper
-    return response; // expected shape: { data } or throws on error
+      const formData = new FormData();
+      formData.append('upload_id', uploadId);
+      formData.append('chunk_index', chunkIndex);
+      formData.append('total_chunks', totalChunks);
+      formData.append('file_name', file.raw.name);
+      formData.append('file_size', file.raw.size);
+      formData.append('content_type', file.raw.type || 'application/octet-stream');
+      formData.append('file', chunk);
+      
+      if (action) formData.append('action', action);
+
+      let chunkRetries = 0;
+      const MAX_CHUNK_RETRIES = 3;
+      let chunkSuccess = false;
+
+      while (chunkRetries < MAX_CHUNK_RETRIES && !chunkSuccess) {
+        try {
+          lastResponse = await uploadFileChunk(formData);
+          chunkSuccess = true;
+          // Update progress
+          setFileProgress(file.id, Math.round(((chunkIndex + 1) / totalChunks) * 100));
+        } catch (error) {
+          chunkRetries++;
+          
+          // Re-throw duplicate errors immediately instead of retrying the chunk
+          const status = error?.response?.status;
+          if (status === 409 || status === 400 || status === 201) {
+              const errData = error?.response?.data;
+              let isDup = false;
+              if (errData?.duplicate === true || String(errData?.duplicate).toLowerCase() === 'true') {
+                  isDup = true;
+              } else if (errData?.failed && errData.failed[0]?.reason?.duplicate) {
+                  isDup = true;
+              }
+              if (isDup) throw error;
+          }
+          
+          if (chunkRetries >= MAX_CHUNK_RETRIES) {
+             throw error; 
+          }
+          // Delay before retry
+          await new Promise(r => setTimeout(r, 1000 * chunkRetries));
+        }
+      }
+    }
+    
+    return lastResponse;
   };
 
   // ── Main upload handler ───────────────────────────────────────────────────
@@ -203,16 +263,33 @@ const UploadFilesMain = () => {
         const errData = err?.response?.data;
 
         // ── Duplicate detected ─────────────────────────────────────────────
-        // ── Duplicate detected ─────────────────────────────────────────────
-const rawError = errData?.error || '';
-const isDuplicate =
-  (err?.response?.status === 409 || err?.response?.status === 500) &&
-  (
-    errData?.duplicate === true ||
-    String(errData?.duplicate).toLowerCase() === 'true' ||
-    rawError.includes("'duplicate': ['True']") ||
-    rawError.includes('"duplicate": ["True"]')
-  );
+        const rawError = errData?.error || '';
+        
+        let isDuplicate = false;
+        
+        // 1. Check legacy 409/500 logic
+        if (err?.response?.status === 409 || err?.response?.status === 500) {
+          isDuplicate = (
+            errData?.duplicate === true ||
+            String(errData?.duplicate).toLowerCase() === 'true' ||
+            rawError.includes("'duplicate': ['True']") ||
+            rawError.includes('"duplicate": ["True"]')
+          );
+        }
+        
+        // 2. Check new batch response format (201/400 with 'failed' array)
+        if (err?.response?.status === 400 || err?.response?.status === 201) {
+          if (errData?.failed && errData.failed.length > 0) {
+             const reason = errData.failed[0]?.reason;
+             if (reason) {
+                isDuplicate = (
+                  reason.duplicate === true ||
+                  String(reason.duplicate).toLowerCase() === 'true' ||
+                  (Array.isArray(reason.duplicate) && String(reason.duplicate[0]).toLowerCase() === 'true')
+                );
+             }
+          }
+        }
 
 if (isDuplicate) {
           const action = await askDuplicateAction(file); // 'replace' | 'keep_both' | null
@@ -340,9 +417,19 @@ if (isDuplicate) {
               <p className={`text-sm font-bold m-0 truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>
                 {file.name}
               </p>
-              <span className={`text-xs font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-                {file.size} MB
-              </span>
+              <div className="flex items-center gap-3 mt-1">
+                <span className={`text-xs font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+                  {file.size} MB
+                </span>
+                {file.status === 'uploading' && (
+                  <div className="flex items-center gap-2 flex-1 max-w-[150px]">
+                    <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-[#222]' : 'bg-slate-200'}`}>
+                      <div className="h-full bg-amber-400 transition-all duration-300" style={{ width: `${file.progress}%` }}></div>
+                    </div>
+                    <span className={`text-[10px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>{file.progress || 0}%</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {file.status === 'uploading' ? (

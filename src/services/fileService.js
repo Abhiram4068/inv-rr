@@ -20,6 +20,12 @@ export const uploadFile = (formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
+// POST /files/upload/chunk/
+export const uploadFileChunk = (formData) =>
+  api.post("/files/upload/chunk/", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
 // GET  /:id/file-download/
 export const downloadFile = (fileId) =>
   api.get(`/${fileId}/file-download/`, { responseType: "blob" });
