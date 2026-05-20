@@ -77,6 +77,10 @@ const DuplicateModal = ({ isDark, file, onResolve }) => {
       <style>{`
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         @keyframes slideUp { from { transform: translateY(12px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+        @keyframes slideDownProfessional {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
       `}</style>
     </div>
   );
@@ -103,15 +107,25 @@ const UploadFilesMain = () => {
     return () => { window.removeEventListener('storage', handleStorageChange); clearInterval(interval); };
   }, [theme]);
 
-  // Toast auto-dismiss
+// Toast auto-dismiss with clean slide-up exit animation
   useEffect(() => {
     if (toast.visible) {
-      const t = setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
-      return () => clearTimeout(t);
+      const dismissTimer = setTimeout(() => {
+        // Trigger slide-out animation state first
+        setToast(prev => ({ ...prev, animateOut: true }));
+        
+        // Completely unmount after the animation finishes
+        setTimeout(() => {
+          setToast({ visible: false, message: '', type: 'success', animateOut: false });
+        }, 350); 
+      }, 3500);
+
+      return () => clearTimeout(dismissTimer);
     }
   }, [toast.visible]);
 
-  const showToast = (message, type = 'success') => setToast({ visible: true, message, type });
+  const showToast = (message, type = 'success') => 
+    setToast({ visible: true, message, type, animateOut: false });
 
   const isDark = theme === 'dark';
 
@@ -357,16 +371,37 @@ if (isDuplicate) {
         />
       )}
 
-      {/* Toast */}
+{/* Professional Top-Sliding Toast */}
       {toast.visible && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200]
-          animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className={`px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3
-            ${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'}`}>
-            <i className={`fa-solid text-lg ${toast.type === 'error'
-              ? 'fa-circle-exclamation text-red-500'
-              : 'fa-circle-check text-emerald-500'}`}></i>
-            {toast.message}
+        <div 
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none
+            transition-all duration-[350ms]
+            ${toast.animateOut 
+              ? 'opacity-0 -translate-y-6 scale-95' 
+              : 'opacity-100 translate-y-0 scale-100'
+            }`}
+          style={{
+            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none'
+          }}
+        >
+          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            ${isDark 
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+              : 'bg-white border-slate-100 text-slate-800'}`}>
+            
+            {/* Icon status badge */}
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
+              ${toast.type === 'error' 
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+                : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
+              }`}>
+              <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
+            </div>
+            
+            <span className="flex-1 leading-normal tracking-wide text-[13px]">
+              {toast.message}
+            </span>
           </div>
         </div>
       )}

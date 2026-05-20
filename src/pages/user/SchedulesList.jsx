@@ -11,7 +11,7 @@ const SchedulesList = () => {
 
   const [revokeTarget, setRevokeTarget] = useState(null);
   const [revoking, setRevoking]         = useState(false);
-  const [toast, setToast]               = useState({ visible: false, message: '', error: false });
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
   const scrollRef = useRef(null);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
@@ -33,10 +33,22 @@ const SchedulesList = () => {
   // --- NEW STATE for calendar cell selection ---
   const [selectedCalendarDay, setSelectedCalendarDay] = useState(null); // { dateStr, schedules }
 
-  const showToast = (message, error = false) => {
-  setToast({ visible: true, message, error });
-  setTimeout(() => setToast({ visible: false, message: '', error: false }), 3000);
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message: message, type: type, animateOut: false });
   };
+ 
+  // Toast auto-dismiss with clean slide-up exit animation
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, animateOut: true }));
+        setTimeout(() => {
+          setToast({ visible: false, message: '', type: 'success', animateOut: false });
+        }, 350);
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
 
   const transformSchedule = (item) => ({
     id: item.id,
@@ -118,7 +130,7 @@ const SchedulesList = () => {
         setSelectedSchedule(null);
       showToast('Scheduled mail revoked successfully');
     } catch (err) {
-      showToast(err?.response?.data?.error || 'Failed to revoke schedule', true);
+      showToast(err?.response?.data?.error || 'Failed to revoke schedule', 'error');
     } finally {
       setRevoking(false);
       setRevokeTarget(null);
@@ -198,14 +210,46 @@ const SchedulesList = () => {
 
   return (
     <div ref={scrollRef} className={`flex-1 min-h-screen p-6 lg:p-10 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
-{toast.visible && (
-  <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300">
-    <div className={`${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'} px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3`}>
-      <i className={`fa-solid ${toast.error ? 'fa-circle-xmark text-red-500' : 'fa-circle-check text-emerald-500'} text-lg`}></i>
-      {toast.message}
-    </div>
-  </div>
-)}
+      {/* Professional Top-Sliding Toast */}
+      {toast.visible && (
+        <div 
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[10000] pointer-events-none
+            transition-all duration-[350ms]
+            ${toast.animateOut 
+              ? 'opacity-0 -translate-y-6 scale-95' 
+              : 'opacity-100 translate-y-0 scale-100'
+            }`}
+          style={{
+            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none'
+          }}
+        >
+          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            ${isDark 
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+              : 'bg-white border-slate-100 text-slate-800'}`}>
+            
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
+              ${toast.type === 'error' 
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+                : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
+              }`}>
+              <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
+            </div>
+            
+            <span className="flex-1 leading-normal tracking-wide text-[13px]">
+              {toast.message}
+            </span>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideDownProfessional {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
 {revokeTarget && (
   <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-md">
     <div className={`p-8 rounded-xl w-full max-w-lg shadow-2xl border animate-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0a0a0a] border-neutral-800' : 'bg-white border-slate-200'}`}>

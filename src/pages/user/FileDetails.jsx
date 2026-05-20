@@ -97,7 +97,7 @@ useEffect(() => {
   const [isStarred, setIsStarred] = useState(false);
 
   // Toast State
-  const [toast, setToast] = useState({ visible: false, message: '' });
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
   // Security and Recipients State
   const [isProtected, setIsProtected] = useState(false);
@@ -108,7 +108,10 @@ useEffect(() => {
   const [shareData, setShareData] = useState({
     title: "",
     message: "",
-    expiration_datetime: 48
+    expiration_datetime: 48,
+    permission: "view_only",      
+  download_limit: null, 
+  view_limit: null,   
   });
 
   // State for File Data
@@ -125,16 +128,18 @@ useEffect(() => {
   const [tempName, setTempName] = useState(fileData.display_name);
   const [tempDesc, setTempDesc] = useState(fileData.description);
 
-const showToast = (msg, duration = 2000) => {
-  setToast({ visible: true, message: msg });
-
-  setTimeout(() => {
-    setToast({ visible: false, message: '' });
-  }, duration);
+const showToast = (msg, type = 'success') => {
+  setToast({ visible: true, message: msg, type: type, animateOut: false });
 };
+  // Toast auto-dismiss with clean slide-up exit animation
   useEffect(() => {
     if (toast.visible) {
-      const timer = setTimeout(() => setToast({ ...toast, visible: false }), 3000);
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, animateOut: true }));
+        setTimeout(() => {
+          setToast({ visible: false, message: '', type: 'success', animateOut: false });
+        }, 350);
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [toast.visible]);
@@ -211,7 +216,15 @@ const saveDetails = async () => {
       recipient_emails: validEmails,
       expiration_datetime: Number(shareData.expiration_datetime),
       title: shareData.title,
-      message: shareData.message
+      message: shareData.message,
+      permission: shareData.permission,
+  download_limit: shareData.permission === 'one_time_download'
+    ? 1                            // always force 1 for one-time
+    : shareData.permission === 'view_download'
+      ? shareData.download_limit   // null = unlimited, number = limited
+      : null,
+        view_limit: (shareData.permission === 'view_only' || shareData.permission === 'view_download')
+    ? shareData.view_limit : null,
     };
     
     setIsSharing(true);
@@ -222,7 +235,7 @@ const saveDetails = async () => {
       showToast(`File shared successfully with ${validEmails.length} recipient(s)`);
       // Optional: reset form state
       setRecipients(['']);
-      setShareData({ title: "", message: "", expiration_datetime: 48 });
+      setShareData({ title: "", message: "", expiration_datetime: 48, permission: "view_only", download_limit: null, view_limit: null });
     } catch (error) {
       console.error("Failed to share file:", error);
       const errorMsg = error.response?.data?.error || error.response?.data?.detail || "Failed to share file";
@@ -381,15 +394,47 @@ const handleDownload = async () => {
   return (
     <div className={`flex-1 flex flex-col lg:flex-row overflow-hidden transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
 
-      {/* Toast Notification */}
+      {/* Professional Top-Sliding Toast */}
       {toast.visible && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className={`${isDark ? 'bg-white text-black' : 'bg-slate-900 text-white'} px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3`}>
-            <i className="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
-            {toast.message}
+        <div 
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none
+          transition-all duration-[350ms]
+          ${toast.animateOut 
+            ? 'opacity-0 -translate-y-6 scale-95' 
+            : 'opacity-100 translate-y-0 scale-100'
+          }`}
+          style={{
+            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none',
+            pointerEvents: 'none'
+          }}
+        >
+          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            ${isDark 
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+              : 'bg-white border-slate-100 text-slate-800'}`}>
+            
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
+              ${toast.type === 'error' 
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+                : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
+              }`}>
+              <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
+            </div>
+            
+            <span className="flex-1 leading-normal tracking-wide text-[13px]">
+              {toast.message}
+            </span>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes slideDownProfessional {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto no-scrollbar p-6 lg:p-10 flex flex-col gap-8">
@@ -589,7 +634,80 @@ const handleDownload = async () => {
               className={`w-full border rounded-xl p-4 text-sm outline-none transition-all resize-none ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-[#333] placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-300 placeholder:text-slate-300'}`}
             ></textarea>
           </div>
+<div>
+  <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+    Access Permission
+  </label>
+  <div className="grid grid-cols-2 gap-3">
+    {[
+      { value: 'view_only',        icon: 'fa-eye',           label: 'View only',        desc: 'Read in browser, no download' },
+      { value: 'view_download',    icon: 'fa-download',      label: 'View + Download',  desc: 'Can save file to device' },
+      { value: 'one_time_download',icon: 'fa-file-arrow-down',label: 'One-time Download',desc: 'Link dies after 1 download' },
+      { value: 'full_access',      icon: 'fa-lock-open',     label: 'Full Access',      desc: 'No restrictions' },
+    ].map(opt => (
+      <button
+        key={opt.value}
+        onClick={() => setShareData({ ...shareData, permission: opt.value, download_limit: null })}
+        className={`text-left p-4 rounded-xl border transition-all ${
+          shareData.permission === opt.value
+            ? 'border-blue-500/50 bg-blue-600/10'
+            : isDark
+              ? 'border-[#1a1a1a] bg-[#050505] hover:bg-[#111]'
+              : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+        }`}
+      >
+        <div className={`flex items-center gap-2 mb-1 text-xs font-bold ${
+          shareData.permission === opt.value
+            ? 'text-blue-500'
+            : isDark ? 'text-white' : 'text-slate-700'
+        }`}>
+          <i className={`fa-solid ${opt.icon}`}></i>
+          {opt.label}
+        </div>
+        <div className={`text-[10px] ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>
+          {opt.desc}
+        </div>
+      </button>
+    ))}
+  </div>
 
+  {/* Download limit — only shown for view_download */}
+  {shareData.permission === 'view_download' && (
+    <div className="mt-4">
+      <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+        Download limit <span className={`normal-case font-normal ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>(leave blank for unlimited)</span>
+      </label>
+      <input
+        type="number"
+        min="1"
+        value={shareData.download_limit || ''}
+        onChange={(e) => setShareData({ ...shareData, download_limit: e.target.value ? Number(e.target.value) : null })}
+        placeholder="e.g. 5"
+        className={`w-full border rounded-xl p-4 text-sm outline-none transition-all ${
+          isDark
+            ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]'
+            : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'
+        }`}
+      />
+    </div>
+  )}
+  {/* ADD: view limit — shown for view_only and view_download */}
+{(shareData.permission === 'view_only' || shareData.permission === 'view_download') && (
+  <div className="mt-4">
+    <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+      View limit <span className={`normal-case font-normal ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>(leave blank for unlimited)</span>
+    </label>
+    <input
+      type="number"
+      min="1"
+      value={shareData.view_limit || ''}
+      onChange={(e) => setShareData({ ...shareData, view_limit: e.target.value ? Number(e.target.value) : null })}
+      placeholder="e.g. 3"
+      className={`w-full border rounded-xl p-4 text-sm outline-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
+    />
+  </div>
+)}
+</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Link Expiry</label>
