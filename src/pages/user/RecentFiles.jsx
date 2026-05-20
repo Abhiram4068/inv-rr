@@ -13,6 +13,22 @@ const RecentActivityMain = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ── Toast State ──────────────────────────────────────────────
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ visible: true, message: msg, type, animateOut: false });
+  };
+
+  useEffect(() => {
+    if (!toast.visible) return;
+    const timer = setTimeout(() => {
+      setToast(prev => ({ ...prev, animateOut: true }));
+      setTimeout(() => setToast({ visible: false, message: '', type: 'success', animateOut: false }), 350);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [toast.visible]);
+
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
     window.addEventListener('storage', handleStorageChange);
@@ -111,6 +127,25 @@ const RecentActivityMain = () => {
 
   return (
     <div className={`flex-1 flex overflow-hidden transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+      {/* Professional Top-Sliding Toast */}
+      {toast.visible && (
+        <div
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[10000] pointer-events-none transition-all duration-[350ms]
+            ${toast.animateOut ? 'opacity-0 -translate-y-6 scale-95' : 'opacity-100 translate-y-0 scale-100'}`}
+          style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+        >
+          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            ${isDark ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' : 'bg-white border-slate-100 text-slate-800'}`}>
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
+              ${toast.type === 'error'
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500')
+                : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')}`}>
+              <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`} />
+            </div>
+            <span className="flex-1 leading-normal tracking-wide text-[13px]">{toast.message}</span>
+          </div>
+        </div>
+      )}
       <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar">
         
         {/* Top Bar */}
@@ -151,6 +186,14 @@ const RecentActivityMain = () => {
                   isLink={true}
                   fileUrl={file.file_url}
                   contentType={file.content_type}
+                  isStarred={file.is_starred}
+                  onToggleStar={(fileId, newState) => {
+                    setRecentAccessed(prev => prev.map(f => f.id === fileId ? { ...f, is_starred: newState } : f));
+                  }}
+                  onDeleted={(fileId) => {
+                    setRecentAccessed(prev => prev.filter(f => f.id !== fileId));
+                    showToast("File moved to trash");
+                  }}
                 />
               ))}
             </div>
@@ -187,6 +230,14 @@ const RecentActivityMain = () => {
                   isLink={true}
                   fileUrl={file.file_url}
                   contentType={file.content_type}
+                  isStarred={file.is_starred}
+                  onToggleStar={(fileId, newState) => {
+                    setRecentAdded(prev => prev.map(f => f.id === fileId ? { ...f, is_starred: newState } : f));
+                  }}
+                  onDeleted={(fileId) => {
+                    setRecentAdded(prev => prev.filter(f => f.id !== fileId));
+                    showToast("File moved to trash");
+                  }}
                 />
               ))}
               <Link to="/upload-file" className={`border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-all min-h-[200px] hover:border-blue-500 no-underline ${isDark ? 'border-[#1a1a1a] text-[#444]' : 'border-slate-200 text-slate-400'}`}>

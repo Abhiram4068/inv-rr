@@ -170,7 +170,8 @@ const showToast = (msg, type = 'success') => {
       setIsAddFileOpen(false); 
       showToast("File added to collection successfully!");
     } catch (err) {
-      alert("Error adding file. It may already exist in this collection.");
+      setIsAddFileOpen(false)
+      showToast(err?.response?.data?.detail,"error");
     }
   };
 
@@ -195,6 +196,12 @@ const showToast = (msg, type = 'success') => {
     } catch (error) {
       console.error("Failed to update star:", error);
     }
+  };
+
+  const handleToggleFileStar = (fileId, newState) => {
+    setCollectionFile(prev => 
+      prev.map(f => f.file === fileId ? { ...f, is_starred: newState } : f)
+    );
   };
 
 
@@ -334,8 +341,10 @@ const showToast = (msg, type = 'success') => {
                   iconClass={iconClassForFile(file)}
                   isLink={true}
                   fileUrl={file.file_url}
-              contentType={file.content_type}
-                   onClick={() => navigate(`/file/${file.file}`)}
+                  contentType={file.content_type}
+                  isStarred={file.is_starred}
+                  onToggleStar={handleToggleFileStar}
+                  onClick={() => navigate(`/file/${file.file}`)}
                 />
               ))}
             </div>

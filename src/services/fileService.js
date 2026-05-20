@@ -34,6 +34,14 @@ export const downloadFile = (fileId) =>
 export const deleteFile = (fileId) =>
   api.delete(`/files/${fileId}/delete/`);
 
+// POST /files/bulk-delete/
+export const bulkDeleteFiles = (fileIds) =>
+  api.post("/files/bulk-delete/", { file_ids: fileIds });
+
+// POST /files/bulk-archive/
+export const bulkArchiveFiles = (fileIds) =>
+  api.post("/files/bulk-archive/", { file_ids: fileIds });
+
 // ARCHIVE /files/:id/archive/
 export const archiveFile = (fileId) =>
   api.post(`/files/${fileId}/archive/`);
