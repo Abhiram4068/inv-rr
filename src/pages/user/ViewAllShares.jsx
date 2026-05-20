@@ -10,7 +10,7 @@ const ViewAllShares = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [toast, setToast] = useState({ visible: false, message: '' });
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
   // --- DATA STATE ---
   const [sharedFiles, setSharedFiles] = useState([]);  
@@ -32,11 +32,17 @@ const ViewAllShares = () => {
     };
   }, [theme]);
 
-  const showToast = (msg) => setToast({ visible: true, message: msg });
+  const showToast = (msg, type = 'success') => setToast({ visible: true, message: msg, type: type, animateOut: false });
 
+  // Toast auto-dismiss with clean slide-up exit animation
   useEffect(() => {
     if (toast.visible) {
-      const timer = setTimeout(() => setToast({ ...toast, visible: false }), 3000);
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, animateOut: true }));
+        setTimeout(() => {
+          setToast({ visible: false, message: '', type: 'success', animateOut: false });
+        }, 350);
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [toast.visible]);
@@ -79,15 +85,46 @@ const ViewAllShares = () => {
   return (
     <div className={`w-full transition-colors duration-300 min-h-screen relative ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
       
-      {/* --- TOAST NOTIFICATION --- */}
+      {/* Professional Top-Sliding Toast */}
       {toast.visible && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[10000] animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className={`${isDark ? 'bg-white text-black' : 'bg-slate-800 text-white'} px-7 py-4 rounded-full text-sm font-bold shadow-2xl flex items-center gap-3`}>
-            <i className="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
-            {toast.message}
+        <div 
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[10000] pointer-events-none
+            transition-all duration-[350ms]
+            ${toast.animateOut 
+              ? 'opacity-0 -translate-y-6 scale-95' 
+              : 'opacity-100 translate-y-0 scale-100'
+            }`}
+          style={{
+            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none'
+          }}
+        >
+          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            ${isDark 
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+              : 'bg-white border-slate-100 text-slate-800'}`}>
+            
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
+              ${toast.type === 'error' 
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+                : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
+              }`}>
+              <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
+            </div>
+            
+            <span className="flex-1 leading-normal tracking-wide text-[13px]">
+              {toast.message}
+            </span>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes slideDownProfessional {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
 
       <div className="p-6 lg:p-10 pb-60 max-w-6xl mx-auto">
 
@@ -115,7 +152,7 @@ const ViewAllShares = () => {
         </div>
 
         {/* DATA TABLE CONTAINER */}
-        <div className={`border rounded-xl overflow-hidden shadow-2xl transition-colors ${isDark ? 'border-neutral-900' : 'border-slate-200'}`}>
+        <div className={`border rounded-lg overflow-hidden shadow-2xl transition-colors ${isDark ? 'border-neutral-900' : 'border-slate-200'}`}>
           
           {/* TOP PAGINATION BAR */}
           <div className={`p-6 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
@@ -157,6 +194,7 @@ const ViewAllShares = () => {
                   <th className="py-4 font-bold">Recipient</th>
                   <th className="py-4 font-bold">Send Date & Time</th>
                   <th className="py-4 font-bold">Status</th>
+                  <th className="py-4 font-bold">Permission</th>  
                   <th className="py-4 pr-6 font-bold text-right">Actions</th>
                 </tr>
               </thead>
@@ -172,7 +210,12 @@ const ViewAllShares = () => {
                             <i className={`fa-solid ${visuals.icon} text-base`} style={{ color: visuals.color }}></i>
                           </div>
                           <Link to={`/file/${file.file_id}`}>
-                            <span className={`font-bold block line-clamp-2 break-all max-w-[250px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.file_name}</span>
+                            <span 
+                              className={`font-bold block truncate w-[160px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`}
+                              title={file.file_name}
+                            >
+                              {file.file_name}
+                            </span>
                           </Link>
                         </div>
                       </td>
@@ -186,6 +229,53 @@ const ViewAllShares = () => {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${isDark ? 'text-emerald-500' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
                           {file.status || 'Active'}
                         </span>
+                      </td>
+                      <td className="py-5 text-sm">
+                        <div className="flex flex-col gap-1.5">
+                          {/* Permission badge */}
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold w-fit ${
+                            file.permission === 'view_only'
+                              ? (isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600')
+                              : file.permission === 'view_download'
+                              ? (isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600')
+                              : file.permission === 'one_time_download'
+                              ? (isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600')
+                              : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+                          }`}>
+                            <i className={`fa-solid text-[9px] ${
+                              file.permission === 'view_only' ? 'fa-eye' :
+                              file.permission === 'view_download' ? 'fa-download' :
+                              file.permission === 'one_time_download' ? 'fa-file-arrow-down' :
+                              'fa-lock-open'
+                            }`}></i>
+                            {file.permission === 'view_only' ? 'View only' :
+                             file.permission === 'view_download' ? 'View + Download' :
+                             file.permission === 'one_time_download' ? 'One-time' :
+                             'Full access'}
+                          </span>
+
+                          {/* Download counter — only show when relevant */}
+                          {file.permission === 'one_time_download' && (
+                            <span className={`text-[10px] font-medium ${
+                              file.download_count >= 1
+                                ? (isDark ? 'text-red-400' : 'text-red-500')
+                                : (isDark ? 'text-neutral-500' : 'text-slate-400')
+                            }`}>
+                              {file.download_count >= 1 ? 'Used' : 'Not yet used'}
+                            </span>
+                          )}
+
+                          {file.permission === 'view_download' && file.download_limit !== null && (
+                            <span className={`text-[10px] font-medium ${
+                              file.downloads_remaining === 0
+                                ? (isDark ? 'text-red-400' : 'text-red-500')
+                                : (isDark ? 'text-neutral-500' : 'text-slate-400')
+                            }`}>
+                              {file.download_count}/{file.download_limit} downloads
+                              {file.downloads_remaining === 0 ? ' · Limit reached' : ` · ${file.downloads_remaining} left`}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-5 pr-6 text-sm text-right">
                         <div className="flex justify-end gap-2">
@@ -233,9 +323,9 @@ const ViewAllShares = () => {
                     className={`fa-solid ${getFileVisuals(selectedFile.content_type || selectedFile.file_name).icon} text-xl`} 
                     style={{ color: getFileVisuals(selectedFile.content_type || selectedFile.file_name).color }}
                   ></i>
-                  <h3 className={`text-2xl font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                    {selectedFile.file_name}
-                  </h3>
+                 <h3 className={`text-xl font-bold leading-tight break-all ${isDark ? 'text-white' : 'text-slate-800'}`}>
+  {selectedFile.file_name}
+</h3>
                 </div>
               </div>
               <button 
@@ -287,6 +377,67 @@ const ViewAllShares = () => {
                     {selectedFile.status}
                   </span>
                 </div>
+                 <div>
+                  <p className={`text-[10px] uppercase font-bold mb-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Permission</p>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold inline-flex items-center gap-1.5 ${
+                    selectedFile.permission === 'view_only'
+                      ? (isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600')
+                      : selectedFile.permission === 'view_download'
+                      ? (isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600')
+                      : selectedFile.permission === 'one_time_download'
+                      ? (isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600')
+                      : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+                  }`}>
+                    <i className={`fa-solid ${
+                      selectedFile.permission === 'view_only' ? 'fa-eye' :
+                      selectedFile.permission === 'view_download' ? 'fa-download' :
+                      selectedFile.permission === 'one_time_download' ? 'fa-file-arrow-down' :
+                      'fa-lock-open'
+                    }`}></i>
+                    {selectedFile.permission === 'view_only' ? 'View only' :
+                     selectedFile.permission === 'view_download' ? 'View + Download' :
+                     selectedFile.permission === 'one_time_download' ? 'One-time download' :
+                     'Full access'}
+                  </span>
+                </div>
+
+                {/* ADD: Download usage — only show for relevant permissions */}
+                {(selectedFile.permission === 'view_download' || selectedFile.permission === 'one_time_download') && (
+                  <div>
+                    <p className={`text-[10px] uppercase font-bold mb-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Downloads</p>
+                    {selectedFile.permission === 'one_time_download' ? (
+                      <p className={`text-sm font-medium ${
+                        selectedFile.download_count >= 1
+                          ? (isDark ? 'text-red-400' : 'text-red-500')
+                          : (isDark ? 'text-emerald-400' : 'text-emerald-600')
+                      }`}>
+                        {selectedFile.download_count >= 1 ? 'Downloaded (link used)' : 'Not yet downloaded'}
+                      </p>
+                    ) : selectedFile.download_limit !== null ? (
+                      <div>
+                        <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                          {selectedFile.download_count} / {selectedFile.download_limit} used
+                        </p>
+                        {/* progress bar */}
+                        <div className={`mt-1.5 h-1.5 rounded-full overflow-hidden w-full ${isDark ? 'bg-neutral-800' : 'bg-slate-100'}`}>
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              selectedFile.downloads_remaining === 0 ? 'bg-red-500' : 'bg-blue-500'
+                            }`}
+                            style={{ width: `${Math.min((selectedFile.download_count / selectedFile.download_limit) * 100, 100)}%` }}
+                          />
+                        </div>
+                        <p className={`text-[10px] mt-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
+                          {selectedFile.downloads_remaining === 0 ? 'Limit reached' : `${selectedFile.downloads_remaining} remaining`}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className={`text-sm font-medium ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
+                        {selectedFile.download_count} downloads · No limit
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
