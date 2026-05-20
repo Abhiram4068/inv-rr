@@ -879,33 +879,43 @@ const handleDownload = async () => {
                   />
                 </div>
 
-                <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 min-h-[300px]">
+                <div className="flex-1 overflow-y-auto no-scrollbar min-h-[300px]">
                   {organizeLoading ? (
                     <div className="flex flex-col items-center justify-center h-full gap-3 py-10">
                       <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                       <span className="text-[10px] uppercase font-bold tracking-widest text-[#444]">Loading Collections</span>
                     </div>
                   ) : collections.filter(c => c.name.toLowerCase().includes(organizeSearch.toLowerCase())).length > 0 ? (
-                    collections
-                      .filter(c => c.name.toLowerCase().includes(organizeSearch.toLowerCase()))
-                      .map((col) => (
-                        <button
-                          key={col.id}
-                          onClick={() => handleOrganize(col.id)}
-                          className={`w-full text-left p-4 rounded-xl border flex items-center justify-between group transition-all ${isDark ? 'border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-blue-50/50'}`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm transition-colors ${isDark ? 'bg-[#1a1a1a] text-[#444] group-hover:text-blue-500 group-hover:bg-blue-500/10' : 'bg-slate-50 text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-600/10'}`}>
-                              <i className="fa-solid fa-folder"></i>
+                    <div className="grid grid-cols-2 gap-3 content-start">
+                      {collections
+                        .filter(c => c.name.toLowerCase().includes(organizeSearch.toLowerCase()))
+                        .map((col) => (
+                          <button
+                            key={col.id}
+                            onClick={() => handleOrganize(col.id)}
+className={`w-full text-left p-4 rounded-xl border flex items-center justify-between group transition-all ${
+  isDark
+    ? 'bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 hover:border-blue-500/40'
+    : 'bg-blue-50/60 border-blue-200 hover:border-blue-400 hover:bg-blue-100/70'
+}`}                          >
+                            <div className="flex items-center gap-4 overflow-hidden">
+                              <div
+className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors ${
+  isDark
+    ? 'bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 group-hover:text-blue-300'
+    : 'bg-blue-100 text-blue-600 group-hover:bg-blue-200 group-hover:text-blue-700'
+}`}                               >
+                                <i className="fa-solid fa-folder"></i>
+                              </div>
+                              <div className="truncate">
+                                <p className={`text-xs font-bold truncate transition-colors ${isDark ? 'text-white' : 'text-slate-700 group-hover:text-blue-700'}`}>{col.name}</p>
+                                <p className={`${isDark ? 'text-[#444]' : 'text-slate-400'} text-[10px] mt-0.5 truncate`}>{col.total_files || 0} items</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className={`text-xs font-bold transition-colors ${isDark ? 'text-white' : 'text-slate-700 group-hover:text-blue-700'}`}>{col.name}</p>
-                              <p className={`${isDark ? 'text-[#444]' : 'text-slate-400'} text-[10px] mt-0.5`}>{col.total_files || 0} items</p>
-                            </div>
-                          </div>
-                          <i className={`fa-solid fa-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-all ${isDark ? 'text-[#333]' : 'text-blue-300'}`}></i>
-                        </button>
-                      ))
+                            <i className={`fa-solid fa-chevron-right text-[10px] opacity-0 group-hover:opacity-100 flex-shrink-0 transition-all ${isDark ? 'text-[#333]' : 'text-blue-300'}`}></i>
+                          </button>
+                        ))}
+                    </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full py-10 opacity-40">
                       <i className="fa-solid fa-folder-open text-3xl mb-4"></i>

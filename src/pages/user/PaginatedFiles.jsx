@@ -307,8 +307,8 @@ const PaginatedFiles = () => {
 
       {/* ── Selection Action Sub-Bar ── */}
       {(isSelectMode || selectedFileIds.length > 0) && files.length > 0 && (
-        <div className={`p-4 mb-6 rounded-xl border flex flex-wrap justify-between items-center gap-4 transition-colors duration-300
-          ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <div className={`p-4 mb-6 rounded-xl  flex flex-wrap justify-between items-center gap-4 transition-colors duration-300
+         `}>
 
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer text-sm font-medium select-none">

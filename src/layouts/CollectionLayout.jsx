@@ -69,7 +69,7 @@ const handleDeleteCollection = async () => {
         <Sidebar isOpen={isSidebarOpen} />
 
  {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 flex flex-col overflow-y-auto">
           {loading ? (
             <div className="p-6 text-gray-400">Loading...</div>
           ) : error ? (
