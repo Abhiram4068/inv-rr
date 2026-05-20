@@ -249,12 +249,10 @@ const saveDetails = async () => {
     try{
       await archiveFile(id);
       setActiveModal(null);
-      showToast("File moved to archive");
-      navigate("/files");
+      navigate("/files", { state: { toast: { message: "File moved to archive", type: "success" } } });
     }catch(error){
       showToast("Failed to move file to archive");
     }
-    
   };
   const handleToggleStar = async () => {
     try {
@@ -274,12 +272,10 @@ const saveDetails = async () => {
     try{
       await deleteFile(id);
       setActiveModal(null);
-      showToast("File moved to trash");
-      navigate("/files");
+      navigate("/files", { state: { toast: { message: "File moved to trash", type: "success" } } });
     }catch(error){
       showToast("Failed to move file to trash");
     }
-    
   };
 
   const handleOrganize = async (collectionId) => {

@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import FileCard from '../../components/FileCard';
-import { Link } from "react-router-dom";
-import { getFiles } from '../../services/fileService';
+import { getFiles, updateFile } from '../../services/fileService';
 
 const PaginatedFiles = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   // 1. Theme State Sync
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -33,6 +35,39 @@ const PaginatedFiles = () => {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const searchDebounceRef = useRef(null);
+
+  // ── Selection State ──────────────────────────────────────────
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedFileIds, setSelectedFileIds] = useState([]);
+  const [confirmAction, setConfirmAction] = useState({ visible: false, type: '', count: 0 });
+
+  // ── Toast State ──────────────────────────────────────────────
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ visible: true, message: msg, type, animateOut: false });
+  };
+
+  useEffect(() => {
+    if (!toast.visible) return;
+    const timer = setTimeout(() => {
+      setToast(prev => ({ ...prev, animateOut: true }));
+      setTimeout(() => setToast({ visible: false, message: '', type: 'success', animateOut: false }), 350);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [toast.visible]);
+
+  // Reset selections when turning off select mode or changing pages/searching
+  useEffect(() => {
+    setSelectedFileIds([]);
+  }, [isSelectMode, page, search]);
+
+  useEffect(() => {
+    if (location.state?.toast) {
+      showToast(location.state.toast.message, location.state.toast.type);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -145,25 +180,173 @@ const PaginatedFiles = () => {
     };
   }, [page, search]);
 
+  const handleToggleStar = (fileId, newState) => {
+    setFiles(prev =>
+      prev.map(f => f.id === fileId ? { ...f, is_starred: newState } : f)
+    );
+  };
+
+  const handleFileDeleted = (fileId) => {
+    setFiles(prev => prev.filter(f => f.id !== fileId));
+    setSelectedFileIds(prev => prev.filter(id => id !== fileId));
+    showToast("File moved to trash");
+  };
+
+  // ── Handlers for Selection Changes ───────────────────────────
+  const handleSelectCardChange = (fileId, isChecked) => {
+    if (isChecked) {
+      setSelectedFileIds(prev => [...prev, fileId]);
+      setIsSelectMode(true); // Auto-enter select mode when a card is manually checked
+    } else {
+      const newSelection = selectedFileIds.filter(id => id !== fileId);
+      setSelectedFileIds(newSelection);
+      if (newSelection.length === 0) {
+        setIsSelectMode(false); // Auto-exit select mode when everything is deselected
+      }
+    }
+  };
+
+  const handleSelectAllToggle = () => {
+    if (selectedFileIds.length === files.length) {
+      setSelectedFileIds([]);
+    } else {
+      setSelectedFileIds(files.map(f => f.id));
+    }
+  };
+
+  // ── Batch Action Handlers ───────────────────────────
+  const handleDeleteSelected = () => {
+    if (selectedFileIds.length === 0) return;
+    setConfirmAction({ visible: true, type: 'delete', count: selectedFileIds.length });
+  };
+
+  const handleArchiveSelected = () => {
+    if (selectedFileIds.length === 0) return;
+    setConfirmAction({ visible: true, type: 'archive', count: selectedFileIds.length });
+  };
+
+  const executeBulkAction = async () => {
+    const { type, count } = confirmAction;
+    setConfirmAction({ ...confirmAction, visible: false });
+
+    try {
+      const { bulkDeleteFiles, bulkArchiveFiles } = await import('../../services/fileService');
+      if (type === 'delete') {
+        await bulkDeleteFiles(selectedFileIds);
+        showToast(`${count} item(s) moved to trash`);
+      } else {
+        await bulkArchiveFiles(selectedFileIds);
+        showToast(`${count} item(s) archived successfully`);
+      }
+
+      setFiles(prev => prev.filter(f => !selectedFileIds.includes(f.id)));
+      setSelectedFileIds([]);
+      setIsSelectMode(false);
+    } catch (err) {
+      showToast(err?.response?.data?.error || `Failed to ${type} files`, "error");
+    }
+  };
+
   return (
     <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
-      
+
+      {/* Professional Top-Sliding Toast */}
+      {toast.visible && (
+        <div
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none transition-all duration-[350ms]
+            ${toast.animateOut ? 'opacity-0 -translate-y-6 scale-95' : 'opacity-100 translate-y-0 scale-100'}`}
+          style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+        >
+          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            ${isDark ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' : 'bg-white border-slate-100 text-slate-800'}`}>
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
+              ${toast.type === 'error'
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500')
+                : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')}`}>
+              <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`} />
+            </div>
+            <span className="flex-1 leading-normal tracking-wide text-[13px]">{toast.message}</span>
+          </div>
+        </div>
+      )}
+
       {/* Search and Action Bar */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
         <div className={`w-full max-w-[450px] border p-[10px_16px] rounded-xl flex items-center transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
           <i className={`fa fa-search ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}></i>
-          <input 
-            type="text" 
-            placeholder="Search Your Files..." 
+          <input
+            type="text"
+            placeholder="Search Your Files..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`} 
+            className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}
           />
         </div>
-        <Link to="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
-          <i className="fa-solid fa-plus"></i> New Document
-        </Link>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Select Button right under/next to the New Document layout chain */}
+          <button
+            type="button"
+            disabled={files.length === 0}
+            onClick={() => setIsSelectMode(!isSelectMode)}
+            className={`w-full md:w-auto p-[10px_20px] rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border disabled:opacity-40 disabled:cursor-not-allowed
+              ${isSelectMode
+                ? 'bg-blue-600/10 border-blue-500 text-blue-500'
+                : isDark
+                  ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+          >
+            <i className={`fa-regular ${isSelectMode ? 'fa-square-minus' : 'fa-square-check'}`}></i>
+            {isSelectMode ? 'Cancel Selection' : 'Select Files'}
+          </button>
+
+          <Link to="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 whitespace-nowrap">
+            <i className="fa-solid fa-plus"></i> New Document
+          </Link>
+        </div>
       </div>
+
+      {/* ── Selection Action Sub-Bar ── */}
+      {(isSelectMode || selectedFileIds.length > 0) && files.length > 0 && (
+        <div className={`p-4 mb-6 rounded-xl border flex flex-wrap justify-between items-center gap-4 transition-colors duration-300
+          ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
+
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium select-none">
+              <input
+                type="checkbox"
+                checked={files.length > 0 && selectedFileIds.length === files.length}
+                onChange={handleSelectAllToggle}
+                className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+              />
+              <span className={isDark ? 'text-slate-300' : 'text-slate-700'}>Select All on Page</span>
+            </label>
+            <div className={`h-4 w-px ${isDark ? 'bg-[#222]' : 'bg-slate-200'}`} />
+            <div className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+              {selectedFileIds.length} selected
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleArchiveSelected}
+              disabled={selectedFileIds.length === 0}
+              className={`p-[8px_16px] rounded-lg font-bold text-xs border transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                ${isDark
+                  ? 'bg-[#111] border-[#222] text-slate-300 hover:bg-[#161616]'
+                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+            >
+              <i className="fa-solid fa-box-archive mr-1.5" /> Archive Selected
+            </button>
+            <button
+              onClick={handleDeleteSelected}
+              disabled={selectedFileIds.length === 0}
+              className="p-[8px_16px] bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            >
+              <i className="fa-regular fa-trash-can" /> Delete Selected
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Header Info */}
       <div className="flex justify-between items-center mb-6">
@@ -180,7 +363,7 @@ const PaginatedFiles = () => {
         <div className="py-16 text-center">
           <div className={`text-sm font-bold ${isDark ? "text-[#ff6b6b]" : "text-red-600"}`}>{error}</div>
         </div>
-) : files.length === 0 ? (
+      ) : files.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
           <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'}`}>
             <i className="fa-solid fa-folder-open text-3xl text-gray-400 opacity-50"></i>
@@ -209,30 +392,36 @@ const PaginatedFiles = () => {
               size={sizeFormatter(file.file_size)}
               time={timeFormatter(file.created_at)}
               iconClass={iconClassForFile(file)}
-              isLink={true}
+              isLink={!isSelectMode && selectedFileIds.length === 0} // Disable route changing link when selection mechanism is active
               fileUrl={file.file_url}
               contentType={file.content_type}
+              isStarred={file.is_starred}
+              onToggleStar={handleToggleStar}
+              onDeleted={handleFileDeleted}
+              // Pass new selection parameters directly into FileCard
+              showSelection={isSelectMode || selectedFileIds.length > 0}
+              isSelected={selectedFileIds.includes(file.id)}
+              onSelectChange={handleSelectCardChange}
             />
           ))}
         </div>
       )}
 
-      {/* ✅ FIX 2: Pagination hidden when no files */}
+      {/* Pagination component */}
       {files.length > 0 && (
         <div className="flex flex-wrap justify-center items-center gap-2 py-6">
           <button
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1 || loading}
-            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-              page === 1 || loading
+            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${page === 1 || loading
                 ? isDark
                   ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
                   : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
                 : isDark
                   ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
+              }`}
           >
             <i className="fa fa-chevron-left text-xs" />
           </button>
@@ -243,15 +432,14 @@ const PaginatedFiles = () => {
               type="button"
               onClick={() => setPage(p)}
               disabled={loading}
-              className={`w-10 h-10 rounded-lg font-semibold border transition-all ${
-                p === page
+              className={`w-10 h-10 rounded-lg font-semibold border transition-all ${p === page
                   ? isDark
                     ? "bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]"
                     : "bg-blue-600 border-blue-600 text-white"
                   : isDark
                     ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
                     : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
+                }`}
             >
               {p}
             </button>
@@ -261,20 +449,71 @@ const PaginatedFiles = () => {
             type="button"
             onClick={() => setPage((p) => p + 1)}
             disabled={!hasNext || loading}
-            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-              !hasNext || loading
+            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${!hasNext || loading
                 ? isDark
                   ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
                   : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
                 : isDark
                   ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
+              }`}
           >
             <i className="fa fa-chevron-right text-xs" />
           </button>
         </div>
       )}
+
+      {/* ── Confirmation Modal ── */}
+      {confirmAction.visible && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div
+            className={`w-full max-w-[400px] rounded-2xl p-6 shadow-2xl scale-in-center ${isDark ? 'bg-[#0d0d0d] border border-[#1e1e1e]' : 'bg-white border border-slate-100'}`}
+            style={{ animation: 'modalScale 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-6 
+              ${confirmAction.type === 'delete'
+                ? (isDark ? 'bg-red-500/10 text-red-500' : 'bg-red-50 text-red-600')
+                : (isDark ? 'bg-blue-500/10 text-blue-500' : 'bg-blue-50 text-blue-600')}`}>
+              <i className={`fa-solid text-xl ${confirmAction.type === 'delete' ? 'fa-trash-can' : 'fa-box-archive'}`} />
+            </div>
+
+            <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              {confirmAction.type === 'delete' ? 'Move to Trash?' : 'Archive Files?'}
+            </h3>
+            <p className={`text-sm mb-8 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              Are you sure you want to {confirmAction.type} {confirmAction.count} selected item(s)?
+              {confirmAction.type === 'delete' && " These files will be moved to your recently deleted folder."}
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmAction({ ...confirmAction, visible: false })}
+                className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all
+                  ${isDark ? 'bg-[#1a1a1a] text-slate-300 hover:bg-[#222]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeBulkAction}
+                className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all shadow-lg
+                  ${confirmAction.type === 'delete'
+                    ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20'
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'}`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @keyframes modalScale {
+          0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}} />
 
     </main>
   );

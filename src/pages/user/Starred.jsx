@@ -105,8 +105,15 @@ const StarredItems = () => {
 
   const handleUnstarFolder = (e, id) => {
     e.preventDefault(); 
-    setStarredCollections(collection.filter(folder => folder.id !== id));
+    setStarredCollections(prev => prev.filter(folder => folder.id !== id));
     showToast("Folder unpinned successfully");
+  };
+
+  const handleFileToggleStar = (fileId, newState) => {
+    if (!newState) {
+      setStarredFiles(prev => prev.filter(f => f.id !== fileId));
+      showToast("Removed from Starred");
+    }
   };
   return (
     <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
@@ -219,6 +226,12 @@ const StarredItems = () => {
     isLink={true}
     fileUrl={item.file_url}
     contentType={item.content_type}
+    isStarred={true}
+    onToggleStar={handleFileToggleStar}
+    onDeleted={(fileId) => {
+      setStarredFiles(prev => prev.filter(f => f.id !== fileId));
+      showToast("File moved to trash");
+    }}
   />
 ))}
           </div>
