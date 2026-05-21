@@ -61,7 +61,7 @@ function App() {
           <Route path="/login"        element={<Login />} />
           <Route path="/register"     element={<Register />} />
         </Route>
-        <Route path="/downloadpage" element={<ExternalShareView />} />
+<Route path="/files/public/:token/" element={<ExternalShareView />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/auth/reset-password/confirm" element={<ResetPassword />} />
         {/* ── Protected routes — cookie checked first ── */}
