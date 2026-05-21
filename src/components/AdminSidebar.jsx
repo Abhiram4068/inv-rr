@@ -61,6 +61,9 @@ const AdminSidebar = ({ isOpen }) => {
         <NavLink to="/admin/pending-users" className={getNavLinkClass}>
           <i className="fa-solid fa-users w-5 mr-3 text-base"></i> Pending Approvals
         </NavLink>
+          <NavLink to="/admin/designations" className={getNavLinkClass}>
+          <i className="fa-solid fa-id-badge w-5 mr-3 text-base"></i> Manage Designations
+        </NavLink>
         <NavLink to="/admin/role-change" className={getNavLinkClass}>
           <i className="fa-solid fa-user-pen w-5 mr-3 text-base"></i> Role Change Requests
         </NavLink>

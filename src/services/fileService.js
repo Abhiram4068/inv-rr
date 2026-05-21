@@ -54,6 +54,10 @@ export const getArchives = (page = 1, search = "") =>
 export const unarchiveFile = (fileId) =>
   api.post(`/files/${fileId}/unarchive/`);
 
+// POST /files/bulk-unarchive/
+export const bulkUnarchiveFiles = (fileIds) =>
+  api.post("/files/bulk-unarchive/", { file_ids: fileIds });
+
 // PUT /files/archive-delete/
 export const deleteArchivedFiles = (fileIds) =>
   api.put("/files/archives/delete/", {
@@ -71,6 +75,14 @@ export const clearTrashFile = (fileId) =>
 // POST /files/:id/restore/recently-deleted/
 export const restoreFile = (fileId) =>
   api.post(`/files/${fileId}/restore/recently-deleted/`);
+
+// POST /files/bulk-restore-trash/
+export const bulkRestoreFiles = (fileIds) =>
+  api.post("/files/bulk-restore-trash/", { file_ids: fileIds });
+
+// DELETE /files/empty-trash/
+export const emptyTrash = () =>
+  api.delete("/files/empty-trash/");
 
 // POST /files/:id/share/
 export const shareFile = (fileId, shareData) =>

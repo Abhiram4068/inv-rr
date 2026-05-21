@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
-import { profile, updateProfile, getDesignations, changePassword  } from '../../../services/authService';
+import { profile, updateProfile, getDesignations, changeCurrentPassword, requestDesignationChange, deactivateAccount } from '../../../services/authService';
 import useAuth from '../../../hooks/useAuth';
 
 const EditAccount = () => {
-  // --- THEME STATE SYNC (Untouched) ---
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,49 +13,13 @@ const EditAccount = () => {
 
   // --- Modal States ---
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [showDisableModal, setShowDisableModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDesignationModal, setShowDesignationModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
 
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    designation: "",
-  });
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
-  const [passwordData, setPasswordData] = useState({
-  current_password: "",
-  new_password: "",
-  confirm_password: ""
-  });
-
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        const [profileRes, desigRes] = await Promise.all([
-          profile(),
-          getDesignations()
-        ]);
-        
-        setUserProfile(profileRes.data);
-        setDesignations(desigRes.data);
-
-        // Find the actual value for the designation display string
-        const userDesigLabel = profileRes.data.designation;
-        const matchedDesig = desigRes.data.find(d => d.label === userDesigLabel);
-
-        setFormData({
-          first_name: profileRes.data.first_name,
-          last_name: profileRes.data.last_name,
-          designation: matchedDesig ? matchedDesig.value : userDesigLabel,
-        });
-      } catch (err) {
-        setError(err.response?.data?.detail || "Failed to fetch profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfileData();
-  }, []);
-
+  // --- Theme sync ---
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
     window.addEventListener('storage', handleStorageChange);
@@ -70,55 +33,142 @@ const EditAccount = () => {
     };
   }, [theme]);
 
-  const handleUpdate = async () => {
-    try {
-      setShowUpdateModal(false);
-      setLoading(true);
-      await updateProfile(formData);
-      if (passwordData.current_password ||passwordData.new_password ||passwordData.confirm_password){
-        if (passwordData.new_password !== passwordData.confirm_password) {
-          alert("Passwords do not match");
-          setLoading(false);
-          return;
-        }
-      await changePassword(passwordData);
-       setPasswordData({
-        current_password: "",
-        new_password: "",
-        confirm_password: ""
-      });
+  // Toast auto-dismiss with clean slide-up exit animation
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, animateOut: true }));
+        setTimeout(() => {
+          setToast({ visible: false, message: '', type: 'success', animateOut: false });
+        }, 350);
+      }, 3500);
+      return () => clearTimeout(timer);
     }
-      const profileRes = await profile();
-      setUserProfile(profileRes.data);
-      const userDesigLabel = profileRes.data.designation;
-      const matchedDesig = designations.find(d => d.label === userDesigLabel);
-      setFormData({
-        first_name: profileRes.data.first_name,
-        last_name: profileRes.data.last_name,
-        designation: matchedDesig ? matchedDesig.value : userDesigLabel,
-      });
+  }, [toast.visible]);
 
-      // Update global user state so TopNavbar re-renders
-      if (user) {
-        login({
-          ...user,
+  const showToast = (msg, type = 'success') => {
+    setToast({ visible: true, message: msg, type: type, animateOut: false });
+  };
+
+  // --- Form States ---
+  const [formData, setFormData] = useState({ first_name: "", last_name: "" });
+
+  const [passwordData, setPasswordData] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+
+  const [requestedDesignation, setRequestedDesignation] = useState("");
+  const [deactivatePassword, setDeactivatePassword] = useState("");
+
+  // --- Fetch profile + designations ---
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const [profileRes, desigRes] = await Promise.all([profile(), getDesignations()]);
+        setUserProfile(profileRes.data);
+        setDesignations(desigRes.data);
+        setFormData({
           first_name: profileRes.data.first_name,
           last_name: profileRes.data.last_name,
-          designation: userDesigLabel
         });
+      } catch (err) {
+        setError(err.response?.data?.detail || "Failed to fetch profile");
+      } finally {
+        setLoading(false);
       }
+    };
+    fetchProfileData();
+  }, []);
+
+  // --- Theme sync ---
+  useEffect(() => {
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(() => {
+      const current = localStorage.getItem('theme');
+      if (current !== theme) setTheme(current);
+    }, 100);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [theme]);
+
+  // --- Handler: Update name only (PATCH /api/profile/) ---
+  const handleUpdateProfile = async () => {
+    setShowUpdateModal(false);
+    setLoading(true);
+    try {
+      await updateProfile({ first_name: formData.first_name, last_name: formData.last_name });
+      const profileRes = await profile();
+      setUserProfile(profileRes.data);
+      if (user) {
+        login({ ...user, first_name: profileRes.data.first_name, last_name: profileRes.data.last_name });
+      }
+      showToast('Profile updated successfully.', 'success');
     } catch (err) {
-       console.log(err.response?.data);
-      setError(err.response?.data?.detail || "Failed to update profile");
+      showToast(err.response?.data?.current_password || 'Failed to update profile.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDisableAccount = () => {
-    // Logic for disabling account goes here
-    setShowDisableModal(false);
-    alert("Account disable request sent to administrator.");
+  // --- Handler: Change password (PATCH /api/auth/change-password/) ---
+  const handleChangePassword = async () => {
+    setShowPasswordModal(false);
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      showToast('New passwords do not match.', 'error');
+      return;
+    }
+    setLoading(true);
+    try {
+      await changeCurrentPassword(passwordData);
+      setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
+      showToast('Password changed successfully.', 'success');
+    } catch (err) {
+      showToast(err.response?.data?.current_password || 'Failed to change password.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Handler: Designation change request (POST /api/designation-change/) ---
+  const handleDesignationRequest = async () => {
+    setShowDesignationModal(false);
+    if (!requestedDesignation) {
+      showToast('Please select a designation.', 'error');
+      return;
+    }
+    setLoading(true);
+    try {
+      await requestDesignationChange({ requested_designation: requestedDesignation });
+      setRequestedDesignation("");
+      showToast('Designation change request sent. Awaiting admin approval.', 'success');
+    } catch (err) {
+      showToast(err.response?.data?.detail || 'Failed to submit request.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Handler: Deactivate account (POST /api/auth/deactivate/) ---
+  const handleDeactivate = async () => {
+    setShowDeactivateModal(false);
+    setLoading(true);
+    try {
+      // Pass the password to the API call
+      await deactivateAccount({ password: deactivatePassword });
+      setDeactivatePassword("");
+      showToast('Account deactivated. You will be logged out shortly.', 'success');
+      setTimeout(() => window.location.href = '/login', 2500);
+    } catch (err) {
+      showToast(err.response?.data?.detail || err.response?.data?.password || 'Failed to deactivate account.', 'error');
+      setDeactivatePassword(""); // clear on failure so they can try again
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isDark = theme === 'dark';
@@ -132,16 +182,57 @@ const EditAccount = () => {
   }
 
   return (
-    <div className={`flex-1 flex min-w-0 transition-colors duration-300 ${isDark ? 'bg-[#050505]' : 'bg-[#F8FAFC]'}`}>
+    <div className={`flex-1 flex min-w-0 transition-colors duration-300 relative ${isDark ? 'bg-[#050505]' : 'bg-[#F8FAFC]'}`}>
+      
+      {/* Professional Top-Sliding Toast */}
+      {toast.visible && (
+        <div 
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none
+            transition-all duration-[350ms]
+            ${toast.animateOut 
+              ? 'opacity-0 -translate-y-6 scale-95' 
+              : 'opacity-100 translate-y-0 scale-100'
+            }`}
+          style={{
+            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none'
+          }}
+        >
+          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            ${isDark 
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+              : 'bg-white border-slate-100 text-slate-800'}`}>
+            
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
+              ${toast.type === 'error' 
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+                : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
+              }`}>
+              <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
+            </div>
+            
+            <span className="flex-1 leading-normal tracking-wide text-[13px]">
+              {toast.message}
+            </span>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideDownProfessional {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
+
       <div className="flex-1 p-4 lg:p-8 overflow-y-auto no-scrollbar">
         <div className="max-w-5xl mx-auto">
-          {/* Breadcrumb Navigation */}
+
+          {/* Breadcrumb */}
           <nav className="mb-4 flex items-center gap-2 text-[13px] font-bold tracking-widest">
-            <Link 
-              to="/myprofile" 
-              className={`flex items-center gap-2 transition-colors hover:text-blue-500 ${
-                isDark ? 'text-neutral-500' : 'text-slate-400'
-              }`}
+            <Link
+              to="/myprofile"
+              className={`flex items-center gap-2 transition-colors hover:text-blue-500 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}
             >
               <i className="fa-solid fa-arrow-left text-[10px]"></i>
               <span>Profile</span>
@@ -149,121 +240,166 @@ const EditAccount = () => {
             <span className={isDark ? 'text-neutral-800' : 'text-slate-300'}>/</span>
             <span className={isDark ? 'text-white' : 'text-slate-900'}>Settings</span>
           </nav>
-          {/* Header Section */}
-          <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-              <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Edit Account</h1>
-              <p className={`text-sm mt-1 ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>Update your personal information and security settings.</p>
-            </div>
+
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Edit Account</h1>
+            <p className={`text-sm mt-1 ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>Update your personal information and security settings.</p>
           </div>
 
           <div className={`w-full rounded-lg overflow-hidden border transition-all ${
             isDark ? 'bg-[#0F0F0F] border-neutral-800 shadow-2xl' : 'bg-white border-slate-200 shadow-sm'
           }`}>
-            
-            <form onSubmit={(e) => e.preventDefault()}>
-              {/* Section 1: Profile Details */}
-              <div className={`p-8 lg:p-10 border-b ${isDark ? 'border-neutral-800' : 'border-slate-100'}`}>
-                <h3 className={`text-lg font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-800'}`}>Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                  <EditItem
-                    label="First Name"
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    isDark={isDark}
-                  />
-                  <EditItem
-                    label="Last Name"
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    isDark={isDark}
-                  />
-                  <EditItem label="Email Address" defaultValue={userProfile?.email} isDark={isDark} disabled />
-                  <div className="group">
-                    <label className={`block text-[10px] uppercase tracking-[0.2em] font-bold mb-2 transition-colors ${
-                      isDark ? 'text-neutral-500' : 'text-slate-400'
-                    }`}>
-                      Designation
-                    </label>
-                    <div className="relative flex items-center">
-                      <select
-                        name="designation"
-                        required
-                        value={formData.designation}
-                        onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                        className={`w-full text-[14px] font-semibold py-2.5 pl-4 pr-10 rounded-lg border outline-none transition-all appearance-none cursor-pointer ${
-                          isDark 
-                          ? 'bg-[#0A0A0A] border-neutral-800 text-white focus:border-blue-500 focus:bg-black' 
+
+            {/* ── Section 1: Personal Information ── */}
+            <div className={`p-8 lg:p-10 border-b ${isDark ? 'border-neutral-800' : 'border-slate-100'}`}>
+              <h3 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>Personal Information</h3>
+              <p className={`text-xs mb-6 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Update your first and last name directly.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                <EditItem
+                  label="First Name"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  isDark={isDark}
+                />
+                <EditItem
+                  label="Last Name"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  isDark={isDark}
+                />
+                <EditItem
+                  label="Email Address"
+                  defaultValue={userProfile?.email}
+                  isDark={isDark}
+                  disabled
+                />
+                <EditItem
+                  label="Current Designation"
+                  defaultValue={userProfile?.designation}
+                  isDark={isDark}
+                  disabled
+                />
+              </div>
+              <div className="mt-8 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowUpdateModal(true)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+
+            {/* ── Section 2: Designation Change Request ── */}
+            <div className={`p-8 lg:p-10 border-b ${isDark ? 'border-neutral-800' : 'border-slate-100'}`}>
+              <h3 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>Request Designation Change</h3>
+              <p className={`text-xs mb-6 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Select a new designation — your request will be sent to an admin for approval.</p>
+              <div className="max-w-sm">
+                <div className="group">
+                  <label className={`block text-[10px] uppercase tracking-[0.2em] font-bold mb-2 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
+                    New Designation
+                  </label>
+                  <div className="relative flex items-center">
+                    <select
+                      value={requestedDesignation}
+                      onChange={(e) => setRequestedDesignation(e.target.value)}
+                      className={`w-full text-[14px] font-semibold py-2.5 pl-4 pr-10 rounded-lg border outline-none transition-all appearance-none cursor-pointer ${
+                        isDark
+                          ? 'bg-[#0A0A0A] border-neutral-800 text-white focus:border-blue-500 focus:bg-black'
                           : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-blue-500 focus:bg-white'
-                        }`}
-                      >
-                        <option value="" disabled className={isDark ? "bg-[#0a0a0a]" : "bg-white"}>Select designation</option>
-                        {designations.map((desig) => (
-                          <option key={desig.value} value={desig.value} className={isDark ? "bg-[#0a0a0a]" : "bg-white"}>
+                      }`}
+                    >
+                      <option value="" disabled className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>Select new designation</option>
+                      {designations
+                        .filter(d => d.label !== userProfile?.designation)
+                        .map((desig) => (
+                          <option key={desig.value} value={desig.value} className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>
                             {desig.label}
                           </option>
                         ))}
-                      </select>
-                      {/* Custom Dropdown Arrow */}
-                      <div className={`absolute right-4 pointer-events-none ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
-                        <i className="fa-solid fa-chevron-down text-[10px]"></i>
-                      </div>
+                    </select>
+                    <div className={`absolute right-4 pointer-events-none ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
+                      <i className="fa-solid fa-chevron-down text-[10px]"></i>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Section 2: Authentication */}
-              <div className={`p-8 lg:p-10 border-b ${isDark ? 'border-neutral-800' : 'border-slate-100'}`}>
-                <h3 className={`text-lg font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-800'}`}>Authentication</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <EditItem label="Old Password" type="password" placeholder="••••••••"  onChange={(e) =>
-                    setPasswordData({ ...passwordData, current_password: e.target.value })
-                  } 
-                    isDark={isDark} />
-                  <EditItem label="New Password" type="password" placeholder="••••••••" 
-                   onChange={(e) =>
-    setPasswordData({ ...passwordData, new_password: e.target.value })
-  }
-                  isDark={isDark} />
-                  <EditItem label="Confirm New Password" type="password" placeholder="••••••••" 
-                    onChange={(e) =>
-    setPasswordData({ ...passwordData, confirm_password: e.target.value })
-  }
-                  isDark={isDark} />
-                </div>
-                <div className="mt-8 flex justify-end">
-                    <button 
-                      type="button"
-                      onClick={() => setShowUpdateModal(true)} 
-                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
-                    >
-                        Update Account
-                    </button>
-                </div>
+              <div className="mt-8 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowDesignationModal(true)}
+                  disabled={!requestedDesignation}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm transition-all"
+                >
+                  Send Request
+                </button>
               </div>
+            </div>
 
-              {/* Section 3: Danger Zone */}
-              <div className={`p-8 lg:p-10 ${isDark ? 'bg-[#120a0a]' : 'bg-red-50/30'}`}>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div className="max-w-xl">
-                    <h3 className="text-lg font-bold mb-2 text-red-500">Danger Zone</h3>
-                    <p className={`text-sm font-medium ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
-                        Deactivating your account will restrict access to your files. This action can be reversed by an administrator.
-                    </p>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => setShowDisableModal(true)}
-                    className="px-6 py-2.5 border border-red-500/50 hover:bg-red-500 hover:text-white text-red-500 rounded-lg font-bold text-sm transition-all whitespace-nowrap"
-                  >
-                    Disable My Account
-                  </button>
-                </div>
+            {/* ── Section 3: Change Password ── */}
+            <div className={`p-8 lg:p-10 border-b ${isDark ? 'border-neutral-800' : 'border-slate-100'}`}>
+              <h3 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>Change Password</h3>
+              <p className={`text-xs mb-6 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Enter your current password to set a new one.</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <EditItem
+                  label="Current Password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={passwordData.current_password}
+                  onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                  isDark={isDark}
+                />
+                <EditItem
+                  label="New Password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={passwordData.new_password}
+                  onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                  isDark={isDark}
+                />
+                <EditItem
+                  label="Confirm New Password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={passwordData.confirm_password}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
+                  isDark={isDark}
+                />
               </div>
-            </form>
+              <div className="mt-8 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(true)}
+                  disabled={!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm transition-all"
+                >
+                  Change Password
+                </button>
+              </div>
+            </div>
 
-            {/* Footer Note */}
+            {/* ── Section 4: Danger Zone ── */}
+            <div className={`p-8 lg:p-10 ${isDark ? 'bg-[#120a0a]' : 'bg-red-50/30'}`}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="max-w-xl">
+                  <h3 className="text-lg font-bold mb-2 text-red-500">Danger Zone</h3>
+                  <p className={`text-sm font-medium ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
+                    Deactivating your account will immediately restrict access to your files and data. This action can only be reversed by an administrator.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDeactivateModal(true)}
+                  className="px-6 py-2.5 border border-red-500/50 hover:bg-red-500 hover:text-white text-red-500 rounded-lg font-bold text-sm transition-all whitespace-nowrap"
+                >
+                  Disable My Account
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
             <div className={`px-8 py-4 text-[11px] font-medium tracking-wide border-t uppercase opacity-50 ${isDark ? 'border-neutral-800 text-neutral-500' : 'border-slate-100 text-slate-400'}`}>
               Changes require Hive protocol re-validation
             </div>
@@ -271,44 +407,87 @@ const EditAccount = () => {
         </div>
       </div>
 
-      {/* Confirmation Modals */}
-      <ConfirmationModal 
+      {/* ── Modals ── */}
+
+      {/* Save profile changes */}
+      <ConfirmationModal
         isOpen={showUpdateModal}
         onClose={() => setShowUpdateModal(false)}
-        onConfirm={handleUpdate}
-        title="Update Profile?"
-        message="Are you sure you want to save these changes to your account information?"
+        onConfirm={handleUpdateProfile}
+        title="Save Profile Changes?"
+        message="Your first and last name will be updated immediately."
         confirmText="Save Changes"
         isDark={isDark}
       />
 
-      <ConfirmationModal 
-        isOpen={showDisableModal}
-        onClose={() => setShowDisableModal(false)}
-        onConfirm={handleDisableAccount}
-        title="Disable Account?"
-        message="This will restrict your access immediately. You will need to contact an administrator to reactivate your account."
-        confirmText="Disable Account"
-        isDanger={true}
+      {/* Change password */}
+      <ConfirmationModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onConfirm={handleChangePassword}
+        title="Change Password?"
+        message="Your password will be updated. You may need to log in again on other devices."
+        confirmText="Change Password"
         isDark={isDark}
       />
+
+      {/* Designation request */}
+      <ConfirmationModal
+        isOpen={showDesignationModal}
+        onClose={() => setShowDesignationModal(false)}
+        onConfirm={handleDesignationRequest}
+        title="Send Designation Request?"
+        message={`A request to change your designation to "${designations.find(d => d.value === requestedDesignation)?.label || requestedDesignation}" will be sent to your administrator for approval.`}
+        confirmText="Send Request"
+        isDark={isDark}
+      />
+
+      {/* Deactivate account */}
+      <ConfirmationModal
+        isOpen={showDeactivateModal}
+        onClose={() => {
+          setShowDeactivateModal(false);
+          setDeactivatePassword(""); // Reset the password input if they cancel
+        }}
+        onConfirm={handleDeactivate}
+        title="Disable Your Account?"
+        message="This will immediately restrict your access. Please confirm your password to proceed."
+        confirmText="Disable Account"
+        isDanger
+        isDark={isDark}
+        confirmDisabled={!deactivatePassword}
+      >
+        <EditItem
+          label="Password to confirm"
+          type="password"
+          placeholder="••••••••"
+          value={deactivatePassword}
+          onChange={(e) => setDeactivatePassword(e.target.value)}
+          isDark={isDark}
+        />
+      </ConfirmationModal>
     </div>
   );
 };
 
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirmText, isDanger = false, isDark }) => {
-  if (!isOpen) return null;
+// ── Shared Sub-components ──
 
+// Updated to accept `children` (for injecting the password field) and `confirmDisabled`
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirmText, isDanger = false, isDark, confirmDisabled = false, children }) => {
+  if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className={`w-full max-w-md rounded-xl border p-6 shadow-2xl ${
         isDark ? 'bg-[#0F0F0F] border-neutral-800' : 'bg-white border-slate-200'
       }`}>
         <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
-        <p className={`text-sm mb-8 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>{message}</p>
+        <p className={`text-sm mb-6 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>{message}</p>
         
+        {/* Render extra inputs if provided */}
+        {children && <div className="mb-6">{children}</div>}
+
         <div className="flex gap-3 justify-end">
-          <button 
+          <button
             onClick={onClose}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
               isDark ? 'text-neutral-400 hover:text-white hover:bg-neutral-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
@@ -316,10 +495,13 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirm
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={onConfirm}
+            disabled={confirmDisabled}
             className={`px-4 py-2 rounded-lg text-sm font-bold text-white transition-all ${
-              isDanger ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
+              isDanger 
+                ? 'bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
             }`}
           >
             {confirmText}
@@ -343,17 +525,17 @@ const EditItem = ({ label, defaultValue, value, onChange, type = "text", placeho
         {label}
       </label>
       <div className="relative flex items-center">
-        <input 
+        <input
           type={inputType}
-          value={value !== undefined ? value : undefined}
-          defaultValue={defaultValue}
+          {...(value !== undefined ? { value } : { defaultValue })}
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full text-[14px] font-semibold py-2.5 px-4 rounded-lg border outline-none transition-all fill-autofill ${
-            isDark 
-            ? 'border-neutral-800 text-white focus:border-blue-500 focus:bg-black placeholder-neutral-700 [color-scheme:dark]' 
-            : 'border-slate-200 text-slate-700 focus:border-blue-500 focus:bg-white placeholder-slate-300 [color-scheme:light]'
+          autoComplete={isPassword ? "new-password" : "off"}
+          className={`w-full text-[14px] font-semibold py-2.5 px-4 rounded-lg border outline-none transition-all ${
+            isDark
+              ? 'bg-[#0A0A0A] border-neutral-800 text-white focus:border-blue-500 focus:bg-black placeholder-neutral-700 [color-scheme:dark]'
+              : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-blue-500 focus:bg-white placeholder-slate-300 [color-scheme:light]'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${isPassword ? 'pr-10' : ''}`}
         />
         {isPassword && (

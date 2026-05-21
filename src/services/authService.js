@@ -86,4 +86,22 @@ export const resetPassword = ({ uid, token, new_password, confirm_password }) =>
 
 export const submitReactivationRequest = (data) => api.post("/api/auth/reactivation-request/", data);
 
+// Change current password — reuses existing POST endpoint from authService
+// POST /api/auth/change-password/
+// Body: { current_password, new_password, confirm_password }
+export const changeCurrentPassword = (data) =>
+  api.post("/api/auth/change-password/", data);
+
+// Submit a designation change request (goes to admin for approval)
+// POST /api/designation-change/
+// Body: { requested_designation }
+export const requestDesignationChange = (data) =>
+  api.post("/api/designation-change/", data);
+
+// Deactivate the current user's account
+// POST /api/auth/deactivate/
+// No body needed — acts on the authenticated user via cookie session
+export const deactivateAccount = (data) =>
+  api.post("/api/auth/deactivate/", data);
+
 export default api;

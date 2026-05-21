@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import adminService from '../../services/adminService'; // Adjust path based on your file tree
+import userService from '../../services/adminservice/userservice';
 
 const RoleChangeRequests = () => {
     const navigate = useNavigate();
@@ -11,27 +11,25 @@ const RoleChangeRequests = () => {
     // Modal State Mechanics
     const [modalConfig, setModalConfig] = useState({
         isOpen: false,
-        type: null, // 'approve' or 'deny'
+        type: null, // 'approve' or 'reject'
         targetRequest: null
     });
     const [isActionLoading, setIsActionLoading] = useState(false);
 
     useEffect(() => {
         fetchRoleRequests();
-    }, []);
+    }, [searchTerm]);
 
-    const fetchRoleRequests = () => {
-        // Mock structure tracking operational directory role reassignment pipelines
-        // Replace with actual API call: const data = await adminService.getRoleRequests();
-        setTimeout(() => {
-            const mockRequests = [
-                { id: 101, userId: 1, name: "Abhiram S", email: "abhiram@hivedrive.io", old_designation: "Associate Engineer", new_designation: "Software Engineer", date_requested: "2026-05-15T06:12:00Z" },
-                { id: 102, userId: 4, name: "Elena Rostova", email: "elena.r@hivedrive.io", old_designation: "QA Analyst", new_designation: "Senior QA Automation Engineer", date_requested: "2026-05-16T08:44:12Z" },
-                { id: 103, userId: 5, name: "David Kim", email: "d.kim@hivedrive.io", old_designation: "Security Specialist", new_designation: "SecOps Lead", date_requested: "2026-05-13T12:01:30Z" },
-            ];
-            setRequests(mockRequests);
+    const fetchRoleRequests = async () => {
+        try {
+            setLoading(true);
+            const data = await userService.getDesignationChangeRequests({ search: searchTerm });
+            setRequests(data.results || data); // Handle both paginated and non-paginated
+        } catch (error) {
+            console.error("Failed to fetch role requests:", error);
+        } finally {
             setLoading(false);
-        }, 300);
+        }
     };
 
     const openModal = (type, request) => {
@@ -53,13 +51,10 @@ const RoleChangeRequests = () => {
         const { type, targetRequest } = modalConfig;
 
         try {
-            if (type === 'approve') {
-                // Replace with API call: await adminService.approveRoleChange(targetRequest.id);
-                console.log(`Approved role migration for request signature: ${targetRequest.id}`);
-            } else if (type === 'deny') {
-                // Replace with API call: await adminService.denyRoleChange(targetRequest.id);
-                console.log(`Dropped role migration sequence: ${targetRequest.id}`);
-            }
+            const action = type === 'approve' ? 'approve' : 'reject';
+            await userService.resolveDesignationChangeRequest(targetRequest.id, action);
+            
+            console.log(`${action}d role migration for request signature: ${targetRequest.id}`);
 
             // Splice tracking record locally out of stack queue
             setRequests(prev => prev.filter(req => req.id !== targetRequest.id));
@@ -71,12 +66,8 @@ const RoleChangeRequests = () => {
         }
     };
 
-    // Global pipeline filters mapping user indices
-    const filteredRequests = requests.filter(req =>
-        req.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.new_designation.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filtered already by backend search, but keeping local search for UI responsiveness if needed
+    const filteredRequests = requests;
 
     if (loading) {
         return (
@@ -132,58 +123,58 @@ const RoleChangeRequests = () => {
                                             {/* User Details Block */}
                                             <td className="py-4 px-6">
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-slate-800">{req.name}</span>
-                                                    <span className="text-xs text-slate-400 mt-0.5">{req.email}</span>
+                                                    <span className="font-semibold text-slate-800">{req.user_full_name}</span>
+                                                    <span className="text-xs text-slate-400 mt-0.5">{req.user_email}</span>
                                                 </div>
                                             </td>
 
                                             {/* Old Title Stack */}
                                             <td className="py-4 px-6">
                                                 <span className="text-slate-500 line-through text-xs bg-slate-50 px-2 py-1 rounded-sm border border-slate-100">
-                                                    {req.old_designation}
+                                                    {req.current_designation_display}
                                                 </span>
                                             </td>
 
                                             {/* New Title Target Array */}
                                             <td className="py-4 px-6">
                                                 <span className="text-indigo-600 font-bold text-xs bg-indigo-50/60 px-2 py-1 rounded-sm border border-indigo-100/50">
-                                                    {req.new_designation}
+                                                    {req.requested_designation_display}
                                                 </span>
                                             </td>
 
                                             {/* Creation Iso Stamps */}
                                             <td className="py-4 px-6 text-slate-500 font-normal">
-                                                {new Date(req.date_requested).toLocaleString('en-US', {
+                                                {new Date(req.created_at).toLocaleString('en-US', {
                                                     dateStyle: 'medium',
                                                     timeStyle: 'short'
                                                 })}
                                             </td>
 
-                                            {/* Practical Functional Controls */}
-                                            <td className="py-4 px-6 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button
-                                                        onClick={() => navigate(`/admin/users/${req.userId}`)}
-                                                        className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-wider shadow-sm"
-                                                    >
-                                                        View Profile
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openModal('deny', req)}
-                                                        className="px-2.5 py-1.5 border border-slate-200 rounded-sm bg-white text-xs font-bold text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all shadow-sm uppercase tracking-wider"
-                                                    >
-                                                        Deny
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openModal('approve', req)}
-                                                        className="px-2.5 py-1.5 bg-indigo-500 border border-indigo-600 rounded-sm text-xs font-bold text-white hover:bg-indigo-600 transition-all shadow-sm uppercase tracking-wider"
-                                                    >
-                                                        Approve
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
+                                             {/* Practical Functional Controls */}
+                                             <td className="py-4 px-6 text-right">
+                                                 <div className="flex items-center justify-end gap-2">
+                                                     <button
+                                                         onClick={() => navigate(`/admin/user-details/${req.user}`)}
+                                                         className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-wider shadow-sm"
+                                                     >
+                                                         View Profile
+                                                     </button>
+                                                     <button
+                                                         onClick={() => openModal('reject', req)}
+                                                         className="px-2.5 py-1.5 border border-slate-200 rounded-sm bg-white text-xs font-bold text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all shadow-sm uppercase tracking-wider"
+                                                     >
+                                                         Reject
+                                                     </button>
+                                                     <button
+                                                         onClick={() => openModal('approve', req)}
+                                                         className="px-2.5 py-1.5 bg-indigo-500 border border-indigo-600 rounded-sm text-xs font-bold text-white hover:bg-indigo-600 transition-all shadow-sm uppercase tracking-wider"
+                                                     >
+                                                         Approve
+                                                     </button>
+                                                 </div>
+                                             </td>
+                                         </tr>
+                                     ))
                                 ) : (
                                     <tr>
                                         <td colSpan="5" className="text-center py-12 text-slate-400 font-medium">

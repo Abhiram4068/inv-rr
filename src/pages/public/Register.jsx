@@ -19,7 +19,7 @@ const Register = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  const [designationsLoading, setDesignationsLoading] = useState(false);
   const buildErrorMessage = (data) => {
     if (!data) return "Registration failed. Please try again.";
     if (typeof data === "string") return data;
@@ -77,7 +77,7 @@ const Register = () => {
       }
       navigate("/login", { replace: true });
     } catch (err) {
-      setError(buildErrorMessage(err.response?.data));
+      setError((err.response?.data?.email));
     } finally {
       setLoading(false);
     }
@@ -85,11 +85,14 @@ const Register = () => {
 
   useEffect(() => {
     const fetchDesignations = async () => {
+      setDesignationsLoading(true); 
       try {
         const res = await getDesignations();
         setDesignations(res.data);
       } catch (err) {
         console.error("Failed to fetch designations", err);
+      }finally{
+        setDesignationsLoading(false);
       }
     };
 
@@ -231,8 +234,8 @@ const Register = () => {
                   >
                     <option value="" disabled className="bg-[#121214]">Select designation</option>
                     {designations.map((designation) => (
-                      <option key={designation.value} value={designation.value} className="bg-[#121214]">
-                        {designation.label}
+                      <option key={designation.id} value={designation.name} className="bg-[#121214]">
+                        {designation.name}
                       </option>
                     ))}
                   </select>

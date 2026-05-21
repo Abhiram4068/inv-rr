@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from "react-router-dom";
-import { getDeletedFiles, restoreFile, clearTrashFile } from "../../../services/fileService";
+import { getDeletedFiles, restoreFile, clearTrashFile, bulkRestoreFiles, emptyTrash } from "../../../services/fileService";
+import { sizeFormatter } from '../../../utils/sizeFormatter';
 
 const TrashManagement = () => {
   // --- THEME STATE SYNC ---
@@ -24,11 +25,14 @@ const TrashManagement = () => {
   // --- STATE ---
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isRestoreModalOpen, setRestoreModalOpen] = useState(false);
+  const [isBulkRestoreModalOpen, setBulkRestoreModalOpen] = useState(false);
+  const [isEmptyTrashModalOpen, setEmptyTrashModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [trashFiles, setTrashFiles] = useState([]);
   const [totalFiles, setTotalFiles] = useState(0);
+  const [totalSize, setTotalSize] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -77,6 +81,7 @@ const TrashManagement = () => {
       // Support both paginated and flat array responses
       setTrashFiles(res.data.data ?? res.data.results ?? res.data ?? []);
       setTotalFiles(res.data.total ?? res.data.count ?? (Array.isArray(res.data) ? res.data.length : 0));
+      setTotalSize(res.data.total_size ?? 0);
     } catch (err) {
       setError(
         err.response?.data?.detail ||
@@ -145,6 +150,39 @@ const TrashManagement = () => {
     setRestoreModalOpen(true);
   };
 
+  const handleBulkRestore = async () => {
+    try {
+      setActionLoading(true);
+      const fileIds = trashFiles.map(f => f.id);
+      if (fileIds.length === 0) {
+        showToast("No files to restore", "error");
+        return;
+      }
+      await bulkRestoreFiles(fileIds);
+      setBulkRestoreModalOpen(false);
+      showToast(`${fileIds.length} files restored successfully`);
+      await fetchTrashFiles();
+    } catch (err) {
+      showToast("Failed to restore files", 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEmptyTrash = async () => {
+    try {
+      setActionLoading(true);
+      await emptyTrash();
+      setEmptyTrashModalOpen(false);
+      showToast("Trash emptied successfully");
+      await fetchTrashFiles();
+    } catch (err) {
+      showToast("Failed to empty trash", 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // --- PAGINATION ---
   const totalPages = Math.ceil(totalFiles / rowsPerPage) || 1;
   const indexOfFirstRow = (currentPage - 1) * rowsPerPage;
@@ -198,7 +236,9 @@ const TrashManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>Trash</h1>
-          <p className={`text-sm mt-1 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>Items in trash will be permanently deleted after 30 days</p>
+          <p className={`text-sm mt-1 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+            Items in trash will be permanently deleted after 30 days • <span className={isDark ? "text-blue-400" : "text-blue-600"}>{sizeFormatter(totalSize)} total</span>
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -212,7 +252,21 @@ const TrashManagement = () => {
               className={`text-xs rounded-xl py-2.5 pl-10 pr-6 w-full focus:outline-none transition-all border ${isDark ? 'bg-neutral-900/50 border-neutral-800 text-white focus:border-neutral-600' : 'bg-white border-slate-200 text-slate-800 focus:border-blue-400 shadow-sm'}`}
             />
           </div>
-          <button className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm ${isDark ? 'bg-white text-black hover:bg-neutral-200' : 'bg-slate-800 text-white hover:bg-slate-900'}`}>
+          <button 
+            onClick={() => setBulkRestoreModalOpen(true)}
+            disabled={trashFiles.length === 0}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm border
+${isDark 
+  ? 'bg-[#0d0d0d] border-[#1e1e1e] text-blue-400 hover:bg-[#151515] hover:border-blue-500/30' 
+  : 'bg-white border-slate-100 text-blue-600 hover:bg-slate-50 shadow-blue-500/5'
+} disabled:opacity-30 disabled:cursor-not-allowed`}>
+  <i className="fa-solid fa-rotate-left"></i>
+            Restore All
+          </button>
+          <button 
+            onClick={() => setEmptyTrashModalOpen(true)}
+            disabled={trashFiles.length === 0}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'bg-white text-black hover:bg-neutral-200' : 'bg-slate-800 text-white hover:bg-slate-900'}`}>
             Empty Trash
           </button>
         </div>
@@ -350,7 +404,7 @@ const TrashManagement = () => {
           {totalFiles} items currently in bin
         </p>
         <span className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-          Total Trash Size: <span className={isDark ? 'text-white font-bold ml-1' : 'text-blue-600 font-bold ml-1'}>2.44 GB</span>
+          Total Trash Size: <span className={isDark ? 'text-white font-bold ml-1' : 'text-blue-600 font-bold ml-1'}>{sizeFormatter(totalSize)}</span>
         </span>
       </div>
 
@@ -391,36 +445,69 @@ const TrashManagement = () => {
         </div>
       )}
 
-      {/* DELETE MODAL */}
-      {isDeleteModalOpen && (
+      {/* BULK RESTORE MODAL */}
+      {isBulkRestoreModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-6 border animate-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0d0d0d] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
             <div className="text-center">
-              <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i className="fa-solid fa-triangle-exclamation text-2xl"></i>
+              <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i className="fa-solid fa-rotate-left text-2xl"></i>
               </div>
-              <h2 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Delete Permanently?</h2>
+              <h2 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Restore All Files?</h2>
               <p className={`text-xs leading-relaxed mb-6 ${isDark ? 'text-[#666]' : 'text-slate-500'}`}>
-                Are you sure you want to permanently delete{' '}
-                <strong className={isDark ? 'text-white' : 'text-slate-800'}>{selectedFile?.original_name}</strong>?
-                {' '}This action cannot be undone.
+                Are you sure you want to restore all {trashFiles.length} items currently in the trash?
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setDeleteModalOpen(false)}
+                  onClick={() => setBulkRestoreModalOpen(false)}
                   disabled={actionLoading}
                   className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${isDark ? 'bg-[#1a1a1a] text-[#808080] hover:bg-[#222]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleDeleteFile}
+                  onClick={handleBulkRestore}
+                  disabled={actionLoading}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {actionLoading
+                    ? <><i className="fa-solid fa-circle-notch animate-spin"></i> Restoring...</>
+                    : <><i className="fa-solid fa-rotate-left"></i> Restore All</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EMPTY TRASH MODAL */}
+      {isEmptyTrashModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-6 border animate-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0d0d0d] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i className="fa-solid fa-triangle-exclamation text-2xl"></i>
+              </div>
+              <h2 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Empty Trash?</h2>
+              <p className={`text-xs leading-relaxed mb-6 ${isDark ? 'text-[#666]' : 'text-slate-500'}`}>
+                Are you sure you want to permanently delete all items in the trash? This action cannot be undone and will release your storage.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEmptyTrashModalOpen(false)}
+                  disabled={actionLoading}
+                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${isDark ? 'bg-[#1a1a1a] text-[#808080] hover:bg-[#222]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEmptyTrash}
                   disabled={actionLoading}
                   className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {actionLoading
-                    ? <><i className="fa-solid fa-circle-notch animate-spin"></i> Deleting...</>
-                    : <><i className="fa-solid fa-trash"></i> Yes, Delete</>}
+                    ? <><i className="fa-solid fa-circle-notch animate-spin"></i> Clearing...</>
+                    : <><i className="fa-solid fa-trash"></i> Empty Trash</>}
                 </button>
               </div>
             </div>

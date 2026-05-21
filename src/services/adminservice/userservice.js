@@ -72,6 +72,18 @@ const userService = {
         const response = await api.get(`/api/admin/deleted-users/?${params.toString()}`);
         return response.data;
     },
+    getDesignationChangeRequests: async ({ page = 1, search = '' } = {}) => {
+        const params = new URLSearchParams();
+        params.append('page', page);
+        if (search.trim()) params.append('search', search.trim());
+        
+        const response = await api.get(`/api/admin/designation-requests/?${params.toString()}`);
+        return response.data;
+    },
+    resolveDesignationChangeRequest: async (id, action) => {
+        const response = await api.post(`/api/admin/designation-requests/${id}/resolve/`, { action });
+        return response.data;
+    },
 
 };
 
