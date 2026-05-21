@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from "react-router-dom";
-import { getArchives, unarchiveFile, deleteArchivedFiles } from '../../services/fileService';
+import { getArchives, unarchiveFile, deleteArchivedFiles, bulkUnarchiveFiles } from '../../services/fileService';
 import { sizeFormatter } from '../../utils/sizeFormatter';
 import { getFileMeta } from '../../utils/fileIcons';
 import { formatDateTime } from '../../utils/dateFormatter';
@@ -38,6 +38,7 @@ const ArchivesList = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [actionLoading, setActionLoading] = useState(false);
+  const [restoreAllModal, setRestoreAllModal] = useState(false);
 
   useEffect(() => {
   const timer = setTimeout(() => {
@@ -109,6 +110,21 @@ const handleUnarchive = async () => {
     alert("Failed to restore file. Try again.");
   }finally{
      setActionLoading(false);
+  }
+};
+
+const handleRestoreAll = async () => {
+  if (archives.length === 0) return;
+  try {
+    setActionLoading(true);
+    await bulkUnarchiveFiles(archives.map(f => f.id));
+    showToast("All files on this page restored");
+    await fetchArchives();
+    setRestoreAllModal(false);
+  } catch (err) {
+    showToast("Failed to restore all files", "error");
+  } finally {
+    setActionLoading(false);
   }
 };
 
@@ -199,6 +215,38 @@ const handleDeleteArchive=async(item)=>{
           </div>
         </div>
       )}
+
+      {/* --- RESTORE ALL CONFIRMATION MODAL --- */}
+      {restoreAllModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-6 border animate-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0d0d0d] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i className="fa-solid fa-boxes-stacked text-2xl"></i>
+              </div>
+              <h2 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Restore All?</h2>
+              <p className={`text-xs leading-relaxed mb-6 ${isDark ? 'text-[#666]' : 'text-slate-500'}`}>
+                Are you sure you want to unarchive all <strong>{archives.length}</strong> items on this page? They will be moved back to your active files.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setRestoreAllModal(false)}
+                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${isDark ? 'bg-[#1a1a1a] text-[#808080] hover:bg-[#222]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRestoreAll}
+                  disabled={actionLoading}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                >
+                  {actionLoading ? <><i className="fa-solid fa-circle-notch animate-spin mr-2"></i>Restoring...</> : "Confirm"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 {deleteTarget && (
   <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
     <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-6 border animate-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0d0d0d] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
@@ -247,76 +295,73 @@ const handleDeleteArchive=async(item)=>{
   </div>
 )}
       {/* --- DETAILS MODAL --- */}
-      {selectedArchive && (() => {
-        const meta = getFileMeta(selectedArchive.content_type || "");
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-            <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-              <div className={`p-6 border-b flex justify-between items-center ${isDark ? 'border-[#1a1a1a] bg-[#0d0d0d]' : 'border-slate-100 bg-slate-50'}`}>
-                <h2 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-800'}`}>Archive Details</h2>
-                <button onClick={() => setSelectedArchive(null)} className="text-[#444] hover:text-red-500 transition-colors">
-                  <i className="fa-solid fa-xmark text-lg"></i>
-                </button>
-              </div>
+      {selectedArchive && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+            <div className={`p-6 border-b flex justify-between items-center ${isDark ? 'border-[#1a1a1a] bg-[#0d0d0d]' : 'border-slate-100 bg-slate-50'}`}>
+              <h2 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-800'}`}>Archive Details</h2>
+              <button onClick={() => setSelectedArchive(null)} className="text-[#444] hover:text-red-500 transition-colors">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
 
-              <div className="p-6 space-y-6">
-                {/* File icon + name */}
-                <div className="flex items-center gap-4">
-                  <div className={`w-14 h-14 flex items-center justify-center flex-shrink-0 `}>
-                    <i className={`fa-solid ${meta.icon} text-2xl`} style={{ color: meta.color }}></i>
-                  </div>
-                  <div>
-                    <span className={`px-0 py-0  text-[10px] font-bold  uppercase tracking-widest ${isDark ? 'text-slate-400 ' : ' text-slate-500 '}`}>
-                       {selectedArchive.status}
-                    </span>
-                    <h3 className={`text-base font-bold mt-1.5 leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                      {selectedArchive.original_name}
-                    </h3>
-                  </div>
+            <div className="p-6 space-y-6">
+              {/* File icon + name */}
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 flex items-center justify-center flex-shrink-0 `}>
+                  <i className={`fa-solid ${getFileMeta(selectedArchive.content_type || "").icon} text-2xl`} style={{ color: getFileMeta(selectedArchive.content_type || "").color }}></i>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className={`p-3 `}>
-                    <p className="text-[9px] font-bold text-[#444] uppercase mb-1">Archived On</p>
-                    <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                      {formatDateTime(selectedArchive.archived_at)}
-                    </p>
-                  </div>
-                  <div className={`p-3`}>
-                    <p className="text-[9px] font-bold text-[#444] uppercase mb-1">File Size</p>
-                    <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                      {selectedArchive.file_size
-                        ? sizeFormatter(selectedArchive.file_size)
-                        : '—'}
-                    </p>
-                  </div>
-                  <div className={`p-3 `}>
-                    <p className="text-[9px] font-bold text-[#444] uppercase mb-1">Content Type</p>
-                    <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                      {selectedArchive.content_type || '—'}
-                    </p>
-                  </div>
-                  <div className={`p-3`}>
-                    <p className="text-[9px] font-bold text-[#444] uppercase mb-1">Uploaded On</p>
-                    <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                      {formatDateTime(selectedArchive.created_at)}
-                    </p>
-                  </div>
+                <div>
+                  <span className={`px-0 py-0  text-[10px] font-bold  uppercase tracking-widest ${isDark ? 'text-slate-400 ' : ' text-slate-500 '}`}>
+                     {selectedArchive.status}
+                  </span>
+                  <h3 className={`text-base font-bold mt-1.5 leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    {selectedArchive.original_name}
+                  </h3>
                 </div>
               </div>
 
-              <div className={`p-4 border-t flex gap-3 ${isDark ? 'bg-[#0d0d0d] border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'}`}>
-                <button
-                  onClick={() => { setUnarchiveTarget(selectedArchive); setSelectedArchive(null); }}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all"
-                >
-                  Unarchive Now
-                </button>
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`p-3 `}>
+                  <p className="text-[9px] font-bold text-[#444] uppercase mb-1">Archived On</p>
+                  <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                    {formatDateTime(selectedArchive.archived_at)}
+                  </p>
+                </div>
+                <div className={`p-3`}>
+                  <p className="text-[9px] font-bold text-[#444] uppercase mb-1">File Size</p>
+                  <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                    {selectedArchive.file_size
+                      ? sizeFormatter(selectedArchive.file_size)
+                      : '—'}
+                  </p>
+                </div>
+                <div className={`p-3 `}>
+                  <p className="text-[9px] font-bold text-[#444] uppercase mb-1">Content Type</p>
+                  <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                    {selectedArchive.content_type || '—'}
+                  </p>
+                </div>
+                <div className={`p-3`}>
+                  <p className="text-[9px] font-bold text-[#444] uppercase mb-1">Uploaded On</p>
+                  <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                    {formatDateTime(selectedArchive.created_at)}
+                  </p>
+                </div>
               </div>
             </div>
+
+            <div className={`p-4 border-t flex gap-3 ${isDark ? 'bg-[#0d0d0d] border-[#1a1a1a]' : 'bg-slate-50 border-slate-100'}`}>
+              <button
+                onClick={() => { setUnarchiveTarget(selectedArchive); setSelectedArchive(null); }}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all"
+              >
+                Unarchive Now
+              </button>
+            </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       {/* --- HEADER & SEARCH --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
@@ -336,6 +381,18 @@ const handleDeleteArchive=async(item)=>{
               className={`text-xs rounded-xl py-2.5 pl-10 pr-6 w-full focus:outline-none transition-all border ${isDark ? 'bg-neutral-900/50 border-neutral-800 text-white focus:border-neutral-600' : 'bg-white border-slate-200 text-slate-800 focus:border-blue-400 shadow-sm'}`}
             />
           </div>
+          <button
+            onClick={() => setRestoreAllModal(true)}
+            disabled={archives.length === 0 || loading}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm border
+              ${isDark 
+                ? 'bg-[#0d0d0d] border-[#1e1e1e] text-blue-400 hover:bg-[#151515] hover:border-blue-500/30' 
+                : 'bg-white border-slate-100 text-blue-600 hover:bg-slate-50 shadow-blue-500/5'
+              } disabled:opacity-30 disabled:cursor-not-allowed`}
+          >
+            <i className="fa-solid fa-rotate-left"></i>
+            Restore All
+          </button>
         </div>
       </div>
 
@@ -380,8 +437,8 @@ const handleDeleteArchive=async(item)=>{
             <thead>
               <tr className={`border-b ${isDark ? 'border-[#1a1a1a] bg-[#080808]' : 'border-slate-100 bg-slate-50'}`}>
                 <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest pl-6">File Name</th>
-                <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Size</th>
-                <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest text-center">Status</th>
+                <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Archived at</th>
+                <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest text-center">Size</th>
                 <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest text-right pr-6">Actions</th>
               </tr>
             </thead>
@@ -404,10 +461,11 @@ const handleDeleteArchive=async(item)=>{
               ) : archives.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="p-10 text-center">
-                <p className="text-sm text-center">
-                  No archived files found.
-                  {searchQuery && " Try a different search."}
-                </p>                 
+                <p className={`text-sm ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
+                      No archives found.
+                      {searchQuery && " Try a different search."}
+                    </p>
+                                
                 </td>
                 </tr>
               ) : (
@@ -423,13 +481,21 @@ const handleDeleteArchive=async(item)=>{
                           <div>
                             <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>{item.original_name}</p>
                             <p className={`text-[10px] font-bold  ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>
-                              Archived on : {item.archived_at ? new Date(item.archived_at).toLocaleDateString() : 'N/A'}
+                             
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-600'}`}>
+                        <div>
+                          <p className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-600'}`}>
+                           {formatDateTime(item.archived_at)}
+                          </p>
+                          
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                       <div className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-600'}`}>
                           {item.file_size
                             ? sizeFormatter(item.file_size)
                             : '—'}
@@ -437,11 +503,6 @@ const handleDeleteArchive=async(item)=>{
                         <div className={`text-[10px] font-bold uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>
                           {item.content_type || '—'}
                         </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className={`px-3 py-1  text-[10px] font-bold  inline-block ${isDark ? ' text-slate-400 border-slate-500/20' : ' text-slate-500 border-slate-200'}`}>
-                          {item.status}
-                        </span>
                       </td>
                       <td className="p-4 pr-6">
                         <div className="flex justify-end gap-2">

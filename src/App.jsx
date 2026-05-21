@@ -50,6 +50,7 @@ import RoleChangeRequests from "./pages/admin/RoleChangeRequests";
 import ReactivationRequests from "./pages/admin/ReactivationRequests";
 import BlockedUsers from "./pages/admin/BlockedUsers";
 import DeletedUsers from "./pages/admin/DeletedUsers";
+import Designations from "./pages/admin/Designations";
 function App() {
   return (
     <AuthProvider>
@@ -116,6 +117,7 @@ function App() {
               <Route path="/admin/blocked-users" element={<BlockedUsers />} />
               <Route path="/admin/deleted-users" element={<DeletedUsers />} />
               <Route path="/admin/reactivation-requests" element={<ReactivationRequests />} />
+              <Route path="/admin/designations" element={<Designations />} />
             </Route>
           </Route>
           
