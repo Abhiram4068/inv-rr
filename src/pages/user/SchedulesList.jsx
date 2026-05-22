@@ -167,9 +167,9 @@ const SchedulesList = () => {
 
   const getShareStyle = (share) => {
     switch (share) {
-      case 'Active': return isDark ? 'text-emerald-500 ' : 'text-emerald-600';
+      case 'active': return isDark ? 'text-emerald-500 ' : 'text-emerald-600';
       case 'Accessed': return isDark ? 'text-blue-500 ' : 'text-blue-600';
-      case 'Revoked': return isDark ? 'text-red-500 ' : 'text-red-600';
+      case 'revoked': return isDark ? 'text-red-500 ' : 'text-red-600';
       default: return isDark ? 'text-[#808080] ' : 'text-slate-500';
     }
   };
@@ -207,7 +207,40 @@ const SchedulesList = () => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+const getStatusStyles = (status) => {
+  switch ((status || "").toLowerCase()) {
 
+    case "active":
+      return isDark
+        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+        : "bg-emerald-50 text-emerald-600 border border-emerald-100";
+
+    case "expired":
+      return isDark
+        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+        : "bg-amber-50 text-amber-600 border border-amber-100";
+
+    case "revoked":
+      return isDark
+        ? "bg-red-500/10 text-red-400 border border-red-500/20"
+        : "bg-red-50 text-red-600 border border-red-100";
+
+    case "accessed":
+      return isDark
+        ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+        : "bg-blue-50 text-blue-600 border border-blue-100";
+
+    case "scheduled":
+      return isDark
+        ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+        : "bg-purple-50 text-purple-600 border border-purple-100";
+
+    default:
+      return isDark
+        ? "bg-neutral-800 text-neutral-300 border border-neutral-700"
+        : "bg-slate-100 text-slate-600 border border-slate-200";
+  }
+};
   return (
     <div ref={scrollRef} className={`flex-1 min-h-screen p-6 lg:p-10 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
       {/* Professional Top-Sliding Toast */}
@@ -585,7 +618,7 @@ const SchedulesList = () => {
                         <div className={`text-[10px] font-bold uppercase mt-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>{item.time}</div>
                       </td>
                       <td className="py-7 px-4 text-sm text-center align-middle">
-                        <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight ${getStatusStyle(item.status)}`}>{item.status}</span>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${getStatusStyles(item.status)}`}>{item.status}</span>
                       </td>
                       <td className="py-7 px-4 text-sm">
                         <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight ${getShareStyle(item.share)}`}>{item.share || "N/A"}</span>
