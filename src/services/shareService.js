@@ -27,6 +27,10 @@ export const getScheduledCalendar = (month, year) => {
   });
 };
 
+// POST /files/bulk-share/
+export const bulkShareFiles = (shareData) =>
+  api.post(`/files/bulk-share/`, shareData);
+
 //PUT /files/revoke/
 export const revokeShare = (fileId) =>
   api.put(`/files/${fileId}/revoke/`);

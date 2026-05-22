@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import FileCard from '../../components/FileCard';
+import ShareModal from '../../components/ShareModal';
 import { getFiles, updateFile } from '../../services/fileService';
 
 const PaginatedFiles = () => {
@@ -40,6 +41,7 @@ const PaginatedFiles = () => {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedFileIds, setSelectedFileIds] = useState([]);
   const [confirmAction, setConfirmAction] = useState({ visible: false, type: '', count: 0 });
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // ── Toast State ──────────────────────────────────────────────
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
@@ -225,6 +227,11 @@ const PaginatedFiles = () => {
     setConfirmAction({ visible: true, type: 'archive', count: selectedFileIds.length });
   };
 
+  const handleShareSelected = () => {
+    if (selectedFileIds.length === 0) return;
+    setIsShareModalOpen(true);
+  };
+
   const executeBulkAction = async () => {
     const { type, count } = confirmAction;
     setConfirmAction({ ...confirmAction, visible: false });
@@ -337,6 +344,16 @@ const PaginatedFiles = () => {
             >
               <i className="fa-solid fa-box-archive mr-1.5" /> Archive Selected
             </button>
+            <button
+               onClick={handleShareSelected}
+               disabled={selectedFileIds.length === 0}
+               className={`p-[8px_16px] rounded-lg font-bold text-xs border transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                 ${isDark
+                   ? 'bg-[#111] border-[#222] text-slate-300 hover:bg-[#161616]'
+                   : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+             >
+               <i className="fa-solid fa-share-nodes mr-1.5" /> Share Selected
+             </button>
             <button
               onClick={handleDeleteSelected}
               disabled={selectedFileIds.length === 0}
@@ -514,6 +531,19 @@ const PaginatedFiles = () => {
           100% { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}} />
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        fileIds={selectedFileIds}
+        isBulk={true}
+        isDark={isDark}
+        onShareSuccess={() => {
+            setSelectedFileIds([]);
+            setIsSelectMode(false);
+            showToast(`${selectedFileIds.length} file(s) shared successfully`);
+        }}
+      />
 
     </main>
   );
