@@ -7,6 +7,7 @@ import { getFiles, updateFile } from '../../services/fileService';
 const PaginatedFiles = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   // 1. Theme State Sync
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -24,6 +25,17 @@ const PaginatedFiles = () => {
   }, [theme]);
 
   const isDark = theme === 'dark';
+
+  // 2. View Mode State (grid/list) — persisted in localStorage
+  const [viewMode, setViewMode] = useState(() => {
+    const saved = localStorage.getItem('viewMode');
+    return saved === 'file_list' ? 'file_list' : 'file_grid';
+  });
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('viewMode', mode);
+  };
 
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -198,12 +210,12 @@ const PaginatedFiles = () => {
   const handleSelectCardChange = (fileId, isChecked) => {
     if (isChecked) {
       setSelectedFileIds(prev => [...prev, fileId]);
-      setIsSelectMode(true); // Auto-enter select mode when a card is manually checked
+      setIsSelectMode(true);
     } else {
       const newSelection = selectedFileIds.filter(id => id !== fileId);
       setSelectedFileIds(newSelection);
       if (newSelection.length === 0) {
-        setIsSelectMode(false); // Auto-exit select mode when everything is deselected
+        setIsSelectMode(false);
       }
     }
   };
@@ -254,6 +266,18 @@ const PaginatedFiles = () => {
     }
   };
 
+  // ── Icon color per file type ──────────────────────────────────
+  const iconColorForClass = (iconClass) => {
+    if (iconClass === 'fa-file-pdf') return 'text-red-400';
+    if (iconClass === 'fa-file-word') return 'text-blue-400';
+    if (iconClass === 'fa-file-excel') return 'text-emerald-400';
+    if (iconClass === 'fa-file-powerpoint') return 'text-orange-400';
+    if (iconClass === 'fa-file-image') return 'text-purple-400';
+    if (iconClass === 'fa-file-video') return 'text-pink-400';
+    if (iconClass === 'fa-file-zipper') return 'text-yellow-400';
+    return 'text-slate-400';
+  };
+
   return (
     <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
 
@@ -290,7 +314,35 @@ const PaginatedFiles = () => {
           />
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          {/* Select Button right under/next to the New Document layout chain */}
+
+          {/* View Mode Toggle */}
+          <div className={`flex items-center rounded-xl border overflow-hidden flex-shrink-0 ${isDark ? 'border-[#1a1a1a] bg-[#0a0a0a]' : 'border-slate-200 bg-white'}`}>
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('file_grid')}
+              title="Grid View"
+              className={`w-10 h-10 flex items-center justify-center transition-all text-sm
+                ${viewMode === 'file_grid'
+                  ? 'bg-blue-600/10 text-blue-500'
+                  : isDark ? 'text-[#555] hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <i className="fa-solid fa-grip" />
+            </button>
+            <div className={`w-px h-5 ${isDark ? 'bg-[#1a1a1a]' : 'bg-slate-200'}`} />
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('file_list')}
+              title="List View"
+              className={`w-10 h-10 flex items-center justify-center transition-all text-sm
+                ${viewMode === 'file_list'
+                  ? 'bg-blue-600/10 text-blue-500'
+                  : isDark ? 'text-[#555] hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <i className="fa-solid fa-list" />
+            </button>
+          </div>
+
+          {/* Select Button */}
           <button
             type="button"
             disabled={files.length === 0}
@@ -314,9 +366,7 @@ const PaginatedFiles = () => {
 
       {/* ── Selection Action Sub-Bar ── */}
       {(isSelectMode || selectedFileIds.length > 0) && files.length > 0 && (
-        <div className={`p-4 mb-6 rounded-xl  flex flex-wrap justify-between items-center gap-4 transition-colors duration-300
-         `}>
-
+        <div className={`p-4 mb-6 rounded-xl flex flex-wrap justify-between items-center gap-4 transition-colors duration-300`}>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer text-sm font-medium select-none">
               <input
@@ -345,15 +395,15 @@ const PaginatedFiles = () => {
               <i className="fa-solid fa-box-archive mr-1.5" /> Archive Selected
             </button>
             <button
-               onClick={handleShareSelected}
-               disabled={selectedFileIds.length === 0}
-               className={`p-[8px_16px] rounded-lg font-bold text-xs border transition-all disabled:opacity-40 disabled:cursor-not-allowed
-                 ${isDark
-                   ? 'bg-[#111] border-[#222] text-slate-300 hover:bg-[#161616]'
-                   : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
-             >
-               <i className="fa-solid fa-share-nodes mr-1.5" /> Share Selected
-             </button>
+              onClick={handleShareSelected}
+              disabled={selectedFileIds.length === 0}
+              className={`p-[8px_16px] rounded-lg font-bold text-xs border transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                ${isDark
+                  ? 'bg-[#111] border-[#222] text-slate-300 hover:bg-[#161616]'
+                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+            >
+              <i className="fa-solid fa-share-nodes mr-1.5" /> Share Selected
+            </button>
             <button
               onClick={handleDeleteSelected}
               disabled={selectedFileIds.length === 0}
@@ -371,7 +421,7 @@ const PaginatedFiles = () => {
         <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>{files.length} item(s)</div>
       </div>
 
-      {/* File Grid */}
+      {/* File Grid / List */}
       {loading ? (
         <div className="py-16 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -398,7 +448,8 @@ const PaginatedFiles = () => {
             <i className="fa-solid fa-plus mr-2"></i> Upload Files
           </Link>
         </div>
-      ) : (
+      ) : viewMode === 'file_grid' ? (
+        /* ── GRID VIEW ── */
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
           {files.map((file) => (
             <FileCard
@@ -409,18 +460,164 @@ const PaginatedFiles = () => {
               size={sizeFormatter(file.file_size)}
               time={timeFormatter(file.created_at)}
               iconClass={iconClassForFile(file)}
-              isLink={!isSelectMode && selectedFileIds.length === 0} // Disable route changing link when selection mechanism is active
+              isLink={!isSelectMode && selectedFileIds.length === 0}
               fileUrl={file.file_url}
               contentType={file.content_type}
               isStarred={file.is_starred}
               onToggleStar={handleToggleStar}
               onDeleted={handleFileDeleted}
-              // Pass new selection parameters directly into FileCard
               showSelection={isSelectMode || selectedFileIds.length > 0}
               isSelected={selectedFileIds.includes(file.id)}
               onSelectChange={handleSelectCardChange}
             />
           ))}
+        </div>
+      ) : (
+        /* ── LIST VIEW ── */
+        <div className={`border rounded-lg overflow-hidden shadow-2xl transition-colors mb-10 ${isDark ? 'border-neutral-900' : 'border-slate-200'}`}>
+
+          {/* Table top bar */}
+          <div className={`px-6 py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
+            <div>
+              <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>My Files</h3>
+              <p className={`text-[10px] font-bold mt-0.5 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
+                {files.length} item(s) on this page
+              </p>
+            </div>
+            {(isSelectMode || selectedFileIds.length > 0) && (
+              <div className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-full ${isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                {selectedFileIds.length} selected
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className={`text-[10px] uppercase tracking-[0.15em] border-b ${isDark ? 'text-neutral-500 border-neutral-900 bg-[#080808]/70' : 'text-slate-400 border-slate-100 bg-slate-50/50'}`}>
+                  {(isSelectMode || selectedFileIds.length > 0) && (
+                    <th className="py-4 pl-6 w-10">
+                      <input
+                        type="checkbox"
+                        checked={files.length > 0 && selectedFileIds.length === files.length}
+                        onChange={handleSelectAllToggle}
+                        className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                      />
+                    </th>
+                  )}
+                  <th className={`py-4 font-bold ${(isSelectMode || selectedFileIds.length > 0) ? '' : 'pl-6'}`}>File Name</th>
+                  <th className="py-4 font-bold">Type</th>
+                  <th className="py-4 font-bold">Size</th>
+                  <th className="py-4 font-bold">Uploaded</th>
+                  <th className="py-4 pr-6 font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${isDark ? 'divide-neutral-900' : 'divide-slate-100'}`}>
+                {files.map((file) => {
+                  const iconClass = iconClassForFile(file);
+                  const isSelected = selectedFileIds.includes(file.id);
+                  const showSel = isSelectMode || selectedFileIds.length > 0;
+                  return (
+                    <tr
+                      key={file.id}
+                      onClick={() => { if (showSel) handleSelectCardChange(file.id, !isSelected); }}
+                      className={`group transition-colors ${showSel ? 'cursor-pointer' : 'cursor-default'}
+                        ${isDark
+                          ? isSelected ? 'bg-blue-500/5' : 'hover:bg-neutral-900/40'
+                          : isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                    >
+                      {/* Checkbox col */}
+                      {showSel && (
+                        <td className="py-5 pl-6 w-10" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={e => handleSelectCardChange(file.id, e.target.checked)}
+                            className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                          />
+                        </td>
+                      )}
+
+                      {/* Name col */}
+                      <td className={`py-5 text-sm ${showSel ? '' : 'pl-6'}`}>
+                        <div className="flex items-center gap-4">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-neutral-900' : 'bg-slate-100'}`}>
+                            <i className={`fa-solid ${iconClass} text-base ${iconColorForClass(iconClass)}`} />
+                          </div>
+                          <div className="min-w-0">
+                            {!showSel && file.file_url ? (
+                              <a
+                                href={file.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="no-underline"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <span className={`font-bold block truncate w-[180px] leading-tight ${isDark ? 'text-white hover:text-blue-400' : 'text-slate-700 hover:text-blue-600'} transition-colors`} title={file.display_name || file.original_name}>
+                                  {file.original_name || file.description || "Untitled"}
+                                </span>
+                              </a>
+                            ) : (
+                              <span className={`font-bold block truncate w-[180px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`} title={file.display_name || file.original_name}>
+                                {file.original_name || file.description || "Untitled"}
+                              </span>
+                            )}
+                            <span className={`text-[11px] truncate block mt-0.5 w-[180px] ${isDark ? 'text-neutral-600' : 'text-slate-400'}`} title={file.original_name}>
+                              {file.display_name}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Type col */}
+                      <td className="py-5 text-sm">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${isDark ? 'bg-neutral-800 text-neutral-400' : 'bg-slate-100 text-slate-500'}`}>
+                          {file.content_type ? (file.content_type.split('/')[1]?.toUpperCase() || file.content_type) : '—'}
+                        </span>
+                      </td>
+
+                      {/* Size col */}
+                      <td className={`py-5 text-sm font-medium ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                        {sizeFormatter(file.file_size)}
+                      </td>
+
+                      {/* Time col */}
+                      <td className={`py-5 text-sm ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                        {timeFormatter(file.created_at)}
+                      </td>
+
+                      {/* Actions col */}
+                      <td className="py-5 pr-6 text-sm text-right" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStar(file.id, !file.is_starred)}
+                            title={file.is_starred ? 'Unstar' : 'Star'}
+                            className={`p-2 rounded-lg transition-colors
+                              ${file.is_starred
+                                ? 'text-yellow-400'
+                                : isDark ? 'text-neutral-600 hover:text-yellow-400 hover:bg-neutral-800' : 'text-slate-300 hover:text-yellow-400 hover:bg-slate-100'}`}
+                          >
+                            <i className={`fa-${file.is_starred ? 'solid' : 'regular'} fa-star text-sm`} />
+                          </button>
+                          {!showSel && (
+                            <button
+                              type="button"
+                              onClick={() => handleFileDeleted(file.id)}
+                              title="Delete"
+                              className={`p-2 rounded-lg transition-colors ${isDark ? 'text-neutral-600 hover:text-red-400 hover:bg-neutral-800' : 'text-slate-300 hover:text-red-500 hover:bg-slate-100'}`}
+                            >
+                              <i className="fa-regular fa-trash-can text-sm" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -539,9 +736,9 @@ const PaginatedFiles = () => {
         isBulk={true}
         isDark={isDark}
         onShareSuccess={() => {
-            setSelectedFileIds([]);
-            setIsSelectMode(false);
-            showToast(`${selectedFileIds.length} file(s) shared successfully`);
+          setSelectedFileIds([]);
+          setIsSelectMode(false);
+          showToast(`${selectedFileIds.length} file(s) shared successfully`);
         }}
       />
 
