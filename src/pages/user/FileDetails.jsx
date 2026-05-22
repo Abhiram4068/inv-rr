@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { updateFile, getFileById,  archiveFile, deleteFile, getFileViewUrl, downloadFile} from '../../services/fileService';
-import { shareFile } from '../../services/shareService';
+import ShareModal from '../../components/ShareModal';
 import { getCollections, addFileToCollection } from '../../services/collectionService';
 import { useNavigate } from 'react-router-dom';
 
@@ -99,20 +99,6 @@ useEffect(() => {
   // Toast State
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
-  // Security and Recipients State
-  const [isProtected, setIsProtected] = useState(false);
-  const [recipients, setRecipients] = useState(['']);
-  
-  // State for Sharing Data
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareData, setShareData] = useState({
-    title: "",
-    message: "",
-    expiration_datetime: 48,
-    permission: "view_only",      
-  download_limit: null, 
-  view_limit: null,   
-  });
 
   // State for File Data
   const [fileData, setFileData] = useState({
@@ -161,15 +147,10 @@ const showToast = (msg, type = 'success') => {
     }
   }, [activeModal]);
 
-  const addRecipient = () => setRecipients([...recipients, '']);
-  const removeRecipient = (index) => {
-    const updated = recipients.filter((_, i) => i !== index);
-    setRecipients(updated.length ? updated : ['']);
-  };
-  const handleEmailChange = (index, value) => {
-    const updated = [...recipients];
-    updated[index] = value;
-    setRecipients(updated);
+  const handleShareSuccess = () => {
+    setActiveModal(null);
+    showToast(`Shared successfully`);
+    fetchFile();
   };
 
 const saveDetails = async () => {
@@ -199,51 +180,6 @@ const saveDetails = async () => {
     setSaveLoading(false);
   }
 }
-
-  const handleShare = async () => {
-    const validEmails = recipients.filter(r => r.trim() !== '');
-    if (validEmails.length === 0) {
-      showToast("Please add at least one recipient email");
-      return;
-    }
-    if (!shareData.title || !shareData.title.trim()) {
-      showToast("Title is required");
-      return;
-    }
-
-
-    const payload = {
-      recipient_emails: validEmails,
-      expiration_datetime: Number(shareData.expiration_datetime),
-      title: shareData.title,
-      message: shareData.message,
-      permission: shareData.permission,
-  download_limit: shareData.permission === 'one_time_download'
-    ? 1                            // always force 1 for one-time
-    : shareData.permission === 'view_download'
-      ? shareData.download_limit   // null = unlimited, number = limited
-      : null,
-        view_limit: (shareData.permission === 'view_only' || shareData.permission === 'view_download')
-    ? shareData.view_limit : null,
-    };
-    
-    setIsSharing(true);
-    try {
-      const response = await shareFile(id, payload);
-      console.log("Sharing Data Success:", response);
-      setActiveModal(null);
-      showToast(`File shared successfully with ${validEmails.length} recipient(s)`);
-      // Optional: reset form state
-      setRecipients(['']);
-      setShareData({ title: "", message: "", expiration_datetime: 48, permission: "view_only", download_limit: null, view_limit: null });
-    } catch (error) {
-      console.error("Failed to share file:", error);
-      const errorMsg = error.response?.data?.error || error.response?.data?.detail || "Failed to share file";
-      showToast(errorMsg);
-    } finally {
-      setIsSharing(false);
-    }
-  };
 
   const handleArchive = async() => {
     try{
@@ -571,221 +507,19 @@ const handleDownload = async () => {
 
       {activeModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
-          <div className={`border w-full max-w-[450px] rounded-lg p-8 shadow-2xl transition-colors ${isDark ? 'bg-[#111111] border-[#2a2a2a] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
-            {activeModal === 'share' && (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
-    {/* Large Modal Container: Background logic updated to match 'edit' modal */}
-    <div className={`border w-full max-w-[1000px] min-h-[600px] rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-      
-      {/* Left Column: Form Fields */}
-      <div className={`flex-1 p-10 border-b md:border-b-0 md:border-r max-h-[90vh] overflow-y-auto no-scrollbar ${isDark ? 'border-[#1a1a1a]' : 'border-slate-100'}`}>
-        <div className="flex justify-between items-center mb-10">
-          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Share File</h2>
-        </div>
-        
-        <div className="space-y-8">
-          <div>
-            <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Title</label>
-            <input
-              value={shareData.title}
-              onChange={(e) => setShareData({ ...shareData, title: e.target.value })}
-              placeholder="e.g. Important Project Updates"
-              className={`w-full border rounded-xl p-4 text-sm outline-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
+          {activeModal === 'share' ? (
+            <ShareModal
+              isOpen={true}
+              onClose={() => setActiveModal(null)}
+              fileIds={[id]}
+              fileNames={[fileData.display_name]}
+              isBulk={false}
+              isDark={isDark}
+              onShareSuccess={handleShareSuccess}
             />
-          </div>
-
-          <div>
-            <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Recipient Emails</label>
-            <div className="space-y-4">
-              {recipients.map((email, index) => (
-                <div key={index} className="flex gap-3 animate-in fade-in slide-in-from-top-1">
-                  <input
-                    value={email}
-                    onChange={(e) => handleEmailChange(index, e.target.value)}
-                    placeholder="Enter email address..."
-                    type="email"
-                    className={`flex-1 border rounded-xl p-4 text-sm outline-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
-                  />
-                  {index === recipients.length - 1 ? (
-                    <button onClick={addRecipient} className="bg-blue-600/10 border border-blue-500/30 w-[54px] h-[54px] rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all">
-                      <i className="fa-solid fa-plus"></i>
-                    </button>
-                  ) : (
-                    <button onClick={() => removeRecipient(index)} className={`border w-[54px] h-[54px] rounded-xl flex items-center justify-center transition-all ${isDark ? 'bg-[#111] border-[#1a1a1a] text-[#444] hover:text-red-500' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-red-500'}`}>
-                      <i className="fa-solid fa-trash-can text-sm"></i>
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Message</label>
-            <textarea 
-              value={shareData.message}
-              onChange={(e) => setShareData({ ...shareData, message: e.target.value })}
-              placeholder="Write a note to recipients..." 
-              rows="5" 
-              className={`w-full border rounded-xl p-4 text-sm outline-none transition-all resize-none ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-[#333] placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-300 placeholder:text-slate-300'}`}
-            ></textarea>
-          </div>
-<div>
-  <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-    Access Permission
-  </label>
-  <div className="grid grid-cols-2 gap-3">
-    {[
-      { value: 'view_only',        icon: 'fa-eye',           label: 'View only',        desc: 'Read in browser, no download' },
-      { value: 'view_download',    icon: 'fa-download',      label: 'View + Download',  desc: 'Can save file to device' },
-      { value: 'one_time_download',icon: 'fa-file-arrow-down',label: 'One-time Download',desc: 'Link dies after 1 download' },
-      { value: 'full_access',      icon: 'fa-lock-open',     label: 'Full Access',      desc: 'No restrictions' },
-    ].map(opt => (
-      <button
-        key={opt.value}
-        onClick={() => setShareData({ ...shareData, permission: opt.value, download_limit: null })}
-        className={`text-left p-4 rounded-xl border transition-all ${
-          shareData.permission === opt.value
-            ? 'border-blue-500/50 bg-blue-600/10'
-            : isDark
-              ? 'border-[#1a1a1a] bg-[#050505] hover:bg-[#111]'
-              : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
-        }`}
-      >
-        <div className={`flex items-center gap-2 mb-1 text-xs font-bold ${
-          shareData.permission === opt.value
-            ? 'text-blue-500'
-            : isDark ? 'text-white' : 'text-slate-700'
-        }`}>
-          <i className={`fa-solid ${opt.icon}`}></i>
-          {opt.label}
-        </div>
-        <div className={`text-[10px] ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>
-          {opt.desc}
-        </div>
-      </button>
-    ))}
-  </div>
-
-  {/* Download limit — only shown for view_download */}
-  {shareData.permission === 'view_download' && (
-    <div className="mt-4">
-      <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-        Download limit <span className={`normal-case font-normal ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>(leave blank for unlimited)</span>
-      </label>
-      <input
-        type="number"
-        min="1"
-        value={shareData.download_limit || ''}
-        onChange={(e) => setShareData({ ...shareData, download_limit: e.target.value ? Number(e.target.value) : null })}
-        placeholder="e.g. 5"
-        className={`w-full border rounded-xl p-4 text-sm outline-none transition-all ${
-          isDark
-            ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]'
-            : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'
-        }`}
-      />
-    </div>
-  )}
-  {/* ADD: view limit — shown for view_only and view_download */}
-{(shareData.permission === 'view_only' || shareData.permission === 'view_download') && (
-  <div className="mt-4">
-    <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-      View limit <span className={`normal-case font-normal ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>(leave blank for unlimited)</span>
-    </label>
-    <input
-      type="number"
-      min="1"
-      value={shareData.view_limit || ''}
-      onChange={(e) => setShareData({ ...shareData, view_limit: e.target.value ? Number(e.target.value) : null })}
-      placeholder="e.g. 3"
-      className={`w-full border rounded-xl p-4 text-sm outline-none transition-all ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
-    />
-  </div>
-)}
-</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Link Expiry</label>
-              <div className="relative">
-                <select 
-                  value={shareData.expiration_datetime}
-                  onChange={(e) => setShareData({ ...shareData, expiration_datetime: e.target.value })}
-                  className={`w-full border rounded-xl p-4 text-sm outline-none cursor-pointer appearance-none ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-[#808080]' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
-                >
-                  <option value="24">24 Hours</option>
-                  <option value="48">48 Hours</option>
-                  <option value="168">7 Days</option>
-                </select>
-                <i className={`fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none ${isDark ? 'text-[#444]' : 'text-slate-400'}`}></i>
-              </div>
-            </div>
-
-            <div>
-              <label className={`block text-[11px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Security Access</label>
-              <button
-                onClick={() => {
-                  const nextState = !isProtected;
-                  setIsProtected(nextState);
-                  showToast(nextState ? "Identity Validation Enabled" : "Security Disabled");
-                }}
-                className={`w-full h-[54px] flex items-center justify-between px-5 rounded-xl border transition-all ${isProtected ? 'bg-blue-600/10 border-blue-500/50' : isDark ? 'bg-[#111] border-[#1a1a1a] hover:bg-[#151515]' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
-              >
-                <div className="flex items-center gap-2">
-                  <i className={`fa-solid fa-shield-halved text-sm ${isProtected ? 'text-blue-500' : isDark ? 'text-[#444]' : 'text-slate-400'}`}></i>
-                  <span className={`text-[11px] font-bold uppercase tracking-tight ${isProtected ? 'text-blue-500' : isDark ? 'text-[#606060]' : 'text-slate-500'}`}>Email Validation</span>
-                </div>
-                <div className={`w-8 h-4 rounded-full relative transition-colors ${isProtected ? 'bg-blue-600' : isDark ? 'bg-[#333]' : 'bg-slate-300'}`}>
-                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${isProtected ? 'right-0.5' : 'left-0.5'}`}></div>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column: Preview & Action Buttons */}
-      <div className={`w-full md:w-[380px] p-10 flex flex-col justify-between transition-colors ${isDark ? 'bg-[#050505]' : 'bg-slate-50/50'}`}>
-        <div>
-          <div className={`text-[11px] uppercase font-bold tracking-widest mb-8 ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Recipient Preview</div>
-          <div className={`flex flex-col items-center justify-center border border-dashed rounded-2xl p-8 transition-colors ${isDark ? 'border-[#1a1a1a] bg-[#0a0a0a]/50' : 'border-slate-200 bg-white'}`}>
-            <div className="w-20 h-20 bg-blue-600/20 text-blue-500 rounded-3xl flex items-center justify-center text-3xl mb-6 border border-blue-500/20">
-              <i className={`fa-solid ${iconClassForFile(file)}`}></i>
-            </div>
-            <p className={`text-sm font-bold text-center mb-2 truncate w-full ${isDark ? 'text-white' : 'text-slate-900'}`}>{fileData.display_name}</p>
-            <p className={`text-xs mb-8 ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{sizeFormatter(file?.file_size)} • Secure Link</p>
-
-            <div className={`w-full h-[40px] rounded-lg border flex items-center px-4 gap-3 transition-all ${isProtected ? 'bg-blue-500/5 border-blue-500/20' : isDark ? 'bg-[#111] border-[#1a1a1a]' : 'bg-slate-50 border-slate-200'}`}>
-              <div className={`w-2.5 h-2.5 rounded-full ${isProtected ? 'bg-blue-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-              <span className={`text-[10px] font-mono uppercase tracking-tighter ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-                {isProtected ? 'Identity Check ON' : 'Encryption Active'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 mt-10">
-          <button 
-            onClick={handleShare} 
-            disabled={isSharing}
-            className="w-full py-4 bg-[#3b82f6] text-white rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isSharing && <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
-            {isSharing ? 'Sending Invites...' : 'Send Invites'}
-          </button>
-          <button 
-            onClick={() => setActiveModal(null)} 
-            disabled={isSharing}
-            className={`w-full py-4 border rounded-xl font-bold text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-            {activeModal === 'edit' && (
+          ) : (
+            <div className={`border w-full max-w-[450px] rounded-lg p-8 shadow-2xl transition-colors ${isDark ? 'bg-[#111111] border-[#2a2a2a] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+              {activeModal === 'edit' && (
               <>
                 <h2 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>Edit Details</h2>
                 <div className="space-y-4">
@@ -935,10 +669,11 @@ className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm flex-s
               </div>
             )}
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    )}
+  </div>
+);
 };
 
 export default FileDetails;
