@@ -114,7 +114,50 @@ const EditAccount = () => {
       setLoading(false);
     }
   };
+const validatePasswordChange = () => {
+  const {
+    current_password,
+    new_password,
+    confirm_password,
+  } = passwordData;
 
+  if (!current_password.trim()) {
+    return "Current password is required.";
+  }
+
+  if (!new_password.trim()) {
+    return "New password is required.";
+  }
+
+  if (!confirm_password.trim()) {
+    return "Please confirm your new password.";
+  }
+
+  // Prevent same password reuse
+  if (current_password === new_password) {
+    return "New password cannot be the same as current password.";
+  }
+
+  // Length validation
+  if (new_password.length < 8) {
+    return "Password must contain at least 8 characters.";
+  }
+
+  // Strong password validation
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+  if (!strongPasswordRegex.test(new_password)) {
+    return "Password must include uppercase, lowercase, number, and special character.";
+  }
+
+  // Confirm password check
+  if (new_password !== confirm_password) {
+    return "New passwords do not match.";
+  }
+
+  return null;
+};
   // --- Handler: Change password (PATCH /api/auth/change-password/) ---
   const handleChangePassword = async () => {
     setShowPasswordModal(false);
@@ -128,7 +171,7 @@ const EditAccount = () => {
       setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
       showToast('Password changed successfully.', 'success');
     } catch (err) {
-      showToast(err.response?.data?.current_password || 'Failed to change password.', 'error');
+      showToast(err.response?.data?.new_password || 'Failed to change password.', 'error');
     } finally {
       setLoading(false);
     }
@@ -371,7 +414,16 @@ const EditAccount = () => {
               <div className="mt-8 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setShowPasswordModal(true)}
+                  onClick={() => {
+                    const validationError = validatePasswordChange();
+
+                    if (validationError) {
+                      showToast(validationError, 'error');
+                      return;
+                    }
+
+                    setShowPasswordModal(true);
+                  }}
                   disabled={!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm transition-all"
                 >

@@ -474,7 +474,19 @@ const PaginatedFiles = () => {
         </div>
       ) : (
         /* ── LIST VIEW ── */
-        <div className={`border rounded-lg overflow-hidden shadow-2xl transition-colors mb-10 ${isDark ? 'border-neutral-900' : 'border-slate-200'}`}>
+        <div
+  className={`rounded-lg overflow-hidden shadow-2xl mb-10 border
+    ${isDark
+      ? 'border-neutral-900 bg-[#050505]'
+      : 'border-slate-200 bg-white'}
+  `}
+  style={{
+    contain: 'paint',
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+    transform: 'translateZ(0)',
+  }}
+>
 
           {/* Table top bar */}
           <div className={`px-6 py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
@@ -492,7 +504,11 @@ const PaginatedFiles = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table
+  className={`w-full text-left border-collapse ${
+    isDark ? 'bg-[#050505]' : 'bg-white'
+  }`}
+>
               <thead>
                 <tr className={`text-[10px] uppercase tracking-[0.15em] border-b ${isDark ? 'text-neutral-500 border-neutral-900 bg-[#080808]/70' : 'text-slate-400 border-slate-100 bg-slate-50/50'}`}>
                   {(isSelectMode || selectedFileIds.length > 0) && (
@@ -520,7 +536,13 @@ const PaginatedFiles = () => {
                   return (
                     <tr
                       key={file.id}
-                      onClick={() => { if (showSel) handleSelectCardChange(file.id, !isSelected); }}
+                     onClick={() => {
+                      if (showSel) {
+                        handleSelectCardChange(file.id, !isSelected);
+                      } else {
+                        navigate(`/file/${file.id}`);
+                      }
+                    }}
                       className={`group transition-colors ${showSel ? 'cursor-pointer' : 'cursor-default'}
                         ${isDark
                           ? isSelected ? 'bg-blue-500/5' : 'hover:bg-neutral-900/40'
@@ -528,7 +550,7 @@ const PaginatedFiles = () => {
                     >
                       {/* Checkbox col */}
                       {showSel && (
-                        <td className="py-5 pl-6 w-10" onClick={e => e.stopPropagation()}>
+                        <td className="py-5 pl-6  pr-3 w-16" onClick={e => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -571,7 +593,7 @@ const PaginatedFiles = () => {
 
                       {/* Type col */}
                       <td className="py-5 text-sm">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${isDark ? 'bg-neutral-800 text-neutral-400' : 'bg-slate-100 text-slate-500'}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5  text-[10px] font-bold ${isDark ? 'text-neutral-400' : ' text-slate-500'}`}>
                           {file.content_type ? (file.content_type.split('/')[1]?.toUpperCase() || file.content_type) : '—'}
                         </span>
                       </td>

@@ -26,6 +26,14 @@ export const uploadFileChunk = (formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
+// GET /files/upload/chunk/status/?upload_id=
+export const getChunkUploadStatus = (uploadId) =>
+  api.get("/files/upload/chunk/status/", { params: { upload_id: uploadId } });
+
+// POST /files/upload/chunk/control/  { upload_id, action: pause|resume|cancel }
+export const controlChunkUpload = (uploadId, action) =>
+  api.post("/files/upload/chunk/control/", { upload_id: uploadId, action });
+
 // GET  /:id/file-download/
 export const downloadFile = (fileId) =>
   api.get(`/${fileId}/file-download/`, { responseType: "blob" });
