@@ -5,92 +5,190 @@ import {
   controlChunkUpload,
 } from '../../services/fileService';
 
-const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB — must match backend MAX_CHUNK_BYTES
-const MAX_FILE_BYTES = 100 * 1024 * 1024; // 100MB per file
+const CHUNK_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_BYTES = 100 * 1024 * 1024;
 const MAX_CHUNK_RETRIES = 3;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// ─── Duplicate Modal ──────────────────────────────────────────────────────────
-const DuplicateModal = ({ isDark, file, onResolve }) => {
-  if (!file) return null;
+// ─── Allowed types (mirrors backend) ─────────────────────────────────────────
+const ALLOWED_CONTENT_TYPES = new Set([
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+  'image/webp',
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/json',
+  'application/xml',
+  'text/xml',
+]);
+
+// ─── Preview helpers ──────────────────────────────────────────────────────────
+const getFileCategory = (rawFile) => {
+  const t = rawFile.type || '';
+  if (t === 'image/jpeg' || t === 'image/png' || t === 'image/webp') return 'image';
+  if (t === 'application/pdf') return 'pdf';
+  if (t.includes('word') || t.includes('document')) return 'word';
+  if (t.includes('sheet') || t.includes('excel') || t === 'text/csv') return 'excel';
+  if (t.includes('powerpoint') || t.includes('presentation')) return 'ppt';
+  if (t === 'text/plain') return 'text';
+  if (t === 'application/json' || t === 'application/xml' || t === 'text/xml') return 'code';
+  if (t === 'application/zip' || t === 'application/x-zip-compressed') return 'zip';
+  return 'other';
+};
+
+const CATEGORY_ICON = {
+  pdf:   { icon: 'ti-file-type-pdf',   color: '#e24b4a' },
+  word:  { icon: 'ti-file-type-doc',   color: '#378add' },
+  excel: { icon: 'ti-file-spreadsheet', color: '#1d9e75' },
+  ppt:   { icon: 'ti-file-type-ppt',   color: '#d85a30' },
+  text:  { icon: 'ti-file-type-txt',   color: '#888780' },
+  code:  { icon: 'ti-file-code',       color: '#7f77dd' },
+  zip:   { icon: 'ti-file-zip',        color: '#ba7517' },
+  other: { icon: 'ti-file',            color: '#888780' },
+};
+
+// ─── File preview thumbnail ───────────────────────────────────────────────────
+const FilePreviewThumb = ({ file, statusDotClass, isDark }) => {
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const category = getFileCategory(file.raw);
+
+  useEffect(() => {
+    if (category !== 'image') return;
+    const url = URL.createObjectURL(file.raw);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file.raw, category]);
+
+  const dotBorder = isDark ? '#0a0a0a' : '#ffffff';
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      style={{ animation: 'fadeIn 0.2s ease' }}>
-      <div className={`w-[380px] rounded-2xl p-7 shadow-2xl border transition-colors
-        ${isDark ? 'bg-[#0d0d0d] border-[#1e1e1e]' : 'bg-white border-slate-200'}`}
-        style={{ animation: 'slideUp 0.2s ease' }}>
-
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4
-          ${isDark ? 'bg-amber-400/10' : 'bg-amber-50'}`}>
-          <i className="fa-solid fa-triangle-exclamation text-amber-400 text-lg"></i>
+    <div style={{ position: 'relative', flexShrink: 0, width: 48, height: 48 }}>
+      {category === 'image' && previewUrl ? (
+        <div style={{
+          width: 48, height: 48,
+          borderRadius: 8,
+          border: '0.5px solid var(--color-border-tertiary)',
+          overflow: 'hidden',
+        }}>
+          <img src={previewUrl} alt={file.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
-
-        <h3 className={`text-base font-bold mb-1.5 tracking-tight
-          ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          Duplicate File Detected
-        </h3>
-        <p className={`text-xs leading-relaxed mb-4
-          ${isDark ? 'text-[#555]' : 'text-slate-500'}`}>
-          A file with the same content already exists in your drive.
-          How would you like to handle <strong className={isDark ? 'text-[#888]' : 'text-slate-700'}>
-            "{file.name}"</strong>?
-        </p>
-
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg mb-5 border text-xs
-          ${isDark ? 'bg-[#111] border-[#1e1e1e]' : 'bg-slate-50 border-slate-200'}`}>
-          <i className={`fa-solid fa-file ${isDark ? 'text-[#444]' : 'text-slate-400'}`}></i>
-          <span className={`font-semibold flex-1 truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>
-            {file.name}
-          </span>
-          <span className={isDark ? 'text-[#444]' : 'text-slate-400'}>{file.size} MB</span>
+      ) : (
+        <div style={{
+          width: 48, height: 48,
+          borderRadius: 8,
+          border: '0.5px solid var(--color-border-tertiary)',
+          background: 'var(--color-background-secondary)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <i
+            className={`ti ${CATEGORY_ICON[category]?.icon || 'ti-file'}`}
+            style={{ fontSize: 22, color: CATEGORY_ICON[category]?.color || '#888' }}
+            aria-hidden="true"
+          />
         </div>
-
-        <div className="flex flex-col gap-2">
-          <button onClick={() => onResolve('replace')}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm
-              bg-white text-black hover:bg-[#e5e5e5] active:scale-[0.98] transition-all">
-            <i className="fa-solid fa-rotate text-base flex-shrink-0"></i>
-            <span className="flex flex-col text-left">
-              <span className="text-sm font-bold">Replace Existing</span>
-              <span className="text-[10px] opacity-60 font-medium mt-0.5">Overwrite the old file with this one</span>
-            </span>
-          </button>
-
-          <button onClick={() => onResolve('keep_both')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm
-              border active:scale-[0.98] transition-all
-              ${isDark
-                ? 'bg-[#111] border-[#222] text-white hover:bg-[#161616]'
-                : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'}`}>
-            <i className="fa-regular fa-copy text-base flex-shrink-0"></i>
-            <span className="flex flex-col text-left">
-              <span className="text-sm font-bold">Keep Both</span>
-              <span className="text-[10px] opacity-60 font-medium mt-0.5">Save as a renamed copy alongside the original</span>
-            </span>
-          </button>
-
-          <button onClick={() => onResolve(null)}
-            className={`w-full py-2.5 rounded-xl text-xs font-bold transition-colors
-              ${isDark ? 'text-[#444] hover:text-[#888]' : 'text-slate-400 hover:text-slate-600'}`}>
-            Cancel upload
-          </button>
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes slideUp { from { transform: translateY(12px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
-        @keyframes slideDownProfessional {
-          from { transform: translateY(-20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
+      )}
+      {/* status dot badge */}
+      <span style={{
+        position: 'absolute', bottom: -4, right: -4,
+        width: 12, height: 12,
+        borderRadius: '50%',
+        border: `2px solid ${dotBorder}`,
+      }} className={statusDotClass} />
     </div>
   );
 };
 
+// ─── Duplicate modal ──────────────────────────────────────────────────────────
+const DuplicateModal = ({ isDark, file, onResolve }) => {
+  if (!file) return null;
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 300,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.8)',
+    }}>
+      <div style={{
+        width: 380, borderRadius: 16, padding: 28,
+        background: isDark ? '#0d0d0d' : '#ffffff',
+        border: `0.5px solid ${isDark ? '#1e1e1e' : '#e2e8f0'}`,
+      }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 12, marginBottom: 16,
+          background: isDark ? 'rgba(251,191,36,0.1)' : '#fffbeb',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <i className="ti ti-alert-triangle" style={{ fontSize: 20, color: '#f59e0b' }} aria-hidden="true" />
+        </div>
+        <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 6px', color: isDark ? '#fff' : '#1e293b' }}>
+          Duplicate file detected
+        </p>
+        <p style={{ fontSize: 12, lineHeight: 1.6, margin: '0 0 16px', color: isDark ? '#555' : '#64748b' }}>
+          A file with the same content exists. How would you like to handle{' '}
+          <strong style={{ color: isDark ? '#888' : '#475569' }}>"{file.name}"</strong>?
+        </p>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '8px 12px', borderRadius: 8, marginBottom: 20,
+          border: `0.5px solid ${isDark ? '#1e1e1e' : '#e2e8f0'}`,
+          background: isDark ? '#111' : '#f8fafc',
+          fontSize: 12,
+        }}>
+          <i className="ti ti-file" style={{ color: isDark ? '#444' : '#94a3b8' }} aria-hidden="true" />
+          <span style={{ flex: 1, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isDark ? '#fff' : '#334155' }}>
+            {file.name}
+          </span>
+          <span style={{ color: isDark ? '#444' : '#94a3b8' }}>{file.size} MB</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button onClick={() => onResolve('replace')} style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+            padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
+            background: '#fff', color: '#000', fontWeight: 600, fontSize: 13,
+          }}>
+            <i className="ti ti-refresh" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
+            <span style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+              <span>Replace existing</span>
+              <span style={{ fontSize: 10, opacity: 0.5, fontWeight: 400, marginTop: 2 }}>Overwrite the old file with this one</span>
+            </span>
+          </button>
+          <button onClick={() => onResolve('keep_both')} style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+            padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontWeight: 600, fontSize: 13,
+            background: isDark ? '#111' : '#f8fafc',
+            border: `0.5px solid ${isDark ? '#222' : '#e2e8f0'}`,
+            color: isDark ? '#fff' : '#334155',
+          }}>
+            <i className="ti ti-copy" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
+            <span style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+              <span>Keep both</span>
+              <span style={{ fontSize: 10, opacity: 0.5, fontWeight: 400, marginTop: 2 }}>Save as a renamed copy alongside the original</span>
+            </span>
+          </button>
+          <button onClick={() => onResolve(null)} style={{
+            width: '100%', padding: '10px', borderRadius: 12, border: 'none',
+            background: 'transparent', cursor: 'pointer',
+            fontSize: 12, fontWeight: 600,
+            color: isDark ? '#444' : '#94a3b8',
+          }}>
+            Cancel upload
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_LABELS = {
   pending: 'Waiting',
   uploading: 'Uploading',
@@ -99,7 +197,22 @@ const STATUS_LABELS = {
   error: 'Failed',
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+const STATUS_DOT_CLASS = {
+  pending: 'bg-[#333]',
+  uploading: 'bg-amber-400 animate-pulse',
+  paused: 'bg-blue-400',
+  completed: 'bg-emerald-500',
+  error: 'bg-red-500',
+};
+
+const STATUS_BADGE = {
+  uploading: { bg: 'rgba(245,158,11,0.15)', color: '#b45309' },
+  paused:    { bg: 'rgba(96,165,250,0.15)', color: '#1d4ed8' },
+  completed: { bg: 'rgba(16,185,129,0.15)', color: '#059669' },
+  error:     { bg: 'rgba(239,68,68,0.15)',  color: '#dc2626' },
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
 const UploadFilesMain = () => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -109,6 +222,8 @@ const UploadFilesMain = () => {
   const fileInputRef = useRef(null);
   const resolveRef = useRef(null);
   const uploadControlRef = useRef({});
+
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -121,51 +236,33 @@ const UploadFilesMain = () => {
   }, [theme]);
 
   useEffect(() => {
-    if (toast.visible) {
-      const dismissTimer = setTimeout(() => {
-        setToast(prev => ({ ...prev, animateOut: true }));
-        setTimeout(() => {
-          setToast({ visible: false, message: '', type: 'success', animateOut: false });
-        }, 350);
-      }, 3500);
-      return () => clearTimeout(dismissTimer);
-    }
+    if (!toast.visible) return;
+    const dismissTimer = setTimeout(() => {
+      setToast(prev => ({ ...prev, animateOut: true }));
+      setTimeout(() => setToast({ visible: false, message: '', type: 'success', animateOut: false }), 350);
+    }, 3500);
+    return () => clearTimeout(dismissTimer);
   }, [toast.visible]);
 
   const showToast = (message, type = 'success') =>
     setToast({ visible: true, message, type, animateOut: false });
 
-  const isDark = theme === 'dark';
+  const patchFile = useCallback((id, patch) =>
+    setSelectedFiles(prev => prev.map(f => f.id === id ? { ...f, ...patch } : f)), []);
 
-  const patchFile = useCallback((id, patch) => {
-    setSelectedFiles(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
-  }, []);
-
-  const askDuplicateAction = useCallback((file) => {
-    return new Promise((resolve) => {
-      resolveRef.current = resolve;
-      setDuplicateModal({ file });
-    });
-  }, []);
+  const askDuplicateAction = useCallback((file) =>
+    new Promise((resolve) => { resolveRef.current = resolve; setDuplicateModal({ file }); }), []);
 
   const handleModalResolve = (action) => {
     setDuplicateModal(null);
-    if (resolveRef.current) {
-      resolveRef.current(action);
-      resolveRef.current = null;
-    }
+    if (resolveRef.current) { resolveRef.current(action); resolveRef.current = null; }
   };
 
   const isDuplicateError = (error) => {
     const errData = error?.response?.data;
     const status = error?.response?.status;
-    if (errData?.duplicate === true || String(errData?.duplicate).toLowerCase() === 'true') {
-      return true;
-    }
-    if (status === 409) {
-      const raw = errData?.error || '';
-      return raw.includes('duplicate');
-    }
+    if (errData?.duplicate === true || String(errData?.duplicate).toLowerCase() === 'true') return true;
+    if (status === 409 && (errData?.error || '').includes('duplicate')) return true;
     if (errData?.failed?.[0]?.reason?.duplicate) return true;
     return false;
   };
@@ -181,22 +278,13 @@ const UploadFilesMain = () => {
 
   const resolveUploadSession = async (file) => {
     if (!file.uploadId) {
-      const uploadId = `${file.id}_${Math.random().toString(36).substr(2, 9)}`;
-      return { uploadId, startChunk: file.nextChunkIndex || 0 };
+      return { uploadId: `${file.id}_${Math.random().toString(36).substr(2, 9)}`, startChunk: file.nextChunkIndex || 0 };
     }
     try {
       const { data } = await getChunkUploadStatus(file.uploadId);
-      return {
-        uploadId: data.upload_id,
-        startChunk: data.next_chunk ?? file.nextChunkIndex ?? 0,
-        progress: data.progress_percent ?? 0,
-      };
+      return { uploadId: data.upload_id, startChunk: data.next_chunk ?? file.nextChunkIndex ?? 0, progress: data.progress_percent ?? 0 };
     } catch {
-      return {
-        uploadId: file.uploadId,
-        startChunk: file.nextChunkIndex || 0,
-        progress: file.progress || 0,
-      };
+      return { uploadId: file.uploadId, startChunk: file.nextChunkIndex || 0, progress: file.progress || 0 };
     }
   };
 
@@ -206,15 +294,10 @@ const UploadFilesMain = () => {
     const uploadId = session.uploadId;
     let startChunk = session.startChunk;
 
-    uploadControlRef.current[file.id] = {
-      pauseRequested: false,
-      cancelRequested: false,
-    };
+    uploadControlRef.current[file.id] = { pauseRequested: false, cancelRequested: false };
 
     patchFile(file.id, {
-      status: 'uploading',
-      uploadId,
-      totalChunks,
+      status: 'uploading', uploadId, totalChunks,
       nextChunkIndex: startChunk,
       progress: session.progress ?? file.progress ?? 0,
       duplicateAction: duplicateAction || file.duplicateAction || null,
@@ -225,18 +308,12 @@ const UploadFilesMain = () => {
     for (let chunkIndex = startChunk; chunkIndex < totalChunks; chunkIndex++) {
       const waitResult = await waitWhilePaused(file.id);
       if (waitResult === 'cancelled') {
-        patchFile(file.id, {
-          status: 'pending',
-          progress: 0,
-          uploadId: null,
-          nextChunkIndex: 0,
-        });
+        patchFile(file.id, { status: 'pending', progress: 0, uploadId: null, nextChunkIndex: 0 });
         return { cancelled: true };
       }
 
       const start = chunkIndex * CHUNK_SIZE;
-      const end = Math.min(start + CHUNK_SIZE, file.raw.size);
-      const chunk = file.raw.slice(start, end);
+      const chunk = file.raw.slice(start, Math.min(start + CHUNK_SIZE, file.raw.size));
 
       const formData = new FormData();
       formData.append('upload_id', uploadId);
@@ -246,7 +323,6 @@ const UploadFilesMain = () => {
       formData.append('file_size', file.raw.size);
       formData.append('content_type', file.raw.type || 'application/octet-stream');
       formData.append('file', chunk);
-
       const action = duplicateAction || file.duplicateAction;
       if (action) formData.append('action', action);
 
@@ -254,46 +330,28 @@ const UploadFilesMain = () => {
       let chunkDone = false;
 
       while (chunkRetries < MAX_CHUNK_RETRIES && !chunkDone) {
-        if (uploadControlRef.current[file.id]?.pauseRequested) {
-          await waitWhilePaused(file.id);
-        }
+        if (uploadControlRef.current[file.id]?.pauseRequested) await waitWhilePaused(file.id);
         if (uploadControlRef.current[file.id]?.cancelRequested) {
           patchFile(file.id, { status: 'pending', progress: 0, uploadId: null, nextChunkIndex: 0 });
           return { cancelled: true };
         }
-
         try {
           const response = await uploadFileChunk(formData);
           lastResponse = response;
           chunkDone = true;
-
           const data = response?.data || {};
-          const progress = data.progress_percent
-            ?? Math.round(((chunkIndex + 1) / totalChunks) * 100);
-
-          patchFile(file.id, {
-            progress,
-            nextChunkIndex: data.next_chunk ?? chunkIndex + 1,
-            uploadId,
-          });
-
+          const progress = data.progress_percent ?? Math.round(((chunkIndex + 1) / totalChunks) * 100);
+          patchFile(file.id, { progress, nextChunkIndex: data.next_chunk ?? chunkIndex + 1, uploadId });
           if (response.status === 201 || data.status === 'completed') {
             patchFile(file.id, { status: 'completed', progress: 100 });
             return lastResponse;
           }
         } catch (error) {
           if (isDuplicateError(error)) throw error;
-
           chunkRetries += 1;
           if (chunkRetries >= MAX_CHUNK_RETRIES) {
-            patchFile(file.id, {
-              status: 'paused',
-              uploadId,
-              nextChunkIndex: chunkIndex,
-            });
-            try {
-              await controlChunkUpload(uploadId, 'pause');
-            } catch { /* ignore */ }
+            patchFile(file.id, { status: 'paused', uploadId, nextChunkIndex: chunkIndex });
+            try { await controlChunkUpload(uploadId, 'pause'); } catch { }
             throw error;
           }
           await sleep(1000 * chunkRetries);
@@ -306,37 +364,20 @@ const UploadFilesMain = () => {
   };
 
   const handlePause = async (file) => {
-    uploadControlRef.current[file.id] = {
-      ...(uploadControlRef.current[file.id] || {}),
-      pauseRequested: true,
-    };
+    uploadControlRef.current[file.id] = { ...(uploadControlRef.current[file.id] || {}), pauseRequested: true };
     patchFile(file.id, { status: 'paused' });
-    if (file.uploadId) {
-      try {
-        await controlChunkUpload(file.uploadId, 'pause');
-      } catch { /* ignore */ }
-    }
+    if (file.uploadId) try { await controlChunkUpload(file.uploadId, 'pause'); } catch { }
   };
 
   const handleResume = async (file) => {
-    uploadControlRef.current[file.id] = {
-      pauseRequested: false,
-      cancelRequested: false,
-    };
-    if (file.uploadId) {
-      try {
-        await controlChunkUpload(file.uploadId, 'resume');
-      } catch { /* ignore */ }
-    }
+    uploadControlRef.current[file.id] = { pauseRequested: false, cancelRequested: false };
+    if (file.uploadId) try { await controlChunkUpload(file.uploadId, 'resume'); } catch { }
     try {
       await uploadSingleFile(file, file.duplicateAction || null);
     } catch (err) {
       if (isDuplicateError(err)) {
         const action = await askDuplicateAction(file);
-        if (!action) {
-          patchFile(file.id, { status: 'paused' });
-          return;
-        }
+        if (!action) { patchFile(file.id, { status: 'paused' }); return; }
         patchFile(file.id, { duplicateAction: action });
         try {
           await uploadSingleFile({ ...file, duplicateAction: action }, action);
@@ -348,31 +389,16 @@ const UploadFilesMain = () => {
         }
         return;
       }
-      if (file.status !== 'paused') {
-        patchFile(file.id, { status: 'error' });
-      }
+      if (file.status !== 'paused') patchFile(file.id, { status: 'error' });
       const errData = err?.response?.data;
-      const msg = errData?.error || errData?.content_type?.[0] || `Upload failed for "${file.name}"`;
-      showToast(msg, 'error');
+      showToast(errData?.error || errData?.content_type?.[0] || `Upload failed for "${file.name}"`, 'error');
     }
   };
 
   const handleCancelUpload = async (file) => {
-    uploadControlRef.current[file.id] = {
-      pauseRequested: true,
-      cancelRequested: true,
-    };
-    if (file.uploadId) {
-      try {
-        await controlChunkUpload(file.uploadId, 'cancel');
-      } catch { /* ignore */ }
-    }
-    patchFile(file.id, {
-      status: 'pending',
-      progress: 0,
-      uploadId: null,
-      nextChunkIndex: 0,
-    });
+    uploadControlRef.current[file.id] = { pauseRequested: true, cancelRequested: true };
+    if (file.uploadId) try { await controlChunkUpload(file.uploadId, 'cancel'); } catch { }
+    patchFile(file.id, { status: 'pending', progress: 0, uploadId: null, nextChunkIndex: 0 });
   };
 
   const processFileUpload = async (file) => {
@@ -400,302 +426,291 @@ const UploadFilesMain = () => {
           return false;
         }
       }
-
-      if (file.status !== 'paused') {
-        patchFile(file.id, { status: 'paused' });
-      }
+      if (file.status !== 'paused') patchFile(file.id, { status: 'paused' });
       const errData = err?.response?.data;
-      const fieldError = errData?.content_type?.[0] || errData?.file?.[0] || errData?.file_size?.[0];
-      const backendError =
-        errData?.error ||
-        fieldError ||
-        `Upload interrupted for "${file.name}". Press Resume to continue.`;
-      showToast(backendError, 'error');
+      showToast(
+        errData?.error || errData?.content_type?.[0] || errData?.file?.[0] || errData?.file_size?.[0] ||
+        `Upload interrupted for "${file.name}". Press Resume to continue.`,
+        'error'
+      );
       return false;
     }
-  };
-
-  const handleZoneClick = () => {
-    if (fileInputRef.current) fileInputRef.current.value = null;
-    fileInputRef.current?.click();
   };
 
   const handleFiles = (files) => {
     const newFiles = Array.from(files)
       .filter(file => {
-        const isFolder = !file.type && file.size % 4096 === 0;
-        if (isFolder) { showToast('Folders are not supported', 'error'); return false; }
+        if (!file.type && file.size % 4096 === 0) { showToast('Folders are not supported', 'error'); return false; }
+        // Frontend MIME pre-check — backend magic is the source of truth
+        if (file.type && !ALLOWED_CONTENT_TYPES.has(file.type)) {
+          showToast(`"${file.name}" — file type not allowed`, 'error');
+          return false;
+        }
+        if (file.size > MAX_FILE_BYTES) { showToast(`"${file.name}" exceeds the 100 MB limit`, 'error'); return false; }
         return true;
       })
-      .map(file => {
-        if (file.size > MAX_FILE_BYTES) {
-          showToast(`"${file.name}" exceeds the 100 MB file limit`, 'error');
-          return null;
-        }
-        return {
-          id: Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          size: (file.size / (1024 * 1024)).toFixed(2),
-          raw: file,
-          status: 'pending',
-          progress: 0,
-          uploadId: null,
-          nextChunkIndex: 0,
-          totalChunks: Math.ceil(file.size / CHUNK_SIZE),
-        };
-      })
-      .filter(Boolean);
+      .map(file => ({
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(2),
+        raw: file,
+        status: 'pending',
+        progress: 0,
+        uploadId: null,
+        nextChunkIndex: 0,
+        totalChunks: Math.ceil(file.size / CHUNK_SIZE),
+      }));
     setSelectedFiles(prev => [...prev, ...newFiles]);
   };
 
   const handleFileChange = (e) => { if (e.target.files.length > 0) handleFiles(e.target.files); };
   const onDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
   const onDragLeave = () => setIsDragging(false);
-  const onDrop = (e) => {
-    e.preventDefault(); setIsDragging(false);
-    if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
-  };
-
-  const removeFile = (id) => {
-    const file = selectedFiles.find(f => f.id === id);
-    if (file?.status === 'uploading') {
-      handleCancelUpload(file);
-    }
-    setSelectedFiles(prev => prev.filter(f => f.id !== id));
-  };
-
-  const clearAllFiles = () => {
-    selectedFiles.forEach(f => {
-      if (f.status === 'uploading' || f.status === 'paused') {
-        handleCancelUpload(f);
-      }
-    });
-    setSelectedFiles([]);
-    if (fileInputRef.current) fileInputRef.current.value = null;
-    showToast('Cleared all files', 'success');
-  };
+  const onDrop = (e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files); };
+  const removeFile = (id) => { const f = selectedFiles.find(f => f.id === id); if (f?.status === 'uploading') handleCancelUpload(f); setSelectedFiles(prev => prev.filter(f => f.id !== id)); };
+  const clearAllFiles = () => { selectedFiles.forEach(f => { if (['uploading', 'paused'].includes(f.status)) handleCancelUpload(f); }); setSelectedFiles([]); if (fileInputRef.current) fileInputRef.current.value = null; showToast('Cleared all files', 'success'); };
 
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
-      showToast('Please select files first.', 'error');
-      return;
-    }
-
     const pending = selectedFiles.filter(f => f.status === 'pending');
+    if (!pending.length) { showToast('Please select files first.', 'error'); return; }
     let successCount = 0;
-
-    for (const file of pending) {
-      const ok = await processFileUpload(file);
-      if (ok) successCount += 1;
-    }
-
+    for (const file of pending) { const ok = await processFileUpload(file); if (ok) successCount++; }
     if (successCount > 0) {
       showToast(`${successCount} file(s) uploaded successfully`, 'success');
-      setTimeout(() => {
-        setSelectedFiles(prev => prev.filter(f => f.status !== 'completed'));
-        if (fileInputRef.current) fileInputRef.current.value = null;
-      }, 1200);
+      setTimeout(() => { setSelectedFiles(prev => prev.filter(f => f.status !== 'completed')); if (fileInputRef.current) fileInputRef.current.value = null; }, 1200);
     }
   };
 
-  const statusDot = {
-    pending: 'bg-[#333]',
-    uploading: 'bg-amber-400 animate-pulse',
-    paused: 'bg-blue-400',
-    completed: 'bg-emerald-500',
-    error: 'bg-red-500',
-  };
+  const showProgress = (file) => ['uploading', 'paused', 'completed'].includes(file.status);
 
-  const showProgress = (file) =>
-    ['uploading', 'paused', 'completed'].includes(file.status);
-
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <main className={`flex-1 overflow-y-auto p-10 no-scrollbar transition-colors duration-300 relative
-      ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
-
+    <main style={{
+      flex: 1, overflowY: 'auto', padding: 40,
+      background: isDark ? '#000' : '#E6EBF2',
+      position: 'relative', transition: 'background 0.3s',
+    }}>
       {duplicateModal && (
-        <DuplicateModal
-          isDark={isDark}
-          file={duplicateModal.file}
-          onResolve={handleModalResolve}
-        />
+        <DuplicateModal isDark={isDark} file={duplicateModal.file} onResolve={handleModalResolve} />
       )}
 
+      {/* Toast */}
       {toast.visible && (
-        <div
-          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none
-            transition-all duration-[350ms]
-            ${toast.animateOut
-              ? 'opacity-0 -translate-y-6 scale-95'
-              : 'opacity-100 translate-y-0 scale-100'
-            }`}
-          style={{
-            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none',
-          }}
-        >
-          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
-            ${isDark
-              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200'
-              : 'bg-white border-slate-100 text-slate-800'}`}>
-            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
-              ${toast.type === 'error'
-                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500')
-                : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
-              }`}>
-              <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
+        <div style={{
+          position: 'fixed', top: 24, left: 0, right: 0,
+          display: 'flex', justifyContent: 'center', zIndex: 9999,
+          pointerEvents: 'none',
+          transition: 'all 350ms cubic-bezier(0.16,1,0.3,1)',
+          opacity: toast.animateOut ? 0 : 1,
+          transform: toast.animateOut ? 'translateY(-24px) scale(0.95)' : 'translateY(0) scale(1)',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '12px 20px', borderRadius: 12,
+            background: isDark ? '#0d0d0d' : '#fff',
+            border: `0.5px solid ${isDark ? '#1e1e1e' : '#f1f5f9'}`,
+            fontSize: 13, fontWeight: 500, pointerEvents: 'auto',
+            minWidth: 300, maxWidth: 450,
+            color: isDark ? '#e2e8f0' : '#1e293b',
+          }}>
+            <div style={{
+              width: 24, height: 24, borderRadius: 8, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: toast.type === 'error'
+                ? (isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2')
+                : (isDark ? 'rgba(16,185,129,0.1)' : '#f0fdf4'),
+              color: toast.type === 'error' ? '#f87171' : '#34d399',
+            }}>
+              <i className={`ti ${toast.type === 'error' ? 'ti-alert-circle' : 'ti-circle-check'}`} style={{ fontSize: 13 }} aria-hidden="true" />
             </div>
-            <span className="flex-1 leading-normal tracking-wide text-[13px]">{toast.message}</span>
+            <span style={{ flex: 1, letterSpacing: '0.01em' }}>{toast.message}</span>
           </div>
         </div>
       )}
 
-      <div className="mb-8">
-        <h2 className={`text-2xl font-bold m-0 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          Upload Files
+      {/* Header */}
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 500, margin: 0, color: isDark ? '#fff' : '#1e293b' }}>
+          Upload files
         </h2>
-        <p className={`mt-1 font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+        <p style={{ marginTop: 4, fontWeight: 400, color: isDark ? '#808080' : '#64748b', fontSize: 14 }}>
           Large files upload in 10 MB chunks. You can pause and resume anytime.
         </p>
       </div>
 
+      {/* Drop zone */}
       <div
-        className={`w-full h-[400px] border-2 border-dashed rounded-[20px] flex flex-col
-          items-center justify-center cursor-pointer transition-all duration-300 mb-5 text-center shadow-sm
-          ${isDragging
-            ? 'border-[#3b82f6] bg-[#3b82f6]/5'
-            : isDark
-              ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#3b82f6] hover:bg-[#0f0f0f]'
-              : 'bg-white border-slate-200 hover:border-blue-400 hover:bg-white'}`}
-        onClick={handleZoneClick}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
+        onClick={() => { if (fileInputRef.current) fileInputRef.current.value = null; fileInputRef.current?.click(); }}
+        onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+        style={{
+          width: '100%', height: 320,
+          border: `2px dashed ${isDragging ? '#3b82f6' : isDark ? '#1a1a1a' : '#cbd5e1'}`,
+          borderRadius: 20,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', marginBottom: 20, textAlign: 'center',
+          background: isDragging ? 'rgba(59,130,246,0.05)' : isDark ? '#0a0a0a' : '#fff',
+          transition: 'all 0.2s',
+        }}
       >
-        <i className="fa-solid fa-cloud-arrow-up text-4xl text-[#3b82f6] mb-3"></i>
-        <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-600'}`}>
+        <i className="ti ti-cloud-upload" style={{ fontSize: 40, color: '#3b82f6', marginBottom: 12 }} aria-hidden="true" />
+        <span style={{ fontSize: 14, fontWeight: 500, color: isDark ? '#fff' : '#475569' }}>
           Drop files here or click to upload
         </span>
-        <span className={`text-xs mt-1 ${isDark ? 'text-[#555]' : 'text-slate-400'}`}>
+        <span style={{ fontSize: 12, marginTop: 4, color: isDark ? '#555' : '#94a3b8' }}>
           Max 100 MB per file
         </span>
-        <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple className="hidden" />
+        <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple style={{ display: 'none' }} />
       </div>
 
-      <div className="flex flex-col gap-2.5">
-        {selectedFiles.map(file => (
-          <div key={file.id}
-            className={`p-4 rounded-xl flex items-center gap-4 border shadow-sm
-              ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+      {/* File list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {selectedFiles.map(file => {
+          const badge = STATUS_BADGE[file.status];
+          return (
+            <div key={file.id} style={{
+              padding: 14, borderRadius: 12,
+              display: 'flex', alignItems: 'center', gap: 14,
+              border: `0.5px solid ${isDark ? '#1a1a1a' : '#e2e8f0'}`,
+              background: isDark ? '#0a0a0a' : '#fff',
+            }}>
+              {/* Thumbnail with status dot */}
+              <FilePreviewThumb
+                file={file}
+                isDark={isDark}
+                statusDotClass={STATUS_DOT_CLASS[file.status] || STATUS_DOT_CLASS.pending}
+              />
 
-            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot[file.status] || statusDot.pending}`} />
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className={`text-sm font-bold m-0 truncate ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                  {file.name}
-                </p>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0
-                  ${file.status === 'uploading' ? 'bg-amber-400/20 text-amber-400'
-                    : file.status === 'paused' ? 'bg-blue-400/20 text-blue-400'
-                    : file.status === 'completed' ? 'bg-emerald-500/20 text-emerald-500'
-                    : file.status === 'error' ? 'bg-red-500/20 text-red-400'
-                    : isDark ? 'bg-[#222] text-[#888]' : 'bg-slate-100 text-slate-500'}`}>
-                  {STATUS_LABELS[file.status] || file.status}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 mt-2">
-                <span className={`text-xs font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-                  {file.size} MB
-                  {file.totalChunks > 1 && ` · ${file.totalChunks} chunks`}
-                </span>
-              </div>
-
-              {showProgress(file) && (
-                <div className="flex items-center gap-2 mt-2 max-w-full">
-                  <div className={`flex-1 h-2 rounded-full overflow-hidden ${isDark ? 'bg-[#222]' : 'bg-slate-200'}`}>
-                    <div
-                      className={`h-full transition-all duration-300 ${file.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-400'}`}
-                      style={{ width: `${file.progress || 0}%` }}
-                    />
-                  </div>
-                  <span className={`text-xs font-bold w-10 text-right ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-                    {file.progress || 0}%
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <p style={{
+                    fontSize: 13, fontWeight: 500, margin: 0,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    color: isDark ? '#fff' : '#334155',
+                  }}>
+                    {file.name}
+                  </p>
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                    flexShrink: 0, whiteSpace: 'nowrap',
+                    background: badge ? badge.bg : isDark ? '#222' : '#f1f5f9',
+                    color: badge ? badge.color : isDark ? '#888' : '#64748b',
+                  }}>
+                    {STATUS_LABELS[file.status] || file.status}
                   </span>
                 </div>
-              )}
+
+                <span style={{ fontSize: 11, color: isDark ? '#808080' : '#94a3b8', fontWeight: 500 }}>
+                  {file.size} MB{file.totalChunks > 1 ? ` · ${file.totalChunks} chunks` : ''}
+                </span>
+
+                {showProgress(file) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                    <div style={{ flex: 1, height: 6, borderRadius: 99, background: isDark ? '#222' : '#e2e8f0', overflow: 'hidden' }}>
+                      <div style={{
+                        width: `${file.progress || 0}%`, height: '100%', borderRadius: 99,
+                        background: file.status === 'completed' ? '#10b981' : '#f59e0b',
+                        transition: 'width 0.3s',
+                      }} />
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, width: 32, textAlign: 'right', color: isDark ? '#808080' : '#64748b' }}>
+                      {file.progress || 0}%
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                {file.status === 'uploading' && (
+                  <>
+                    <button onClick={() => handlePause(file)} title="Pause" style={{
+                      padding: 8, borderRadius: 8, border: 'none', background: 'transparent',
+                      cursor: 'pointer', color: '#f59e0b', display: 'flex', alignItems: 'center',
+                    }}>
+                      <i className="ti ti-player-pause" style={{ fontSize: 15 }} aria-label="Pause" />
+                    </button>
+                    <i className="ti ti-loader-2" style={{ fontSize: 15, color: '#f59e0b', padding: '0 4px' }} aria-hidden="true" />
+                  </>
+                )}
+                {(['paused', 'error'].includes(file.status) && file.uploadId) && (
+                  <>
+                    <button onClick={() => handleResume(file)} title="Resume" style={{
+                      padding: 8, borderRadius: 8, border: 'none', background: 'transparent',
+                      cursor: 'pointer', color: '#10b981', display: 'flex', alignItems: 'center',
+                    }}>
+                      <i className="ti ti-player-play" style={{ fontSize: 15 }} aria-label="Resume" />
+                    </button>
+                    <button onClick={() => handleCancelUpload(file)} title="Cancel" style={{
+                      padding: 8, borderRadius: 8, border: 'none', background: 'transparent',
+                      cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center',
+                    }}>
+                      <i className="ti ti-player-stop" style={{ fontSize: 15 }} aria-label="Cancel" />
+                    </button>
+                  </>
+                )}
+                {file.status === 'completed' && (
+                  <i className="ti ti-circle-check" style={{ fontSize: 16, color: '#10b981', padding: '0 8px' }} aria-hidden="true" />
+                )}
+                {file.status === 'pending' && (
+                  <button onClick={() => removeFile(file.id)} style={{
+                    padding: 8, borderRadius: 8, border: 'none', background: 'transparent',
+                    cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center',
+                  }}>
+                    <i className="ti ti-x" style={{ fontSize: 16 }} aria-label="Remove file" />
+                  </button>
+                )}
+              </div>
             </div>
-
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {file.status === 'uploading' && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handlePause(file)}
-                    title="Pause"
-                    className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-[#1a1a1a] text-amber-400' : 'hover:bg-slate-100 text-amber-600'}`}
-                  >
-                    <i className="fa-solid fa-pause text-sm" />
-                  </button>
-                  <i className="fa-solid fa-spinner fa-spin text-amber-400 text-sm px-1" />
-                </>
-              )}
-
-              {(file.status === 'paused' || file.status === 'error') && file.uploadId && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handleResume(file)}
-                    title="Resume"
-                    className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-[#1a1a1a] text-emerald-400' : 'hover:bg-slate-100 text-emerald-600'}`}
-                  >
-                    <i className="fa-solid fa-play text-sm" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleCancelUpload(file)}
-                    title="Cancel upload"
-                    className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-[#1a1a1a] text-red-400' : 'hover:bg-slate-100 text-red-500'}`}
-                  >
-                    <i className="fa-solid fa-stop text-sm" />
-                  </button>
-                </>
-              )}
-
-              {file.status === 'completed' && (
-                <i className="fa-solid fa-check text-emerald-500 text-sm px-2" />
-              )}
-
-              {file.status === 'pending' && (
-                <i
-                  className="fa-solid fa-xmark text-[#ff4444] cursor-pointer hover:scale-125 transition-transform p-2"
-                  onClick={() => removeFile(file.id)}
-                />
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <div className={`flex justify-end items-center gap-4 pt-5 border-t mt-5
-        ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
+      {/* Footer */}
+      <div style={{
+        display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 16,
+        paddingTop: 20, marginTop: 20,
+        borderTop: `0.5px solid ${isDark ? '#1a1a1a' : '#e2e8f0'}`,
+      }}>
         {selectedFiles.length > 0 && (
-          <button onClick={clearAllFiles}
-            className={`text-xs font-bold transition-colors
-              ${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-500 hover:text-red-500'}`}>
-            Clear All
+          <button onClick={clearAllFiles} style={{
+            fontSize: 12, fontWeight: 600, background: 'transparent', border: 'none',
+            cursor: 'pointer', color: isDark ? '#808080' : '#64748b',
+          }}>
+            Clear all
           </button>
         )}
-        <button onClick={handleUpload}
+        <button
+          onClick={handleUpload}
           disabled={!selectedFiles.some(f => f.status === 'pending')}
-          className={`px-[30px] py-3 rounded-[25px] font-bold transition-all duration-200 shadow-lg
-            ${selectedFiles.some(f => f.status === 'pending')
-              ? `${isDark ? 'bg-[#e3e3e3] text-black hover:opacity-90 hover:-translate-y-0.5 cursor-pointer' : 'bg-slate-800 text-white hover:opacity-90 hover:-translate-y-0.5 cursor-pointer'}`
-              : 'opacity-40 cursor-not-allowed bg-slate-500 text-white'}`}>
+          style={{
+            padding: '12px 30px', borderRadius: 25, fontWeight: 600, fontSize: 14,
+            border: 'none', cursor: selectedFiles.some(f => f.status === 'pending') ? 'pointer' : 'not-allowed',
+            background: selectedFiles.some(f => f.status === 'pending')
+              ? (isDark ? '#e3e3e3' : '#1e293b')
+              : '#6b7280',
+            color: selectedFiles.some(f => f.status === 'pending')
+              ? (isDark ? '#000' : '#fff')
+              : '#fff',
+            opacity: selectedFiles.some(f => f.status === 'pending') ? 1 : 0.4,
+            transition: 'all 0.2s',
+          }}
+        >
           Confirm &amp; Upload
         </button>
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .ti-loader-2 { animation: spin 1s linear infinite; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .bg-\\[\\#333\\] { background: #333; }
+        .bg-amber-400 { background: #f59e0b; }
+        .bg-blue-400 { background: #60a5fa; }
+        .bg-emerald-500 { background: #10b981; }
+        .bg-red-500 { background: #ef4444; }
+      `}</style>
     </main>
   );
 };
