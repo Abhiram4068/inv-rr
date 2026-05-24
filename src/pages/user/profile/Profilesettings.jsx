@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
-import { profile, updateProfile, getDesignations, changeCurrentPassword, requestDesignationChange, deactivateAccount } from '../../../services/authService';
+import { profile, updateProfile, changeCurrentPassword, requestDesignationChange, deactivateAccount, getDesignations } from '../../../services/authService';
 import useAuth from '../../../hooks/useAuth';
 
 const EditAccount = () => {
@@ -190,7 +190,13 @@ const validatePasswordChange = () => {
       setRequestedDesignation("");
       showToast('Designation change request sent. Awaiting admin approval.', 'success');
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Failed to submit request.', 'error');
+      const data = err.response?.data;
+      const msg =
+        data?.detail ||
+        data?.non_field_errors?.[0] ||
+        (typeof data?.non_field_errors === 'string' ? data.non_field_errors : null) ||
+        'Failed to submit request.';
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -356,10 +362,10 @@ const validatePasswordChange = () => {
                     >
                       <option value="" disabled className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>Select new designation</option>
                       {designations
-                        .filter(d => d.label !== userProfile?.designation)
+                        .filter((d) => d.id !== userProfile?.designation_id)
                         .map((desig) => (
-                          <option key={desig.value} value={desig.value} className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>
-                            {desig.label}
+                          <option key={desig.id} value={desig.id}>
+                            {desig.name}
                           </option>
                         ))}
                     </select>
@@ -489,7 +495,7 @@ const validatePasswordChange = () => {
         onClose={() => setShowDesignationModal(false)}
         onConfirm={handleDesignationRequest}
         title="Send Designation Request?"
-        message={`A request to change your designation to "${designations.find(d => d.value === requestedDesignation)?.label || requestedDesignation}" will be sent to your administrator for approval.`}
+        message={`A request to change your designation to "${designations.find(d => d.id === requestedDesignation)?.name}" will be sent to your administrator for approval.`}
         confirmText="Send Request"
         isDark={isDark}
       />

@@ -294,7 +294,7 @@ const Register = () => {
                   >
                     <option value="" disabled className="bg-[#121214]">Select designation</option>
                     {designations.map((designation) => (
-                      <option key={designation.id} value={designation.name} className="bg-[#121214]">
+                      <option key={designation.id} value={designation.id} className="bg-[#121214]">
                         {designation.name}
                       </option>
                     ))}
