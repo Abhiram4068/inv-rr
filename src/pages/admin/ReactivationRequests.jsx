@@ -74,10 +74,10 @@ const ReactivationRequests = () => {
 
         try {
             if (type === 'allow') {
-                await userService.resolveReactivationRequest(targetRequest.id, 'approve', targetRequest.user_id);
+                await adminService.resolveReactivationRequest(targetRequest.id, 'approve', targetRequest.user_id);
                 console.log(`Re-activated access permissions for target node: ${targetRequest.user_id}`);
             } else if (type === 'deny') {
-                await userService.resolveReactivationRequest(targetRequest.id, 'reject', targetRequest.user_id);
+                await adminService.resolveReactivationRequest(targetRequest.id, 'reject', targetRequest.user_id);
                 console.log(`Rejected structural reactivation appeal: ${targetRequest.id}`);
             }
 
