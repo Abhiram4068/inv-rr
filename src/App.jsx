@@ -22,6 +22,8 @@ import ArchivesList from "./pages/user/Archives";
 import Collections from "./pages/user/Collections";
 import CollectionDetails from "./pages/user/CollectionDetails";
 import TrashManagement from "./pages/user/storage/Trash";
+import TeamsDashboard from "./pages/user/TeamsDashboard";
+import TeamDetails from "./pages/user/TeamDetails";
 import UploadFilesMain from "./pages/user/UploadFile";
 import StorageDashboard from "./pages/user/StorageDashboard";
 import Threads from "./pages/user/Threads";
@@ -73,6 +75,8 @@ function App() {
           <Route element={<UserLayout />}>
             <Route path="/archives"     element={<ArchivesList />} />
             <Route path="/dashboard"     element={<Dashboard />} />
+            <Route path="/teams"     element={<TeamsDashboard />} />
+            <Route path="/teams/:id"   element={<TeamDetails />} />
             <Route path="/files"         element={<PaginatedFiles />} />
             <Route path="/file/:id"   element={<FileDetails />} />
             <Route path="/starred"       element={<Starred />} />
