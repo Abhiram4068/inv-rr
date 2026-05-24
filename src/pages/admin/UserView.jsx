@@ -121,7 +121,7 @@ const UserManagement = () => {
                                                 </div>
                                             </td>
                                             <td className="py-4 px-6 text-slate-600 font-medium">
-                                                {user.designation}
+                                                {user.designation_display}
                                             </td>
                                             <td className="py-4 px-6 text-slate-500 font-normal">
                                                 {new Date(user.date_joined).toLocaleDateString('en-US', {

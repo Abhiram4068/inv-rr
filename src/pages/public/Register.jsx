@@ -20,6 +20,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [designationsLoading, setDesignationsLoading] = useState(false);
+  
   const buildErrorMessage = (data) => {
     if (!data) return "Registration failed. Please try again.";
     if (typeof data === "string") return data;
@@ -44,11 +45,66 @@ const Register = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age;
+  };
+
+  const validateForm = () => {
+    const {
+      firstName,
+      lastName,
+      email,
+      dob,
+      designation,
+      password,
+      confirm_password,
+    } = formData;
+
+    if (!firstName.trim()) return "First name is required.";
+    if (firstName.trim().length < 2) return "First name must contain at least 2 characters.";
+    if (!/^[A-Za-z\s]+$/.test(firstName)) return "First name should contain only alphabets.";
+
+    if (!lastName.trim()) return "Last name is required.";
+    if (lastName.trim().length < 1) return "Last name must contain at least 1 character.";
+    if (!/^[A-Za-z\s]+$/.test(lastName)) return "Last name should contain only alphabets.";
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(email)) return "Please enter a valid email address.";
+
+    if (!dob) return "Date of birth is required.";
+    const age = calculateAge(dob);
+    if (age < 18) return "Minimum age required is 18 years.";
+    if (age > 80) return "Please enter a valid date of birth.";
+
+    if (!designation) return "Please select your designation.";
+
+    if (password.length < 8) return "Password must contain at least 8 characters.";
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    if (!strongPasswordRegex.test(password)) {
+      return "Password must include uppercase, lowercase, number, and special character.";
+    }
+    if (password !== confirm_password) return "Passwords do not match.";
+
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (formData.password !== formData.confirm_password) {
-      setError("Passwords do not match.");
+    const validationError = validateForm();
+
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setLoading(true);
@@ -91,11 +147,10 @@ const Register = () => {
         setDesignations(res.data);
       } catch (err) {
         console.error("Failed to fetch designations", err);
-      }finally{
+      } finally {
         setDesignationsLoading(false);
       }
     };
-
     fetchDesignations();
   }, []);
 
@@ -103,14 +158,17 @@ const Register = () => {
   if (user) return <Navigate to={(user.is_staff || user.is_superuser) ? "/admin/dashboard" : "/dashboard"} replace />;
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex font-['Inter'] antialiased">
+    <div className="h-screen w-screen bg-[#09090b] flex font-['Inter'] antialiased overflow-hidden">
       
-      {/* LEFT SIDE: Brand & Info (Pure Deep Black & Ultra Clean Typography) */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-16 bg-black border-r border-[#1e1e20] relative">
-        <div className="relative z-10">
-          <div className="text-xl font-bold tracking-tight text-white mb-24">
-            HiveDrive<span className="text-blue-500">.</span>
-          </div>
+      {/* LEFT SIDE: Brand & Info */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-16 bg-black border-r border-[#1e1e20] relative overflow-y-auto">
+        {/* Top-aligned Brand Logo */}
+        <div className="text-xl font-bold tracking-tight text-white mb-12">
+          HiveDrive<span className="text-blue-500">.</span>
+        </div>
+
+        {/* Core Description - Shifted downward using margins to visually align with the Right-side form header */}
+        <div className="relative z-10 my-auto pt-10">
           <h1 className="text-5xl font-semibold tracking-tight text-white leading-[1.15] mb-6">
             The workspace where <br />
             <span className="text-blue-500 font-normal italic">projects move faster.</span>
@@ -120,7 +178,8 @@ const Register = () => {
           </p>
         </div>
 
-        <div className="relative z-10 grid grid-cols-2 gap-12 border-t border-[#1e1e20] pt-8">
+        {/* Bottom Feature Badges */}
+        <div className="relative z-10 grid grid-cols-2 gap-12 border-t border-[#1e1e20] pt-8 mt-12">
           <div>
             <div className="text-white text-sm font-medium tracking-wide uppercase mb-1">Secure Storage</div>
             <div className="text-[#71717a] text-xs leading-relaxed">Enterprise-grade encryption for all project assets.</div>
@@ -132,9 +191,9 @@ const Register = () => {
         </div>
       </div>
 
-      {/* RIGHT SIDE: Form Section */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 bg-[#09090b]">
-        <div className="w-full max-w-[440px]">
+      {/* RIGHT SIDE: Form Section (Scroll Fix Implemented) */}
+      <div className="w-full lg:w-1/2 h-full bg-[#09090b] overflow-y-auto flex justify-center items-start">
+        <div className="w-full max-w-[440px] px-6 md:px-0 py-16">
           
           {/* Mobile Header (Visible only on mobile) */}
           <div className="lg:hidden text-left mb-12">
@@ -147,7 +206,7 @@ const Register = () => {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-md bg-red-950/20 border border-red-900/50 text-red-400 text-xs tracking-wide">
+            <div className="mb-6 text-red-400 text-xs tracking-wide">
               {error}
             </div>
           )}
@@ -208,19 +267,20 @@ const Register = () => {
                 <label className="text-[10px] uppercase tracking-widest text-[#71717a] mb-2 font-semibold">Date of Birth</label>
                 <div className="relative flex items-center">
                   <i className="fa-solid fa-calendar-days absolute left-4 text-[#4a4a4a] text-xs pointer-events-none"></i>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     name="dob"
                     required
+                    max={new Date().toISOString().split("T")[0]}
                     value={formData.dob}
                     onChange={handleChange}
-                    style={{ colorScheme: 'dark' }} 
+                    style={{ colorScheme: 'dark' }}
                     className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Designation (Customized Select) */}
+              {/* Designation */}
               <div className="flex flex-col md:col-span-2">
                 <label className="text-[10px] uppercase tracking-widest text-[#71717a] mb-2 font-semibold">Designation</label>
                 <div className="relative flex items-center">
@@ -234,7 +294,7 @@ const Register = () => {
                   >
                     <option value="" disabled className="bg-[#121214]">Select designation</option>
                     {designations.map((designation) => (
-                      <option key={designation.id} value={designation.name} className="bg-[#121214]">
+                      <option key={designation.id} value={designation.id} className="bg-[#121214]">
                         {designation.name}
                       </option>
                     ))}

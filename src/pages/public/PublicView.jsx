@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -25,6 +21,7 @@ const ExternalShareView = () => {
   const [fileData, setFileData] = useState(null);
   const [backendError, setBackendError] = useState('');
   const [actionLoading, setActionLoading] = useState(null); // 'view' | 'download' | null
+  const [revokedModalVisible, setRevokedModalVisible] = useState(false);
 
   useEffect(() => {
     const loadShare = async () => {
@@ -38,6 +35,7 @@ const ExternalShareView = () => {
             setPhase('expired');
           } else if (data.error && (data.error.toLowerCase().includes('revoked') || data.error.toLowerCase().includes('used'))) {
             setPhase('revoked');
+            setRevokedModalVisible(true);
           } else {
             setPhase('error');
           }
@@ -79,6 +77,7 @@ const ExternalShareView = () => {
         if (fileData?.permission === 'one_time_download') {
             setPhase('revoked'); // Link is now dead
             setBackendError('This one-time link has already been used.');
+            setRevokedModalVisible(true);
         } else if (fileData?.download_limit !== null) {
             setFileData(prev => ({ ...prev, download_count: (prev.download_count || 0) + 1 }));
         }
@@ -158,14 +157,12 @@ const ExternalShareView = () => {
     );
 
     if (phase === 'revoked') return (
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ textAlign: 'center', opacity: 0.25, filter: 'blur(1.5px)', pointerEvents: 'none', userSelect: 'none' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 72, borderRadius: 20, background: '#ef444420', border: '1px solid #ef444430', marginBottom: '1.5rem' }}>
-          <i className="fa-solid fa-hand-holding-slash" style={{ fontSize: 28, color: '#ef4444' }}></i>
+          <i className="fa-solid fa-ban" style={{ fontSize: 28, color: '#ef4444' }}></i>
         </div>
-        <h1 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 10px', color: '#fff' }}>Access Denied</h1>
-        <p style={{ fontSize: 14, color: '#808080', margin: 0, lineHeight: 1.6 }}>
-          {backendError || 'The sender has revoked access to this file.'}
-        </p>
+        <h1 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 10px', color: '#fff' }}>Access Revoked</h1>
+        <p style={{ fontSize: 14, color: '#808080', margin: 0, lineHeight: 1.6 }}>This link has been revoked.</p>
       </div>
     );
 
@@ -284,9 +281,123 @@ const ExternalShareView = () => {
     <div className="min-h-screen bg-[#09090b] flex font-['Inter'] antialiased">
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.92) translateY(12px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes backdropIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
         button:active { transform: scale(0.98); }
       `}</style>
       
+      {/* ── Revoked Modal Overlay ── */}
+      {revokedModalVisible && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1.5rem',
+            background: 'rgba(0, 0, 0, 0.78)',
+            backdropFilter: 'blur(8px)',
+            animation: 'backdropIn 0.3s ease',
+          }}
+        >
+          <div
+            style={{
+              width: '100%', maxWidth: 420,
+              background: '#0c0c0e',
+              border: '1px solid #2a1a1a',
+              borderRadius: 20,
+              padding: '2.5rem 2rem',
+              textAlign: 'center',
+              boxShadow: '0 0 0 1px rgba(239,68,68,0.08), 0 32px 80px rgba(0,0,0,0.7)',
+              animation: 'fadeInScale 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Red gradient top bar */}
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+              background: 'linear-gradient(90deg, transparent, #ef4444, transparent)',
+              opacity: 0.7,
+            }} />
+
+            {/* Subtle red glow behind icon */}
+            <div style={{
+              position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
+              width: 180, height: 180,
+              background: 'radial-gradient(circle, rgba(239,68,68,0.09) 0%, transparent 70%)',
+              filter: 'blur(30px)', pointerEvents: 'none',
+            }} />
+
+            {/* Icon */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 72, height: 72, borderRadius: 22,
+              background: 'linear-gradient(135deg, #2a0a0a, #1a0606)',
+              border: '1px solid rgba(239,68,68,0.25)',
+              marginBottom: '1.5rem',
+              boxShadow: '0 8px 24px rgba(239,68,68,0.15)',
+            }}>
+              <i className="fa-solid fa-ban" style={{ fontSize: 28, color: '#ef4444' }}></i>
+            </div>
+
+            {/* Title */}
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 10px', color: '#fff', letterSpacing: '-0.3px' }}>
+              Access Revoked
+            </h2>
+
+            {/* Divider */}
+            <div style={{ width: 32, height: 2, background: 'rgba(239,68,68,0.35)', borderRadius: 2, margin: '0 auto 1.25rem' }} />
+
+            {/* Backend message */}
+            <p style={{
+              fontSize: 14, color: '#9ca3af', margin: '0 0 2rem',
+              lineHeight: 1.7, padding: '0 0.5rem',
+            }}>
+              {backendError || 'The sender has revoked access to this file. This link is no longer valid.'}
+            </p>
+
+            {/* Info badge */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: 'rgba(239,68,68,0.07)',
+              border: '1px solid rgba(239,68,68,0.15)',
+              borderRadius: 10, padding: '8px 14px',
+              marginBottom: '1.75rem',
+            }}>
+              <i className="fa-solid fa-circle-info" style={{ fontSize: 12, color: '#ef4444' }}></i>
+              <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>
+                Contact the file owner if you need access
+              </span>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={() => setRevokedModalVisible(false)}
+              style={{
+                width: '100%', padding: '13px',
+                borderRadius: 12,
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                color: '#ef4444',
+                fontSize: 14, fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                letterSpacing: '0.1px',
+              }}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.18)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.35)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)'; }}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* LEFT SIDE: Banner Panel */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-16 bg-black border-r border-[#1e1e20] relative overflow-hidden">
         {/* Abstract Background Elements */}

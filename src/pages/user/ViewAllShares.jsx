@@ -33,7 +33,32 @@ const ViewAllShares = () => {
   }, [theme]);
 
   const showToast = (msg, type = 'success') => setToast({ visible: true, message: msg, type: type, animateOut: false });
+  const getStatusClasses = (status) => {
+  switch (status) {
+    case 'Active':
+      return isDark
+        ? 'text-emerald-400'
+        : 'text-emerald-600';
 
+    case 'Expired':
+      return isDark
+        ? 'text-amber-400'
+        : 'text-amber-600';
+
+    case 'Revoked':
+      return isDark
+        ? 'text-red-400'
+        : 'text-red-600';
+
+    case 'Accessed':
+      return isDark
+        ? 'text-blue-400'
+        : 'text-blue-600';
+
+    default:
+      return '';
+  }
+};
   // Toast auto-dismiss with clean slide-up exit animation
   useEffect(() => {
     if (toast.visible) {
@@ -226,8 +251,8 @@ const ViewAllShares = () => {
                         {formatDateTime(file.created_at)}
                       </td>
                       <td className="py-5 text-sm">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${isDark ? 'text-emerald-500' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                          {file.status || 'Active'}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${getStatusClasses(file.status)}`}>
+                          {file.status}
                         </span>
                       </td>
                       <td className="py-5 text-sm">
@@ -235,12 +260,12 @@ const ViewAllShares = () => {
                           {/* Permission badge */}
                           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold w-fit ${
                             file.permission === 'view_only'
-                              ? (isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600')
+                              ? (isDark ? ' text-blue-400' : ' text-blue-600')
                               : file.permission === 'view_download'
-                              ? (isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600')
+                              ? (isDark ? ' text-purple-400' : ' text-purple-600')
                               : file.permission === 'one_time_download'
-                              ? (isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600')
-                              : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+                              ? (isDark ? ' text-amber-400' : ' text-amber-600')
+                              : (isDark ? ' text-emerald-400' : ' text-emerald-600')
                           }`}>
                             <i className={`fa-solid text-[9px] ${
                               file.permission === 'view_only' ? 'fa-eye' :
@@ -253,7 +278,17 @@ const ViewAllShares = () => {
                              file.permission === 'one_time_download' ? 'One-time' :
                              'Full access'}
                           </span>
-
+                          {/* View counter — only show when view limit is set */}
+                          {file.permission !== 'one_time_download' && file.view_limit !== null && (
+                            <span className={`text-[10px] font-medium ${
+                              file.views_remaining === 0
+                                ? (isDark ? 'text-red-400' : 'text-red-500')
+                                : (isDark ? 'text-neutral-500' : 'text-slate-400')
+                            }`}>
+                              {file.view_count}/{file.view_limit} views
+                              {file.views_remaining === 0 ? ' · Limit reached' : ` · ${file.views_remaining} left`}
+                            </span>
+                          )}
                           {/* Download counter — only show when relevant */}
                           {file.permission === 'one_time_download' && (
                             <span className={`text-[10px] font-medium ${
@@ -438,6 +473,34 @@ const ViewAllShares = () => {
                     )}
                   </div>
                 )}
+                {/* ADD: Views block */}
+{selectedFile.permission !== 'one_time_download' && (
+  <div>
+    <p className={`text-[10px] uppercase font-bold mb-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Views</p>
+    {selectedFile.view_limit !== null ? (
+      <div>
+        <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          {selectedFile.view_count} / {selectedFile.view_limit} used
+        </p>
+        <div className={`mt-1.5 h-1.5 rounded-full overflow-hidden w-full ${isDark ? 'bg-neutral-800' : 'bg-slate-100'}`}>
+          <div
+            className={`h-full rounded-full transition-all ${
+              selectedFile.views_remaining === 0 ? 'bg-red-500' : 'bg-purple-500'
+            }`}
+            style={{ width: `${Math.min((selectedFile.view_count / selectedFile.view_limit) * 100, 100)}%` }}
+          />
+        </div>
+        <p className={`text-[10px] mt-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
+          {selectedFile.views_remaining === 0 ? 'Limit reached' : `${selectedFile.views_remaining} remaining`}
+        </p>
+      </div>
+    ) : (
+      <p className={`text-sm font-medium ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
+        {selectedFile.view_count} views · No limit
+      </p>
+    )}
+  </div>
+)}
               </div>
             </div>
 

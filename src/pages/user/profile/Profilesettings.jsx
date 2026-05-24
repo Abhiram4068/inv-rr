@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
-import { profile, updateProfile, getDesignations, changeCurrentPassword, requestDesignationChange, deactivateAccount } from '../../../services/authService';
+import { profile, updateProfile, changeCurrentPassword, requestDesignationChange, deactivateAccount, getDesignations } from '../../../services/authService';
 import useAuth from '../../../hooks/useAuth';
 
 const EditAccount = () => {
@@ -114,7 +114,50 @@ const EditAccount = () => {
       setLoading(false);
     }
   };
+const validatePasswordChange = () => {
+  const {
+    current_password,
+    new_password,
+    confirm_password,
+  } = passwordData;
 
+  if (!current_password.trim()) {
+    return "Current password is required.";
+  }
+
+  if (!new_password.trim()) {
+    return "New password is required.";
+  }
+
+  if (!confirm_password.trim()) {
+    return "Please confirm your new password.";
+  }
+
+  // Prevent same password reuse
+  if (current_password === new_password) {
+    return "New password cannot be the same as current password.";
+  }
+
+  // Length validation
+  if (new_password.length < 8) {
+    return "Password must contain at least 8 characters.";
+  }
+
+  // Strong password validation
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+  if (!strongPasswordRegex.test(new_password)) {
+    return "Password must include uppercase, lowercase, number, and special character.";
+  }
+
+  // Confirm password check
+  if (new_password !== confirm_password) {
+    return "New passwords do not match.";
+  }
+
+  return null;
+};
   // --- Handler: Change password (PATCH /api/auth/change-password/) ---
   const handleChangePassword = async () => {
     setShowPasswordModal(false);
@@ -128,7 +171,7 @@ const EditAccount = () => {
       setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
       showToast('Password changed successfully.', 'success');
     } catch (err) {
-      showToast(err.response?.data?.current_password || 'Failed to change password.', 'error');
+      showToast(err.response?.data?.new_password || 'Failed to change password.', 'error');
     } finally {
       setLoading(false);
     }
@@ -147,7 +190,13 @@ const EditAccount = () => {
       setRequestedDesignation("");
       showToast('Designation change request sent. Awaiting admin approval.', 'success');
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Failed to submit request.', 'error');
+      const data = err.response?.data;
+      const msg =
+        data?.detail ||
+        data?.non_field_errors?.[0] ||
+        (typeof data?.non_field_errors === 'string' ? data.non_field_errors : null) ||
+        'Failed to submit request.';
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -313,10 +362,10 @@ const EditAccount = () => {
                     >
                       <option value="" disabled className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>Select new designation</option>
                       {designations
-                        .filter(d => d.label !== userProfile?.designation)
+                        .filter((d) => d.id !== userProfile?.designation_id)
                         .map((desig) => (
-                          <option key={desig.value} value={desig.value} className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>
-                            {desig.label}
+                          <option key={desig.id} value={desig.id}>
+                            {desig.name}
                           </option>
                         ))}
                     </select>
@@ -371,7 +420,16 @@ const EditAccount = () => {
               <div className="mt-8 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setShowPasswordModal(true)}
+                  onClick={() => {
+                    const validationError = validatePasswordChange();
+
+                    if (validationError) {
+                      showToast(validationError, 'error');
+                      return;
+                    }
+
+                    setShowPasswordModal(true);
+                  }}
                   disabled={!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm transition-all"
                 >
@@ -437,7 +495,7 @@ const EditAccount = () => {
         onClose={() => setShowDesignationModal(false)}
         onConfirm={handleDesignationRequest}
         title="Send Designation Request?"
-        message={`A request to change your designation to "${designations.find(d => d.value === requestedDesignation)?.label || requestedDesignation}" will be sent to your administrator for approval.`}
+        message={`A request to change your designation to "${designations.find(d => d.id === requestedDesignation)?.name}" will be sent to your administrator for approval.`}
         confirmText="Send Request"
         isDark={isDark}
       />

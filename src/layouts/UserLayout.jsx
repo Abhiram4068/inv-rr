@@ -15,8 +15,8 @@ const UserLayout = () => {
         <Sidebar isOpen={isSidebarOpen} />
         
        <main className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
-  <Outlet />
-</main>
+        <Outlet />
+      </main>
 
         <RightSidebar />
 

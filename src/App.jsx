@@ -8,6 +8,7 @@ import UserLayout from "./layouts/UserLayout";
 import StorageLayout from "./layouts/StorageManagement";
 import CollectionLayout from "./layouts/CollectionLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import UserOnlyRoute from "./routes/UserOnlyRoute";
 
 import Dashboard from "./pages/user/Dashboard";
 import PaginatedFiles from "./pages/user/PaginatedFiles";
@@ -62,13 +63,13 @@ function App() {
           <Route path="/login"        element={<Login />} />
           <Route path="/register"     element={<Register />} />
         </Route>
-<Route path="/files/public/:token/" element={<ExternalShareView />} />
+        <Route path="/files/public/:token/" element={<ExternalShareView />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/auth/reset-password/confirm" element={<ResetPassword />} />
         {/* ── Protected routes — cookie checked first ── */}
         <Route element={<ProtectedRoute />}>
           <Route path="/account-deactivated" element={<AccountDeactivated />} />
-
+ <Route element={<UserOnlyRoute />}>
           <Route element={<UserLayout />}>
             <Route path="/archives"     element={<ArchivesList />} />
             <Route path="/dashboard"     element={<Dashboard />} />
@@ -89,7 +90,7 @@ function App() {
             <Route path="/storage/trash"           element={<TrashManagement />} />
             <Route path="/recent" element={<RecentFiles />} />
           </Route>
-
+</Route>
          <Route element={<ThreadLayout />}>
           <Route path="/thread/:id" element={<ThreadVisualizer />} />
          </Route>

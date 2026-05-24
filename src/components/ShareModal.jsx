@@ -21,6 +21,8 @@ const ShareModal = ({
     download_limit: null,
     view_limit: null,
   });
+  const [isCustomExpiry, setIsCustomExpiry] = useState(false);
+  const [customExpiry, setCustomExpiry] = useState('');
 
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
@@ -57,7 +59,7 @@ const ShareModal = ({
 
     const payload = {
       recipient_emails: validEmails,
-      expiration_datetime: Number(shareData.expiration_datetime),
+      expiration_datetime: isCustomExpiry ? Number(customExpiry) : Number(shareData.expiration_datetime),
       title: shareData.title,
       message: shareData.message,
       permission: shareData.permission,
@@ -258,18 +260,43 @@ const ShareModal = ({
                 <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Link Expiry</label>
                 <div className="relative">
                   <select
-                    value={shareData.expiration_datetime}
-                    onChange={(e) => setShareData({ ...shareData, expiration_datetime: e.target.value })}
+                    value={isCustomExpiry ? 'custom' : shareData.expiration_datetime}
+                    onChange={(e) => {
+                      if (e.target.value === 'custom') {
+                        setIsCustomExpiry(true);
+                      } else {
+                        setIsCustomExpiry(false);
+                        setShareData({ ...shareData, expiration_datetime: e.target.value });
+                      }
+                    }}
                     className={`w-full border rounded-xl p-4 text-sm outline-none cursor-pointer appearance-none
                       ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-[#808080]' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
                   >
                     <option value="24">24 Hours</option>
                     <option value="48">48 Hours</option>
                     <option value="168">7 Days</option>
+                    <option value="custom">Custom (Hours)</option>
                   </select>
                   <i className={`fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none ${isDark ? 'text-[#444]' : 'text-slate-400'}`} />
                 </div>
               </div>
+
+              {isCustomExpiry && (
+                <div className="md:col-span-2">
+                  <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Custom Expiry (Hours)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="168"
+                    value={customExpiry}
+                    onChange={(e) => setCustomExpiry(e.target.value)}
+                    placeholder="Enter expiry in hours (max 168)"
+                    className={`w-full border rounded-xl p-4 text-sm outline-none transition-all
+                      ${isDark ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]'
+                               : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
+                  />
+                </div>
+              )}
 
               <div>
                 <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Security</label>
