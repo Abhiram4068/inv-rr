@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
@@ -14,62 +14,66 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { useParams, useNavigate } from "react-router-dom";
+import TopToast from "../../components/TopToast";
+import {
+  getThreads,
+  getThreadGraph,
+  createNode,
+  updateNode,
+  deleteNode,
+  updateNodePosition,
+  createStage,
+  updateStage,
+  deleteStage,
+  addDependency,
+  removeDependency,
+  updateDependency,
+  getNodeFiles,
+  uploadNodeFile,
+  deleteNodeFile,
+  getNodeActivity,
+  getApiErrorMessage,
+  getApiSuccessMessage,
+} from "../../services/threadService";
 
-// ── API layer ──────────────────────────────────────────────────────────────────
-const BASE = "/api";
-
-function authHeaders() {
-  const t = localStorage.getItem("access") || localStorage.getItem("access_token") || localStorage.getItem("token");
-  return { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) };
-}
-
-async function apiFetch(url, opts = {}) {
-  const res = await fetch(url, { headers: authHeaders(), ...opts });
-  if (res.status === 204) return null;
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.detail || "API error");
-  return data;
-}
-
-const api = {
-  getThreads: () => apiFetch(`${BASE}/threads/`),
-  createThread: (body) => apiFetch(`${BASE}/threads/`, { method: "POST", body: JSON.stringify(body) }),
-  deleteThread: (id) => apiFetch(`${BASE}/threads/${id}/`, { method: "DELETE" }),
-  getGraph: (id) => apiFetch(`${BASE}/threads/${id}/graph/`),
-  createNode: (threadId, body) => apiFetch(`${BASE}/threads/${threadId}/nodes/`, { method: "POST", body: JSON.stringify(body) }),
-  updateNode: (id, body) => apiFetch(`${BASE}/nodes/${id}/`, { method: "PUT", body: JSON.stringify(body) }),
-  deleteNode: (id) => apiFetch(`${BASE}/nodes/${id}/`, { method: "DELETE" }),
-  updatePosition: (id, body) => apiFetch(`${BASE}/nodes/${id}/position/`, { method: "PATCH", body: JSON.stringify(body) }),
-  createStage: (threadId, name) => apiFetch(`${BASE}/threads/${threadId}/stages/`, { method: "POST", body: JSON.stringify({ name }) }),
-  updateStage: (id, name) => apiFetch(`${BASE}/stages/${id}/`, { method: "PUT", body: JSON.stringify({ name }) }),
-  deleteStage: (id) => apiFetch(`${BASE}/stages/${id}/`, { method: "DELETE" }),
-  getStages: (id) => apiFetch(`${BASE}/threads/${id}/stages/`),
-  addDependency: (src, tgt, type = "DEPENDS_ON") =>
-    apiFetch(`${BASE}/nodes/${src}/dependencies/`, {
-      method: "POST",
-      body: JSON.stringify({ source_node: src, target_node: tgt, dependency_type: type }),
-    }),
-  removeDependency: (depId) => apiFetch(`${BASE}/dependencies/${depId}/`, { method: "DELETE" }),
-  updateDependency: (depId, type) =>
-    apiFetch(`${BASE}/dependencies/${depId}/`, {
-      method: "PATCH",
-      body: JSON.stringify({ dependency_type: type }),
-    }),
-  getFiles: (id) => apiFetch(`${BASE}/nodes/${id}/files/`),
-  uploadFile: (id, fd) => {
-    const t = localStorage.getItem("access") || localStorage.getItem("access_token") || localStorage.getItem("token");
-    return fetch(`${BASE}/nodes/${id}/files/`, { method: "POST", headers: t ? { Authorization: `Bearer ${t}` } : {}, body: fd })
-      .then(async r => { if (!r.ok) throw new Error("Upload failed"); return r.json(); });
-  },
-  deleteFile: (id) => apiFetch(`${BASE}/files/${id}/`, { method: "DELETE" }),
-  getActivity: (id) => apiFetch(`${BASE}/nodes/${id}/activity/`),
-};
-
-// ── Design tokens (image-matching) ─────────────────────────────────────────────
+// ── Design tokens ──────────────────────────────────────────────────────────────
 const ff = "'Inter', 'DM Sans', system-ui, sans-serif";
 
 const ThemeStyles = ({ isDark }) => (
   <style>{`
+    /* ── Custom scrollbars (global) ── */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: ${isDark ? "#2d2d2d transparent" : "#d1d9e6 transparent"};
+    }
+    *::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    *::-webkit-scrollbar-thumb {
+      background: ${isDark ? "#2d2d2d" : "#d1d9e6"};
+      border-radius: 999px;
+      transition: background .2s;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background: ${isDark ? "#444" : "#94a3b8"};
+    }
+    *::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    /* ── ReactFlow canvas: allow vertical scroll with scrollbar,
+          disable wheel-zoom so the page scrolls naturally ── */
+    .rf-canvas-wrap {
+      overflow: auto !important;
+    }
+    .rf-canvas-wrap .react-flow__renderer {
+      overflow: visible !important;
+    }
+
     .theme-wrapper {
       --t-sidebarBg: ${isDark ? "#050505" : "#f8fafc"};
       --t-sidebarBorder: ${isDark ? "#1a1a1a" : "#e2e8f0"};
@@ -77,7 +81,7 @@ const ThemeStyles = ({ isDark }) => (
       --t-sidebarTextMuted: ${isDark ? "#64748b" : "#94a3b8"};
       --t-sidebarActiveBg: ${isDark ? "#1a1a1a" : "#eff6ff"};
       --t-sidebarActiveText: #3b82f6;
-      --t-pageBg: ${isDark ? "#000000" : "#eff2f6"};
+      --t-pageBg: ${isDark ? "#000000" : "#e8ecf1"};
       --t-cardBg: ${isDark ? "#0d0d0d" : "#ffffff"};
       --t-border: ${isDark ? "#262626" : "#e2e8f0"};
       --t-borderSoft: ${isDark ? "#1a1a1a" : "#f1f5f9"};
@@ -95,24 +99,35 @@ const ThemeStyles = ({ isDark }) => (
       --t-dangerBorder: ${isDark ? "#331111" : "#ffe4e6"};
       --t-dangerText: ${isDark ? "#f87171" : "#e11d48"};
       --t-inputBg: ${isDark ? "#050505" : "#ffffff"};
-      --t-dotsBg: ${isDark ? "rgba(10,10,10,0.95)" : "rgba(255,255,255,0.95)"};
+      --t-dotsBg: ${isDark ? "rgba(10,10,10,0.95)" : "rgba(255,255,255,0.97)"};
       --t-iconBg: ${isDark ? "#1a1a1a" : "#f1f5f9"};
       --t-iconColor: ${isDark ? "#94a3b8" : "#64748b"};
-      --t-stageBg: ${isDark ? "rgba(255, 255, 255, 0.03)" : "rgba(255, 255, 255, 0.6)"};
-      --t-stageHeaderBg: ${isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(255, 255, 255, 0.9)"};
-      --t-edgeColor: ${isDark ? "#64748b" : "#cbd5e1"};
-      --t-statusActiveBg: ${isDark ? "rgba(30, 58, 138, 0.3)" : "#eff6ff"};
+      --t-stageBg: ${isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.55)"};
+      --t-stageHeaderBg: ${isDark ? "rgba(255,255,255,0.06)" : "#f8fafc"};
+      --t-stageBorder: ${isDark ? "#262626" : "#d1d9e6"};
+      --t-nodeBg: ${isDark ? "#0d0d0d" : "#ffffff"};
+      --t-nodeBorder: ${isDark ? "#262626" : "#dde3ed"};
+      --t-nodeShadow: ${isDark
+        ? "0 0 0 1px rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.6)"
+        : "0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.08)"};
+      --t-nodeSelectedShadow: ${isDark
+        ? "0 0 0 2px #3b82f6, 0 4px 20px rgba(0,0,0,0.7)"
+        : "0 0 0 2px #3b82f6, 0 4px 20px rgba(59,130,246,0.15)"};
+      --t-edgeColor: ${isDark ? "#475569" : "#94a3b8"};
+      --t-statusActiveBg: ${isDark ? "rgba(30,58,138,0.3)" : "#eff6ff"};
       --t-statusActiveColor: ${isDark ? "#93c5fd" : "#1d4ed8"};
       --t-statusInactiveBg: ${isDark ? "#111111" : "#f1f5f9"};
       --t-statusInactiveColor: ${isDark ? "#64748b" : "#475569"};
-      --t-statusReviewBg: ${isDark ? "rgba(69, 26, 3, 0.3)" : "#fefce8"};
+      --t-statusReviewBg: ${isDark ? "rgba(69,26,3,0.3)" : "#fefce8"};
       --t-statusReviewColor: ${isDark ? "#fde68a" : "#854d0e"};
-      --t-statusBlockedBg: ${isDark ? "rgba(69, 10, 10, 0.3)" : "#fef2f2"};
+      --t-statusBlockedBg: ${isDark ? "rgba(69,10,10,0.3)" : "#fef2f2"};
       --t-statusBlockedColor: ${isDark ? "#fca5a5" : "#991b1b"};
-      --t-statusCompletedBg: ${isDark ? "rgba(6, 78, 59, 0.3)" : "#f0fdf4"};
+      --t-statusCompletedBg: ${isDark ? "rgba(6,78,59,0.3)" : "#f0fdf4"};
       --t-statusCompletedColor: ${isDark ? "#6ee7b7" : "#166534"};
-      --t-shadowSoft: ${isDark ? "0 10px 30px rgba(0,0,0,0.9)" : "0 4px 12px rgba(2,6,23,0.06)"};
-      --t-shadowCard: ${isDark ? "0 0 0 1px rgba(255,255,255,0.08), 0 10px 20px rgba(0,0,0,0.7)" : "0 1px 2px rgba(2,6,23,0.04), 0 6px 16px rgba(2,6,23,0.04)"};
+      --t-shadowSoft: ${isDark ? "0 10px 30px rgba(0,0,0,0.9)" : "0 4px 20px rgba(15,23,42,0.1)"};
+      --t-shadowCard: ${isDark
+        ? "0 0 0 1px rgba(255,255,255,0.08), 0 10px 20px rgba(0,0,0,0.7)"
+        : "0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.08)"};
     }
   `}</style>
 );
@@ -133,7 +148,6 @@ const T = {
   textFaint: "var(--t-textFaint)",
   accent: "var(--t-accent)",
   accentSoft: "var(--t-accentSoft)",
-  // Status colors 
   statusCompleted: "#22c55e",
   statusInProgress: "#3b82f6",
   statusInReview: "#f59e0b",
@@ -142,12 +156,12 @@ const T = {
 };
 
 const STATUS_CFG = {
-  INACTIVE: { label: "Inactive", color: "var(--t-statusInactiveColor)", bg: "var(--t-statusInactiveBg)", dot: T.statusNotStarted, top: T.statusNotStarted },
-  ACTIVE: { label: "Active", color: "var(--t-statusActiveColor)", bg: "var(--t-statusActiveBg)", dot: T.statusInProgress, top: T.statusInProgress },
-  NEEDS_REVIEW: { label: "Needs Review", color: "var(--t-statusReviewColor)", bg: "var(--t-statusReviewBg)", dot: T.statusInReview, top: T.statusInReview },
-  OUTDATED: { label: "Outdated", color: "var(--t-statusBlockedColor)", bg: "var(--t-statusBlockedBg)", dot: T.statusBlocked, top: T.statusBlocked },
-  BLOCKED: { label: "Blocked", color: "var(--t-statusBlockedColor)", bg: "var(--t-statusBlockedBg)", dot: T.statusBlocked, top: T.statusBlocked },
-  ARCHIVED: { label: "Completed", color: "var(--t-statusCompletedColor)", bg: "var(--t-statusCompletedBg)", dot: T.statusCompleted, top: T.statusCompleted },
+  INACTIVE:     { label: "Inactive",      color: "var(--t-statusInactiveColor)",  bg: "var(--t-statusInactiveBg)",  dot: T.statusNotStarted, top: "#94a3b8" },
+  ACTIVE:       { label: "Active",        color: "var(--t-statusActiveColor)",    bg: "var(--t-statusActiveBg)",    dot: T.statusInProgress,  top: "#3b82f6" },
+  NEEDS_REVIEW: { label: "Needs Review",  color: "var(--t-statusReviewColor)",    bg: "var(--t-statusReviewBg)",    dot: T.statusInReview,    top: "#f59e0b" },
+  OUTDATED:     { label: "Outdated",      color: "var(--t-statusBlockedColor)",   bg: "var(--t-statusBlockedBg)",   dot: T.statusBlocked,     top: "#ef4444" },
+  BLOCKED:      { label: "Blocked",       color: "var(--t-statusBlockedColor)",   bg: "var(--t-statusBlockedBg)",   dot: T.statusBlocked,     top: "#ef4444" },
+  ARCHIVED:     { label: "Completed",     color: "var(--t-statusCompletedColor)", bg: "var(--t-statusCompletedBg)", dot: T.statusCompleted,   top: "#22c55e" },
 };
 
 const SW = 240;
@@ -156,7 +170,7 @@ const NH = 96;
 const NG = 58;
 const PT = 54;
 
-// ── Theme sync (preserved) ─────────────────────────────────────────────────────
+// ── Theme sync ─────────────────────────────────────────────────────────────────
 function useThemeSync() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   useEffect(() => {
@@ -179,11 +193,11 @@ function StatusPill({ status }) {
   const c = STATUS_CFG[status] || STATUS_CFG.ACTIVE;
   return (
     <span style={{
-      display: "inline-flex", alignItems: "center", gap: 6,
-      background: c.bg, color: c.color, fontSize: 10.5, fontWeight: 600,
-      padding: "3px 9px", borderRadius: 999, letterSpacing: "0.01em",
+      display: "inline-flex", alignItems: "center", gap: 5,
+      background: c.bg, color: c.color, fontSize: 10, fontWeight: 700,
+      padding: "3px 8px", borderRadius: 999, letterSpacing: "0.02em",
     }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.dot }} />
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: c.dot, flexShrink: 0 }} />
       {c.label}
     </span>
   );
@@ -198,7 +212,7 @@ function Btn({ children, onClick, variant = "primary", small, disabled, style: e
     fontFamily: ff, opacity: disabled ? 0.55 : 1, transition: "all .15s",
   };
   const v = {
-    primary: { background: T.accent, color: "#fff", boxShadow: "0 1px 2px rgba(124,92,255,.35)" },
+    primary: { background: T.accent, color: "#fff", boxShadow: "0 1px 3px rgba(59,130,246,.4)" },
     ghost: { background: "var(--t-btnGhostBg)", border: `1px solid ${T.border}`, color: T.text },
     soft: { background: "var(--t-btnSoftBg)", color: T.text },
     danger: { background: "var(--t-dangerBg)", color: "var(--t-dangerText)", border: "1px solid var(--t-dangerBorder)" },
@@ -279,26 +293,32 @@ function Dots({ onEdit, onFiles, onDelete }) {
   );
 }
 
-// ── Stage lane (background column header) ──────────────────────────────────────
+// ── Stage lane ─────────────────────────────────────────────────────────────────
 function StageLane({ data }) {
-  const { label, height, nodeCount } = data;
+  const { label, height } = data;
   return (
     <div style={{ width: SW, height, pointerEvents: "none", fontFamily: ff, position: "relative" }}>
-      {/* Box grouping the nodes */}
       <div style={{
-        width: "100%", height: "100%", border: `2px solid var(--t-borderSoft)`, borderRadius: 14,
-        background: "var(--t-stageBg)", boxSizing: "border-box"
+        width: "100%", height: "100%",
+        border: "1.5px solid var(--t-stageBorder)",
+        borderRadius: 14,
+        background: "var(--t-stageBg)",
+        boxSizing: "border-box",
+        boxShadow: "inset 0 1px 3px rgba(15,23,42,0.04)",
       }}>
         <div style={{
-          padding: "12px 16px", fontSize: 13, fontWeight: 700, color: T.text, borderBottom: `2px solid var(--t-borderSoft)`,
-          background: "var(--t-stageHeaderBg)", borderTopLeftRadius: 12, borderTopRightRadius: 12,
-          textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", justifyContent: "space-between", alignItems: "center",
-          pointerEvents: "auto"
+          padding: "11px 14px", fontSize: 11, fontWeight: 700, color: T.textMuted,
+          borderBottom: "1.5px solid var(--t-stageBorder)",
+          background: "var(--t-stageHeaderBg)",
+          borderTopLeftRadius: 12, borderTopRightRadius: 12,
+          textTransform: "uppercase", letterSpacing: "0.08em",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          pointerEvents: "auto",
         }}>
           <span>{label}</span>
-          <div style={{ display: "flex", gap: 4 }}>
-            <button onClick={() => data.onRenameStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, padding: 4 }}>✏️</button>
-            <button onClick={() => data.onDeleteStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, padding: 4 }}>🗑</button>
+          <div style={{ display: "flex", gap: 2 }}>
+            <button onClick={() => data.onRenameStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: "2px 4px", color: T.textFaint, borderRadius: 4 }}>✏️</button>
+            <button onClick={() => data.onDeleteStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: "2px 4px", color: T.textFaint, borderRadius: 4 }}>🗑</button>
           </div>
         </div>
       </div>
@@ -306,88 +326,55 @@ function StageLane({ data }) {
   );
 }
 
-// ── Thread node card (image-style) ─────────────────────────────────────────────
-// function nodeIcon(node, isRoot) {
-//   const t = (node.title || "").toLowerCase();
-//   if (isRoot) return { emoji: "📋", bg: "var(--t-statusCompletedBg)", color: "var(--t-statusCompletedColor)" };
-//   if (t.includes("design") && t.includes("system")) return { emoji: "🎨", bg: T.accentSoft, color: T.accent };
-//   if (t.includes("design") || t.includes("ui") || t.includes("ux")) return { emoji: "🖼️", bg: T.accentSoft, color: T.accent };
-//   if (t.includes("requirement") || t.includes("doc") || t.includes("analysis")) return { emoji: "📄", bg: "var(--t-statusActiveBg)", color: "var(--t-statusActiveColor)" };
-//   if (t.includes("frontend") || t.includes("backend") || t.includes("dev") || t.includes("code")) return { emoji: "💻", bg: "var(--t-statusActiveBg)", color: "var(--t-statusActiveColor)" };
-//   if (t.includes("test") || t.includes("qa")) return { emoji: "🧪", bg: "var(--t-statusBlockedBg)", color: "var(--t-statusBlockedColor)" };
-//   if (t.includes("deploy") || t.includes("launch")) return { emoji: "🚀", bg: "var(--t-statusCompletedBg)", color: "var(--t-statusCompletedColor)" };
-//   if (t.includes("alt") || t.includes("concept")) return { emoji: "🧪", bg: "var(--t-statusReviewBg)", color: "var(--t-statusReviewColor)" };
-//   return { emoji: "🗂️", bg: "var(--t-iconBg)", color: "var(--t-iconColor)" };
-// }
-
+// ── Thread node card ───────────────────────────────────────────────────────────
 function ThreadNode({ data, selected }) {
   const { node, isRoot, onEdit, onFiles, onDelete, indexLabel } = data;
   const sc = STATUS_CFG[node.status] || STATUS_CFG.ACTIVE;
-  // const ic = nodeIcon(node, isRoot);
 
   return (
     <div style={{
       width: SW - 24,
       minHeight: NH,
-      background: T.cardBg,
-      border: `1px solid ${selected ? T.accent : T.border}`,
-      borderRadius: 14,
-      paddingTop: 0,
+      background: "var(--t-nodeBg)",
+      borderLeft: `3px solid ${sc.top}`,
+      border: selected ? `1.5px solid ${T.accent}` : "1.5px solid var(--t-nodeBorder)",
+      borderRadius: 10,
       fontFamily: ff,
       position: "relative",
       boxSizing: "border-box",
-      boxShadow: selected
-        ? `0 0 0 3px ${T.accent}33, var(--t-shadowSoft)`
-        : "var(--t-shadowCard)",
+      boxShadow: selected ? "var(--t-nodeSelectedShadow)" : "var(--t-nodeShadow)",
       overflow: "visible",
       cursor: "default",
+      zIndex: 10,
     }}>
-      {/* Top color bar */}
-      <div style={{ height: 4, background: sc.top, width: "100%", borderTopLeftRadius: 13, borderTopRightRadius: 13 }} />
-
-      {/* Status check pill (top-right corner circle like image) */}
-      <div style={{
-        position: "absolute", top: 10, right: 10,
-        width: 18, height: 18, borderRadius: "50%",
-        background: T.cardBg, border: `1.5px solid ${sc.dot}`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 10, color: sc.dot, fontWeight: 800, zIndex: 5,
-      }}>
-        ✓
-      </div>
-
-      {/* Handles */}
       <Handle type="target" position={Position.Left}
-        style={{ width: 10, height: 10, background: T.textFaint, border: `2px solid ${T.cardBg}`, left: -6 }} />
+        style={{ width: 9, height: 9, background: T.textFaint, border: `2px solid var(--t-nodeBg)`, left: -7 }} />
       <Handle type="source" position={Position.Right}
-        style={{ width: 10, height: 10, background: T.accent, border: `2px solid ${T.cardBg}`, right: -6, cursor: "crosshair" }} />
+        style={{ width: 9, height: 9, background: T.accent, border: `2px solid var(--t-nodeBg)`, right: -7, cursor: "crosshair" }} />
 
-      <div style={{ padding: "10px 12px 12px" }}>
-        {/* Index number top-left */}
-        <div style={{ fontSize: 11, fontWeight: 700, color: T.textFaint, marginBottom: 6 }}>
-          {indexLabel}
+      <div style={{ padding: "10px 12px 11px 11px" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: T.textFaint, marginBottom: 5, letterSpacing: "0.02em" }}>
+          #{indexLabel}
         </div>
-
-        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{
-              fontWeight: 700, fontSize: 12.5, color: T.text,
-              lineHeight: 1.3, marginBottom: 3,
-              display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-            }}>
-              {node.title}
-            </div>
-            <div style={{ fontSize: 10.5, color: T.textFaint, fontWeight: 500 }}>
-              {new Date(node.created_at || Date.now()).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-            </div>
-          </div>
+        <div style={{
+          fontWeight: 700, fontSize: 12.5, color: T.text,
+          lineHeight: 1.35, marginBottom: 4,
+          display: "-webkit-box", WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical", overflow: "hidden",
+          paddingRight: 24,
+        }}>
+          {node.title}
         </div>
-
-        {/* Footer: avatars stub + status */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
-          <div style={{ display: "flex" }}>
-            <p style={{ fontSize: 10.5, color: T.textFaint, fontWeight: 500 , }}>Total files : <span style={{ color: T.text, fontWeight: 700 }}>{node.file_count}</span></p>
-          </div>
+        <div style={{ fontSize: 10.5, color: T.textFaint, fontWeight: 500, marginBottom: 10 }}>
+          {new Date(node.created_at || Date.now()).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          paddingTop: 8, borderTop: "1px solid var(--t-borderSoft)",
+        }}>
+          <span style={{ fontSize: 10.5, color: T.textFaint, fontWeight: 500 }}>
+            Files: <span style={{ color: T.textMuted, fontWeight: 700 }}>{node.file_count}</span>
+          </span>
           <StatusPill status={node.status} />
         </div>
       </div>
@@ -411,34 +398,44 @@ function formatDependencyLabel(type) {
 }
 
 const DEPENDENCY_TYPES = [
-  { value: "DEPENDS_ON", label: "Depends On" },
+  { value: "DEPENDS_ON",   label: "Depends On" },
   { value: "REQUIRED_FOR", label: "Required For" },
-  { value: "WAITING_FOR", label: "Waiting For" },
-  { value: "RELATED", label: "Related" },
-  { value: "NOT_SURE", label: "Not Sure" },
+  { value: "WAITING_FOR",  label: "Waiting For" },
+  { value: "RELATED",      label: "Related" },
+  { value: "NOT_SURE",     label: "Not Sure" },
   { value: "NEEDS_REVIEW", label: "Needs Review" },
 ];
 
 // ── File modal ─────────────────────────────────────────────────────────────────
-function FileModal({ open, onClose, node, onChange }) {
+function FileModal({ open, onClose, node, onChange, showToast }) {
   const [files, setFiles] = useState([]);
   const [staged, setStaged] = useState([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (open && node) api.getFiles(node.id).then(setFiles).catch(() => setFiles([]));
+    if (open && node) getNodeFiles(node.id).then(setFiles).catch(() => setFiles([]));
     setStaged([]);
   }, [open, node?.id]);
 
   const upload = async () => {
     setBusy(true);
     let changed = false;
+    let lastMessage = null;
     for (const f of staged) {
       const fd = new FormData(); fd.append("file", f);
-      try { const r = await api.uploadFile(node.id, fd); setFiles(p => [r, ...p]); changed = true; } catch { }
+      try {
+        const r = await uploadNodeFile(node.id, fd);
+        setFiles((p) => [r, ...p]);
+        changed = true;
+        lastMessage = getApiSuccessMessage(r, null);
+      } catch (e) {
+        showToast?.(getApiErrorMessage(e, "Upload failed"), "error");
+      }
     }
-    setStaged([]); setBusy(false);
+    setStaged([]);
+    setBusy(false);
     if (changed) {
+      showToast?.(lastMessage || "File(s) uploaded successfully", "success");
       if (onChange) onChange();
       onClose();
     }
@@ -466,7 +463,11 @@ function FileModal({ open, onClose, node, onChange }) {
           <span>📎</span>
           <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.original_name}</div>
           {f.file_url && <a href={f.file_url} download style={{ fontSize: 12, color: T.accent }}>⬇</a>}
-          <button onClick={() => api.deleteFile(f.id).then(() => { setFiles(p => p.filter(x => x.id !== f.id)); if (onChange) onChange(); })} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 15 }}>×</button>
+          <button onClick={() => deleteNodeFile(f.id).then((res) => {
+            setFiles((p) => p.filter((x) => x.id !== f.id));
+            showToast?.(getApiSuccessMessage(res, "File removed"), "success");
+            if (onChange) onChange();
+          }).catch((e) => showToast?.(getApiErrorMessage(e, "Failed to remove file"), "error"))} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 15 }}>×</button>
         </div>
       ))}
       {!files.length && !staged.length && <div style={{ color: T.textFaint, fontSize: 12, textAlign: "center", paddingTop: 4 }}>No files yet</div>}
@@ -498,7 +499,7 @@ function NodeFormModal({ open, onClose, onSubmit, initial, title }) {
   );
 }
 
-// ── Feedback Modals ──────────────────────────────────────────────────────────
+// ── Feedback Modals ────────────────────────────────────────────────────────────
 function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText = "Confirm", variant = "primary" }) {
   return (
     <Modal open={open} onClose={onClose} title={title} width={380}>
@@ -538,16 +539,16 @@ function AlertModal({ open, onClose, title, message }) {
   );
 }
 
-// ── Right Detail Panel (image-style) ───────────────────────────────────────────
-function NodePanel({ node, onClose, onEdit, onFiles, onRefresh, showConfirm, showError }) {
+// ── Right Detail Panel ─────────────────────────────────────────────────────────
+function NodePanel({ node, onClose, onEdit, onFiles, onDelete, onRefresh, showConfirm, showToast }) {
   const [activity, setActivity] = useState([]);
   const [files, setFiles] = useState([]);
   const [tab, setTab] = useState("activity");
 
   const loadData = useCallback(() => {
     if (!node) return;
-    api.getActivity(node.id).then(setActivity).catch(() => setActivity([]));
-    api.getFiles(node.id).then(setFiles).catch(() => setFiles([]));
+    getNodeActivity(node.id).then(setActivity).catch(() => setActivity([]));
+    getNodeFiles(node.id).then(setFiles).catch(() => setFiles([]));
   }, [node]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -561,32 +562,26 @@ function NodePanel({ node, onClose, onEdit, onFiles, onRefresh, showConfirm, sho
       variant: "danger",
       onConfirm: async () => {
         try {
-          await api.deleteFile(file.id);
+          const res = await deleteNodeFile(file.id);
           loadData();
           if (onRefresh) onRefresh();
+          showToast?.(getApiSuccessMessage(res, "File removed"), "success");
         } catch (e) {
-          showError(e);
+          showToast?.(getApiErrorMessage(e, "Failed to remove file"), "error");
         }
       }
     });
   };
 
   if (!node) return null;
-  const sc = STATUS_CFG[node.status] || STATUS_CFG.ACTIVE;
-  // const ic = nodeIcon(node, false);
   const EVT = { CREATED: "🌱", UPDATED: "✏️", FILE_UPLOADED: "📎", FILE_DELETED: "🗑", STATUS_CHANGED: "🔄", DEPENDENCY_ADDED: "🔗" };
 
   return (
     <div style={{ width: 320, background: T.cardBg, borderLeft: `1px solid ${T.border}`, display: "flex", flexDirection: "column", flexShrink: 0, fontFamily: ff }}>
-      {/* Header */}
       <div style={{ padding: "16px 18px", borderBottom: `1px solid ${T.borderSoft}` }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0, flex: 1 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 8,
-              // background: ic.bg, color: ic.color,
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0,
-            }}></div>
+            <div style={{ width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}></div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: 13.5, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{node.title}</div>
               <div style={{ fontSize: 11, color: T.textFaint, marginTop: 2 }}>
@@ -600,7 +595,6 @@ function NodePanel({ node, onClose, onEdit, onFiles, onRefresh, showConfirm, sho
         {node.description && <div style={{ fontSize: 12, color: T.textMuted, marginTop: 10, lineHeight: 1.6 }}>{node.description}</div>}
       </div>
 
-      {/* Tabs */}
       <div style={{ display: "flex", borderBottom: `1px solid ${T.borderSoft}`, padding: "0 12px" }}>
         {[["details", "Details"], ["files", `Files (${files.length})`], ["activity", "Activity"]].map(([k, l]) => (
           <button key={k} onClick={() => k === "details" ? onEdit(node) : setTab(k)}
@@ -642,24 +636,21 @@ function NodePanel({ node, onClose, onEdit, onFiles, onRefresh, showConfirm, sho
                 {f.file_url && (
                   <button onClick={() => window.open(f.file_url, "_blank")} title="View File" style={{ width: 26, height: 26, borderRadius: 6, border: "none", background: "var(--t-btnSoftBg)", color: T.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>👁️</button>
                 )}
-                <button 
-                  onClick={() => onRemoveFile(f)} 
-                  title="Remove from node" 
-                  style={{ width: 26, height: 26, borderRadius: 6, border: "none", background: "var(--t-dangerBg)", color: "var(--t-dangerText)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}
-                >🗑️</button>
+                <button onClick={() => onRemoveFile(f)} title="Remove from node" style={{ width: 26, height: 26, borderRadius: 6, border: "none", background: "var(--t-dangerBg)", color: "var(--t-dangerText)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🗑️</button>
               </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Bottom actions */}
       <div style={{ padding: "12px 16px", borderTop: `1px solid ${T.borderSoft}`, display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ display: "flex", gap: 8 }}>
           <Btn small variant="ghost" onClick={() => onEdit(node)} style={{ flex: 1 }}>✏️ Rename / Edit</Btn>
           <Btn small variant="ghost" onClick={() => onFiles(node)} style={{ flex: 1 }}>📎 Files</Btn>
         </div>
-        <Btn small variant="ghost" onClick={() => onDelete(node)} style={{ color: "var(--t-dangerText)", borderColor: "var(--t-dangerBorder)" }}>🗑 Archive Node</Btn>
+        {!node.is_root && (
+          <Btn small variant="ghost" onClick={() => onDelete(node)} style={{ color: "var(--t-dangerText)", borderColor: "var(--t-dangerBorder)" }}>🗑 Archive Node</Btn>
+        )}
       </div>
     </div>
   );
@@ -669,14 +660,13 @@ function NodePanel({ node, onClose, onEdit, onFiles, onRefresh, showConfirm, sho
 function buildGraph(apiNodes, apiEdges, stages, thread, handlers) {
   const stageMap = {};
   apiNodes.forEach(n => {
-    const s = n.stage; // This is the stage ID
+    const s = n.stage;
     if (!stageMap[s]) stageMap[s] = [];
     stageMap[s].push(n);
   });
 
-  const numStages = stages.length;
   const laneHeights = {};
-  stages.forEach((stage, i) => {
+  stages.forEach((stage) => {
     const cnt = (stageMap[stage.id] || []).length;
     laneHeights[stage.id] = Math.max(cnt, 1) * NH + Math.max(cnt - 1, 0) * NG + PT + 28;
   });
@@ -707,8 +697,7 @@ function buildGraph(apiNodes, apiEdges, stages, thread, handlers) {
   apiNodes.forEach(n => {
     const stageId = n.stage;
     const stageIdx = stages.findIndex(s => s.id === stageId);
-    if (stageIdx === -1) return; // Should not happen
-
+    if (stageIdx === -1) return;
     const sorted = (stageMap[stageId] || []).sort((a, b) => (a.row || 0) - (b.row || 0));
     const rowIdx = sorted.findIndex(x => x.id === n.id);
     counter++;
@@ -721,7 +710,7 @@ function buildGraph(apiNodes, apiEdges, stages, thread, handlers) {
       },
       data: {
         node: n,
-        isRoot: stageIdx === 0 && rowIdx === 0,
+        isRoot: Boolean(n.is_root),
         indexLabel: counter,
         ...handlers,
       },
@@ -740,11 +729,6 @@ function buildGraph(apiNodes, apiEdges, stages, thread, handlers) {
     labelBgPadding: [6, 3],
     labelBgBorderRadius: 6,
     labelBgStyle: { fill: "var(--t-cardBg)", fillOpacity: 0.95, stroke: "var(--t-border)", strokeWidth: 1 },
-    label: formatDependencyLabel(e.dependency_type),
-    labelStyle: { fill: T.textMuted, fontSize: 10, fontWeight: 700 },
-    labelBgPadding: [6, 3],
-    labelBgBorderRadius: 6,
-    labelBgStyle: { fill: "var(--t-cardBg)", fillOpacity: 0.95, stroke: "var(--t-border)", strokeWidth: 1 },
     markerEnd: { type: MarkerType.ArrowClosed, color: "var(--t-edgeColor)" },
     style: { stroke: "var(--t-edgeColor)", strokeWidth: 1.6 },
     data: { depId: e.id, type: e.dependency_type || "DEPENDS_ON", sourceTitle: e.source_node_title, targetTitle: e.target_node_title },
@@ -753,13 +737,8 @@ function buildGraph(apiNodes, apiEdges, stages, thread, handlers) {
   return { rfNodes, rfEdges };
 }
 
-
-
-
-
-
 // ── Canvas inner ───────────────────────────────────────────────────────────────
-function CanvasInner({ thread, onBack }) {
+function CanvasInner({ thread, onBack, showToast }) {
   const isDark = useThemeSync();
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState([]);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState([]);
@@ -775,14 +754,25 @@ function CanvasInner({ thread, onBack }) {
   const [stageNameInput, setStageNameInput] = useState("");
   const [edgeEditModal, setEdgeEditModal] = useState({ open: false, edge: null });
 
-  // Feedback states
-  const [alert, setAlert] = useState({ open: false, title: "Alert", message: "" });
   const [confirm, setConfirm] = useState({ open: false, title: "Confirm", message: "", onConfirm: () => {}, variant: "primary", confirmText: "Confirm" });
   const [prompt, setPrompt] = useState({ open: false, title: "Rename", label: "Name", initialValue: "", onSubmit: () => {} });
 
-  const showError = (e) => setAlert({ open: true, title: "Error", message: e.message || String(e) });
+  const notifyError = (e) => showToast(getApiErrorMessage(e), "error");
 
   const { fitView, zoomIn, zoomOut } = useReactFlow();
+
+  // ── Compute canvas content dimensions for scroll container ──────────────────
+  const canvasContentWidth = useMemo(() => {
+    if (!stages.length) return 1200;
+    return stages.length * (SW + SG) + 80;
+  }, [stages]);
+
+  const canvasContentHeight = useMemo(() => {
+    if (!rfNodes.length) return 800;
+    const laneNodes = rfNodes.filter(n => n.type === "stageLane");
+    const maxH = laneNodes.reduce((acc, n) => Math.max(acc, n.data?.height || 0), 0);
+    return maxH + 120;
+  }, [rfNodes]);
 
   async function handleDelete(node) {
     setConfirm({
@@ -792,8 +782,14 @@ function CanvasInner({ thread, onBack }) {
       confirmText: "Archive",
       variant: "danger",
       onConfirm: async () => {
-        try { await api.deleteNode(node.id); setSelectedNode(null); loadGraph(); }
-        catch (e) { showError(e); }
+        try {
+          const res = await deleteNode(node.id);
+          setSelectedNode(null);
+          loadGraph();
+          showToast(getApiSuccessMessage(res, "Node archived"), "success");
+        } catch (e) {
+          notifyError(e);
+        }
       }
     });
   }
@@ -805,8 +801,13 @@ function CanvasInner({ thread, onBack }) {
       label: "Stage Name",
       initialValue: stageData.label,
       onSubmit: async (newName) => {
-        try { await api.updateStage(stageData.id, newName); loadGraph(); }
-        catch (e) { showError(e); }
+        try {
+          const res = await updateStage(stageData.id, newName);
+          loadGraph();
+          showToast(getApiSuccessMessage(res, "Stage renamed"), "success");
+        } catch (e) {
+          notifyError(e);
+        }
       }
     });
   }
@@ -815,12 +816,17 @@ function CanvasInner({ thread, onBack }) {
     setConfirm({
       open: true,
       title: "Delete Stage",
-      message: `Delete "${stageData.label}"? All nodes currently in this stage will lose their column mapping and need to be re-positioned.`,
+      message: `Delete stage "${stageData.label}"? Stages with active nodes cannot be removed.`,
       confirmText: "Delete",
       variant: "danger",
       onConfirm: async () => {
-        try { await api.deleteStage(stageData.id); loadGraph(); }
-        catch (e) { showError(e); }
+        try {
+          const res = await deleteStage(stageData.id);
+          loadGraph();
+          showToast(getApiSuccessMessage(res, "Stage deleted"), "success");
+        } catch (e) {
+          notifyError(e);
+        }
       }
     });
   }
@@ -841,7 +847,7 @@ function CanvasInner({ thread, onBack }) {
   }, [thread, fitView]);
 
   const loadGraph = useCallback(() => {
-    api.getGraph(thread.id).then(data => {
+    getThreadGraph(thread.id).then(data => {
       const nodes = data?.nodes || [];
       const edges = data?.edges || [];
       const stgs = data?.stages || [];
@@ -860,27 +866,29 @@ function CanvasInner({ thread, onBack }) {
     const tgt = parseInt(params.target);
     if (src === tgt || isNaN(src) || isNaN(tgt)) return;
 
-    const existing = rfEdges.find(e => 
+    const existing = rfEdges.find(e =>
       (e.source === params.source && e.target === params.target) ||
       (e.source === params.target && e.target === params.source)
     );
 
     if (existing) {
-      setAlert({
-        open: true,
-        title: "Connection Exists",
-        message: existing.source === params.source 
-          ? "This dependency already exists." 
-          : "An inverse dependency already exists between these nodes."
-      });
+      showToast(
+        existing.source === params.source
+          ? "This dependency already exists."
+          : "An inverse dependency already exists between these nodes.",
+        "error"
+      );
       return;
     }
 
     try {
-      await api.addDependency(src, tgt, "DEPENDS_ON");
+      const res = await addDependency(src, tgt, "DEPENDS_ON");
       loadGraph();
-    } catch (e) { showError(e); }
-  }, [loadGraph, rfEdges]);
+      showToast(getApiSuccessMessage(res, "Connection created"), "success");
+    } catch (e) {
+      notifyError(e);
+    }
+  }, [loadGraph, rfEdges, showToast]);
 
   const onEdgeClick = useCallback((evt, edge) => {
     evt.stopPropagation();
@@ -888,9 +896,15 @@ function CanvasInner({ thread, onBack }) {
   }, []);
 
   const handleUpdateDependency = async (depId, type) => {
-    try { await api.updateDependency(depId, type); loadGraph(); }
-    catch (e) { showError(e); }
-    finally { setEdgeEditModal({ open: false, edge: null }); }
+    try {
+      const res = await updateDependency(depId, type);
+      loadGraph();
+      showToast(getApiSuccessMessage(res, "Connection updated"), "success");
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setEdgeEditModal({ open: false, edge: null });
+    }
   };
 
   const handleRemoveDependency = async (depId) => {
@@ -901,9 +915,15 @@ function CanvasInner({ thread, onBack }) {
       confirmText: "Remove",
       variant: "danger",
       onConfirm: async () => {
-        try { await api.removeDependency(depId); loadGraph(); }
-        catch (e) { showError(e); }
-        finally { setEdgeEditModal({ open: false, edge: null }); }
+        try {
+          const res = await removeDependency(depId);
+          loadGraph();
+          showToast(getApiSuccessMessage(res, "Connection removed"), "success");
+        } catch (e) {
+          notifyError(e);
+        } finally {
+          setEdgeEditModal({ open: false, edge: null });
+        }
       }
     });
   };
@@ -914,9 +934,8 @@ function CanvasInner({ thread, onBack }) {
     const stageIdx = Math.max(0, Math.round(rfNode.position.x / (SW + SG)));
     const targetStage = stages[stageIdx];
     if (!targetStage) return loadGraph();
-    
     const row = Math.max(0, Math.round((rfNode.position.y - PT) / (NH + NG)));
-    try { await api.updatePosition(nodeId, { stage: targetStage.id, row }); loadGraph(); }
+    try { await updateNodePosition(nodeId, { stage: targetStage.id, row }); loadGraph(); }
     catch { loadGraph(); }
   }, [loadGraph, stages]);
 
@@ -930,37 +949,47 @@ function CanvasInner({ thread, onBack }) {
     const { stageId } = addNodeModal;
     const inStage = rawNodes.filter(n => n.stage === stageId);
     const row = inStage.length ? Math.max(...inStage.map(n => n.row || 0)) + 1 : 0;
-    try { await api.createNode(thread.id, { ...form, stage: stageId, row }); }
-    catch (e) { showError(e); }
-    finally { setAddNodeModal({ open: false, stageId: null }); loadGraph(); }
+    try {
+      const res = await createNode(thread.id, { ...form, stage: stageId, row });
+      showToast(getApiSuccessMessage(res, "Node created"), "success");
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setAddNodeModal({ open: false, stageId: null });
+      loadGraph();
+    }
   };
 
   const handleEdit = async (form) => {
-    try { await api.updateNode(editModal.node.id, form); }
-    catch (e) { showError(e); }
-    finally { setEditModal({ open: false, node: null }); loadGraph(); }
+    try {
+      const res = await updateNode(editModal.node.id, form);
+      showToast(getApiSuccessMessage(res, "Node updated"), "success");
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setEditModal({ open: false, node: null });
+      loadGraph();
+    }
   };
-
 
   const handleAddStage = async () => {
     const label = stageNameInput.trim() || `Stage ${stages.length + 1}`;
     try {
-      await api.createStage(thread.id, label);
+      const res = await createStage(thread.id, label);
       setStageNameInput("");
       setAddStageModal(false);
       loadGraph();
-    } catch (e) { showError(e); }
+      showToast(getApiSuccessMessage(res, "Stage created"), "success");
+    } catch (e) {
+      notifyError(e);
+    }
   };
-
-
-  const graphHandlers = { onEdit: setEditModal, onFiles: setFileModal, onDelete: handleDelete, onRenameStage: handleRenameStage, onDeleteStage: handleDeleteStage };
 
   return (
     <div style={{ display: "flex", height: "100vh", background: T.pageBg, fontFamily: ff }}>
-
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        {/* Header: title + active pill */}
-        <div style={{ background: T.cardBg, padding: "16px 24px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* Header */}
+        <div style={{ background: T.cardBg, padding: "16px 24px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
           <div>
             <div style={{ marginBottom: 12 }}>
               <button onClick={onBack} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 13, color: T.textMuted, fontWeight: 600, fontFamily: ff, display: "flex", alignItems: "center", gap: 4, padding: 0 }}>
@@ -974,82 +1003,115 @@ function CanvasInner({ thread, onBack }) {
             <div style={{ fontSize: 12.5, color: T.textMuted, marginTop: 4 }}>Main thread for the {thread.title.toLowerCase()} project</div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
             {stages.map((stg, i) => (
               <button key={stg.id} onClick={() => setAddNodeModal({ open: true, stageId: stg.id })}
                 style={{
-                  background: i === 0 ? T.accent : T.cardBg,
-                  color: i === 0 ? "#ffffff" : T.text,
-                  border: `1px solid ${i === 0 ? T.accent : T.border}`,
-                  borderRadius: 8, padding: "6px 12px",
-                  fontSize: 11.5, fontWeight: 600, cursor: "pointer", fontFamily: ff,
-                  boxShadow: "var(--t-shadowCard)",
-                }}>
-                + {i === 0 ? thread.title : stg.name}
+                  background: "transparent", color: T.textMuted,
+                  border: `1px solid ${T.border}`,
+                  borderRadius: 7, padding: "5px 11px",
+                  fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: ff,
+                  display: "flex", alignItems: "center", gap: 5,
+                  transition: "all .15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = T.accent; e.currentTarget.style.color = T.accent; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.color = T.textMuted; }}
+              >
+                <span style={{ fontSize: 13, lineHeight: 1 }}>+</span>
+                {i === 0 ? thread.title : stg.name}
               </button>
             ))}
-            <Btn onClick={() => setAddStageModal(true)}>+ Add stage</Btn>
+            <div style={{ width: 1, height: 20, background: T.border, margin: "0 2px" }} />
+            <button onClick={() => setAddStageModal(true)}
+              style={{
+                background: T.accent, color: "#fff", border: "none",
+                borderRadius: 7, padding: "5px 12px",
+                fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: ff,
+                display: "flex", alignItems: "center", gap: 5,
+              }}>
+              <span style={{ fontSize: 13, lineHeight: 1 }}>+</span> Add stage
+            </button>
           </div>
         </div>
 
+        {/* Canvas + detail panel row */}
         <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
-          {/* Canvas */}
-          <div style={{ flex: 1, position: "relative" }}>
-            {/* Floating legend */}
 
+          {/*
+            ── Scrollable canvas wrapper ──────────────────────────────────────
+            The key insight: ReactFlow's own wheel handler zooms the viewport.
+            We wrap ReactFlow in an overflow:auto div. ReactFlow is given
+            zoomOnScroll=false and panOnScroll=false so wheel events bubble up
+            to this wrapper and scroll it normally. The user can still zoom
+            with ctrl+wheel or pinch, and pan by dragging the canvas.
+          */}
+          <div
+            style={{
+              flex: 1,
+              overflow: "auto",
+              position: "relative",
+              // The inner div below sets a minimum content size so the scrollbar appears
+            }}
+          >
+            {/* Minimum-size inner shell so scrollbars appear when content overflows */}
+            <div style={{ minWidth: canvasContentWidth, minHeight: canvasContentHeight, position: "relative", height: "100%" }}>
+              <ReactFlow
+                nodes={rfNodes}
+                edges={rfEdges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onEdgeClick={onEdgeClick}
+                onNodeDragStop={onNodeDragStop}
+                onNodeClick={onNodeClick}
+                nodeTypes={RF_NODE_TYPES}
+                fitView
+                // ── Disable zoom/pan on scroll so wheel events scroll the page ──
+                zoomOnScroll={false}
+                zoomOnPinch={true}
+                panOnScroll={false}
+                panOnDrag={true}
+                // Ctrl+wheel still zooms
+                zoomOnDoubleClick={false}
+                defaultEdgeOptions={{
+                  type: "smoothstep",
+                  markerEnd: { type: MarkerType.ArrowClosed, color: "var(--t-edgeColor)" },
+                  style: { stroke: "var(--t-edgeColor)", strokeWidth: 1.6 },
+                }}
+                connectionLineStyle={{ stroke: T.accent, strokeWidth: 2 }}
+                connectionLineType="smoothstep"
+                deleteKeyCode={null}
+                proOptions={{ hideAttribution: true }}
+                style={{ background: T.pageBg, width: "100%", height: "100%" }}
+              >
+                <Background color="var(--t-border)" gap={28} size={1} />
 
-            <ReactFlow
-              nodes={rfNodes}
-              edges={rfEdges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onEdgeClick={onEdgeClick}
-              onNodeDragStop={onNodeDragStop}
-              onNodeClick={onNodeClick}
-              nodeTypes={RF_NODE_TYPES}
-              fitView
-              defaultEdgeOptions={{ type: "smoothstep", markerEnd: { type: MarkerType.ArrowClosed, color: "var(--t-edgeColor)" }, style: { stroke: "var(--t-edgeColor)", strokeWidth: 1.6 } }}
-              connectionLineStyle={{ stroke: T.accent, strokeWidth: 2 }}
-              connectionLineType="smoothstep"
-              deleteKeyCode={null}
-              proOptions={{ hideAttribution: true }}
-              style={{ background: T.pageBg }}
-            >
-              <Background color="var(--t-borderSoft)" gap={28} size={1.2} />
-
-              {/* Custom controls (top-left) */}
-              <Panel position="top-left" style={{ marginTop: 70, marginLeft: 16 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Panel position="top-left" style={{ marginTop: 16, marginLeft: 16 }}>
                   <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", gap: 4, boxShadow: "var(--t-shadowSoft)" }}>
                     <button title="Zoom in" style={iconBtn()} onClick={() => zoomIn({ duration: 200 })}>+</button>
                     <button title="Zoom out" style={iconBtn()} onClick={() => zoomOut({ duration: 200 })}>−</button>
                   </div>
-                </div>
-              </Panel>
+                </Panel>
 
-
-
-              {/* Mini map (top-right) */}
-              <MiniMap
-                position="top-right"
-                pannable
-                zoomable
-                nodeColor={(n) => n.type === "threadNode" ? "var(--t-edgeColor)" : "transparent"}
-                maskColor="rgba(124,92,255,0.06)"
-                style={{
-                  background: T.cardBg,
-                  border: `1px solid ${T.border}`,
-                  borderRadius: 10,
-                  width: 180, height: 110,
-                  boxShadow: "var(--t-shadowSoft)",
-                  margin: 16
-                }}
-              />
-            </ReactFlow>
+                <MiniMap
+                  position="top-right"
+                  pannable
+                  zoomable
+                  nodeColor={(n) => n.type === "threadNode" ? "var(--t-edgeColor)" : "transparent"}
+                  maskColor="rgba(59,130,246,0.06)"
+                  style={{
+                    background: T.cardBg,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 10,
+                    width: 180, height: 110,
+                    boxShadow: "var(--t-shadowSoft)",
+                    margin: 16,
+                  }}
+                />
+              </ReactFlow>
+            </div>
           </div>
 
-          {/* Detail panel */}
           {selectedNode && (
             <NodePanel
               node={selectedNode}
@@ -1057,8 +1119,9 @@ function CanvasInner({ thread, onBack }) {
               onEdit={n => setEditModal({ open: true, node: n })}
               onFiles={n => setFileModal({ open: true, node: n })}
               onRefresh={loadGraph}
+              onDelete={handlers.onDelete}
               showConfirm={setConfirm}
-              showError={showError}
+              showToast={showToast}
             />
           )}
         </div>
@@ -1071,7 +1134,6 @@ function CanvasInner({ thread, onBack }) {
         initial={null}
         title={`+ Add node — ${stages.find(s => s.id === addNodeModal.stageId)?.name || "stage"}`}
       />
-
       <NodeFormModal
         open={editModal.open}
         onClose={() => setEditModal({ open: false, node: null })}
@@ -1079,8 +1141,13 @@ function CanvasInner({ thread, onBack }) {
         initial={editModal.node}
         title="Edit node"
       />
-
-      <FileModal open={fileModal.open} onClose={() => setFileModal({ open: false, node: null })} node={fileModal.node} onChange={loadGraph} />
+      <FileModal
+        open={fileModal.open}
+        onClose={() => setFileModal({ open: false, node: null })}
+        node={fileModal.node}
+        onChange={loadGraph}
+        showToast={showToast}
+      />
 
       <Modal open={addStageModal} onClose={() => setAddStageModal(false)} title="Add stage">
         <Fld label="Stage name">
@@ -1099,11 +1166,8 @@ function CanvasInner({ thread, onBack }) {
         return (
           <Modal open={true} onClose={() => setEdgeEditModal({ open: false, edge: null })} title="Edit Connection" width={400}>
             <Fld label="Relationship Type">
-              <select
-                defaultValue={initialType}
-                id="_edge_type_select"
-                style={{ width: "100%", padding: "10px 12px", fontSize: 13, border: `1px solid ${T.border}`, borderRadius: 8, fontFamily: ff, color: T.text, background: "var(--t-inputBg)" }}
-              >
+              <select defaultValue={initialType} id="_edge_type_select"
+                style={{ width: "100%", padding: "10px 12px", fontSize: 13, border: `1px solid ${T.border}`, borderRadius: 8, fontFamily: ff, color: T.text, background: "var(--t-inputBg)" }}>
                 {DEPENDENCY_TYPES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
             </Fld>
@@ -1117,7 +1181,7 @@ function CanvasInner({ thread, onBack }) {
           </Modal>
         );
       })()}
-      <AlertModal open={alert.open} onClose={() => setAlert(p => ({ ...p, open: false }))} title={alert.title} message={alert.message} />
+
       <ConfirmModal open={confirm.open} onClose={() => setConfirm(p => ({ ...p, open: false }))} onConfirm={confirm.onConfirm} title={confirm.title} message={confirm.message} confirmText={confirm.confirmText} variant={confirm.variant} />
       <PromptModal open={prompt.open} onClose={() => setPrompt(p => ({ ...p, open: false }))} onSubmit={prompt.onSubmit} title={prompt.title} label={prompt.label} initialValue={prompt.initialValue} />
     </div>
@@ -1136,10 +1200,10 @@ function iconBtn(active = false) {
 }
 
 // ── Thread Canvas wrapper ──────────────────────────────────────────────────────
-function ThreadCanvas({ thread, onBack }) {
+function ThreadCanvas({ thread, onBack, showToast }) {
   return (
     <ReactFlowProvider>
-      <CanvasInner thread={thread} onBack={onBack} />
+      <CanvasInner thread={thread} onBack={onBack} showToast={showToast} />
     </ReactFlowProvider>
   );
 }
@@ -1151,13 +1215,29 @@ export default function ThreadVisualizer() {
   const [activeThread, setActiveThread] = useState(null);
   const [loading, setLoading] = useState(true);
   const isDark = useThemeSync();
+  const [toast, setToast] = useState({ visible: false, message: "", type: "success", animateOut: false });
+
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type, animateOut: false });
+  };
+
+  useEffect(() => {
+    if (!toast.visible) return;
+    const timer = setTimeout(() => {
+      setToast((prev) => ({ ...prev, animateOut: true }));
+      setTimeout(() => {
+        setToast({ visible: false, message: "", type: "success", animateOut: false });
+      }, 350);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [toast.visible]);
 
   useEffect(() => {
     setLoading(true);
-    api.getThreads().then((data) => {
+    getThreads().then((data) => {
       const found = (data || []).find(t => String(t.id) === String(id));
       setActiveThread(found || null);
-    }).catch(err => {
+    }).catch((err) => {
       console.error(err);
     }).finally(() => {
       setLoading(false);
@@ -1184,7 +1264,8 @@ export default function ThreadVisualizer() {
   return (
     <div className="theme-wrapper" style={{ height: "100%" }}>
       <ThemeStyles isDark={isDark} />
-      <ThreadCanvas thread={activeThread} onBack={() => navigate("/threads")} />
+      <TopToast toast={toast} isDark={isDark} />
+      <ThreadCanvas thread={activeThread} onBack={() => navigate("/threads")} showToast={showToast} />
     </div>
   );
 }

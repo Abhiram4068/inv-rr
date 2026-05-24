@@ -1,34 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-
-const BASE = "/api";
-
-function authHeaders() {
-  const t = localStorage.getItem("access") || localStorage.getItem("access_token") || localStorage.getItem("token");
-  return { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) };
-}
-
-async function apiFetch(url, opts = {}) {
-  const res = await fetch(url, { headers: authHeaders(), ...opts });
-  if (res.status === 204) return null;
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.detail || "API error");
-  return data;
-}
-
-const api = {
-  getThreads: () => apiFetch(`${BASE}/threads/`),
-  createThread: (body) => apiFetch(`${BASE}/threads/`, { method: "POST", body: JSON.stringify(body) }),
-  updateThread: (id, body) => apiFetch(`${BASE}/threads/${id}/`, { method: "PUT", body: JSON.stringify(body) }),
-  deleteThread: (id) => apiFetch(`${BASE}/threads/${id}/`, { method: "DELETE" }),
-};
+import {
+  getThreads,
+  createThread,
+  updateThread,
+  deleteThread,
+  getApiErrorMessage,
+} from '../../services/threadService';
 
 const Threads = () => {
   const navigate = useNavigate();
   // Theme & UI Logic
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(
+    document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  );
   const [isModalOpen, setModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState(localStorage.getItem('viewMode') || 'grid');
+  
+  // Set viewMode using thread_grid and thread_list keys, defaulting to thread_grid
+  const [viewMode, setViewMode] = useState(() => {
+    const savedMode = localStorage.getItem('viewMode');
+    return savedMode === 'thread_list' ? 'thread_list' : 'thread_grid';
+  });
+  
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
   // Thread Form State
@@ -67,16 +60,27 @@ const Threads = () => {
     }
   }, [toast.visible]);
 
-  // Sync Theme logic
+  // Sync Theme logic via MutationObserver to catch layout theme toggles instantly
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    const isCurrentlyDark = document.documentElement.classList.contains('dark');
+    setTheme(isCurrentlyDark ? 'dark' : 'light');
+
+    const observer = new MutationObserver(() => {
+      const isDarkNow = document.documentElement.classList.contains('dark');
+      setTheme(isDarkNow ? 'dark' : 'light');
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   const loadThreads = () => {
     setLoading(true);
-    api.getThreads().then((data) => {
+    getThreads().then((data) => {
       setAllThreads(data || []);
       setLoading(false);
     }).catch((err) => {
@@ -92,13 +96,12 @@ const Threads = () => {
   useEffect(() => {
     let filtered = allThreads.filter(t => 
       t.title?.toLowerCase().includes(search.toLowerCase()) || 
-      t.description?.toLowerCase().includes(search.toLowerCase()) // backend usually uses description
+      t.description?.toLowerCase().includes(search.toLowerCase())
     );
 
     filtered.sort((a, b) => {
       let valA = a[sortBy] || '';
       let valB = b[sortBy] || '';
-      // Default to created_at if updated_at is requested but missing
       if (sortBy === 'updated_at') {
           valA = a.updated_at || a.created_at || '';
           valB = b.updated_at || b.created_at || '';
@@ -117,14 +120,14 @@ const Threads = () => {
     }
     setLoading(true);
     try {
-      const newThread = await api.createThread({ title: threadTitle, description: threadObjective });
+      const newThread = await createThread({ title: threadTitle, description: threadObjective });
       setAllThreads([newThread, ...allThreads]);
       setModalOpen(false);
       setThreadTitle('');
       setThreadObjective('');
       showToast("Workflow thread initialized successfully");
     } catch (e) {
-      alert(e.message);
+      alert(getApiErrorMessage(e, 'Failed to create thread'));
     } finally {
       setLoading(false);
     }
@@ -133,12 +136,12 @@ const Threads = () => {
   const handleUpdateThread = async (id, data) => {
     setLoading(true);
     try {
-      const updated = await api.updateThread(id, data);
+      const updated = await updateThread(id, data);
       setAllThreads(prev => prev.map(t => t.id === id ? updated : t));
       setEditingThread(null);
       showToast("Thread updated successfully");
     } catch (e) {
-      alert(e.message);
+      alert(getApiErrorMessage(e, 'Failed to update thread'));
     } finally {
       setLoading(false);
     }
@@ -147,15 +150,22 @@ const Threads = () => {
   const handleDeleteThread = async (id) => {
     setLoading(true);
     try {
-      await api.deleteThread(id);
+      await deleteThread(id);
       setAllThreads(prev => prev.filter(t => t.id !== id));
       setDeletingThread(null);
       showToast("Thread deleted successfully");
     } catch (e) {
-      alert(e.message);
+      alert(getApiErrorMessage(e, 'Failed to delete thread'));
     } finally {
       setLoading(false);
     }
+  };
+
+  // Toggle view layout state and synchronize correct thread keys to localStorage
+  const handleViewModeToggle = () => {
+    const nextMode = viewMode === 'thread_grid' ? 'thread_list' : 'thread_grid';
+    setViewMode(nextMode);
+    localStorage.setItem('viewMode', nextMode);
   };
 
   return (
@@ -219,10 +229,10 @@ const Threads = () => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')}
+              onClick={handleViewModeToggle}
               className={`p-[10px] rounded-[10px] transition-all ${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-500 hover:text-blue-500'}`}
             >
-              <i className={`fa-solid ${viewMode === 'grid' ? 'fa-list' : 'fa-grip'}`}></i>
+              <i className={`fa-solid ${viewMode === 'thread_grid' ? 'fa-list' : 'fa-grip'}`}></i>
             </button>
 
             <button
@@ -277,7 +287,7 @@ const Threads = () => {
              <i className="fa-solid fa-route text-4xl mb-4 text-[#333]"></i>
              <div className={`text-sm ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No matches found.</div>
           </div>
-        ) : viewMode === 'grid' ? (
+        ) : viewMode === 'thread_grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             {threads.map((thread) => (
               <div
@@ -341,7 +351,7 @@ const Threads = () => {
               </thead>
               <tbody className={`text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
                 {threads.map((thread) => (
-                  <tr key={thread.id} className={`group border-b last:border-0 transition-colors ${isDark ? 'hover:bg-[#ffffff05]' : 'hover:bg-white/50'}`}>
+                  <tr key={thread.id} className={`group border-b-0 transition-colors ${isDark ? 'hover:bg-[#ffffff05]' : 'hover:bg-white/50'}`}>
                     <td className="px-6 py-4">
                       <Link to={`/thread/${thread.id}`} className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><i className="fa-solid fa-diagram-project"></i></div>
