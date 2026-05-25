@@ -362,7 +362,7 @@ const validatePasswordChange = () => {
                     >
                       <option value="" disabled className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>Select new designation</option>
                       {designations
-                        .filter((d) => d.id !== userProfile?.designation_id)
+                        .filter((d) => d.id !== userProfile?.designation)
                         .map((desig) => (
                           <option key={desig.id} value={desig.id}>
                             {desig.name}
