@@ -13,6 +13,10 @@ export const getReports = (
 
   return api.get("/report-downloads/", {
     params,
-    responseType: download ? "blob" : "json", // ✅ THIS LINE FIXES CSV
+    responseType: download ? "blob" : "json",
   });
+};
+
+export const toggleMonthlyReport = () => {
+    return api.patch("/toggle-monthly-report/");
 };
