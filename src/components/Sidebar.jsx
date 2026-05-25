@@ -72,6 +72,7 @@ const Sidebar = ({ isOpen }) => {
       <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#333]' : 'border-slate-100'}`}></div>
       
       {[
+        { to: "/teams", icon: "fa-users", label: "Teams" },
         { to: "/collections", icon: "fa-folder", label: "Collections" },
         { to: "/threads", icon: "fa-code-branch", label: "Threads" },
 

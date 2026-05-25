@@ -154,7 +154,7 @@ const RoleChangeRequests = () => {
                                              <td className="py-4 px-6 text-right">
                                                  <div className="flex items-center justify-end gap-2">
                                                      <button
-                                                         onClick={() => navigate(`/admin/user-details/${req.user}`)}
+                                                         onClick={() => navigate(`/admin/user/detail/${req.user}`)}
                                                          className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-wider shadow-sm"
                                                      >
                                                          View Profile

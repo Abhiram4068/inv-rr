@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getTeams, createTeam, updateTeam, deleteTeam } from '../../services/teamService';
+import { formatDateTime } from '../../utils/dateFormatter';
 
 const TeamsDashboard = () => {
   const navigate = useNavigate();
@@ -22,11 +24,8 @@ const TeamsDashboard = () => {
   const isDark = theme === 'dark';
 
   // State Management
-  const [teams, setTeams] = useState([
-    { id: 1, name: "Frontend Alpha", memberCount: 5, createdAt: "2026-05-10" },
-    { id: 2, name: "Core Infrastructure", memberCount: 3, createdAt: "2026-05-18" },
-    { id: 3, name: "Security & Operations", memberCount: 4, createdAt: "2026-05-22" },
-  ]);
+  const [teams, setTeams] = useState([]);
+  const [loadingTeams, setLoadingTeams] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
@@ -39,29 +38,49 @@ const TeamsDashboard = () => {
     setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 3000);
   };
 
-  const handleCreateOrUpdateTeam = (e) => {
+  // Fetch on mount and on search
+  useEffect(() => {
+    fetchTeams();
+  }, [searchInput]);
+
+  const fetchTeams = async () => {
+    try {
+      setLoadingTeams(true);
+      const res = await getTeams(searchInput);
+      setTeams(res.data);
+    } catch (err) {
+      showToast("Failed to load teams.", "error");
+    } finally {
+      setLoadingTeams(false);
+    }
+  };
+
+  const handleCreateOrUpdateTeam = async (e) => {
     e.preventDefault();
     if (!teamModal.name.trim()) return;
-
-    if (teamModal.type === 'create') {
-      const newTeam = {
-        id: Date.now(),
-        name: teamModal.name.trim(),
-        memberCount: 0,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setTeams([newTeam, ...teams]);
-      showToast("Team created successfully!");
-    } else {
-      setTeams(teams.map(t => t.id === teamModal.teamId ? { ...t, name: teamModal.name.trim() } : t));
-      showToast("Team renamed successfully!");
+    try {
+      if (teamModal.type === 'create') {
+        await createTeam({ name: teamModal.name.trim() });
+        showToast("Team created successfully!");
+      } else {
+        await updateTeam(teamModal.teamId, { name: teamModal.name.trim() });
+        showToast("Team renamed successfully!");
+      }
+      await fetchTeams();
+    } catch (err) {
+      showToast(err.response?.data?.detail || err.response?.data?.name?.[0] || "Action failed.", "error");
     }
     setTeamModal({ visible: false, type: 'create', teamId: null, name: '' });
   };
 
-  const handleDeleteTeam = () => {
-    setTeams(teams.filter(t => t.id !== confirmModal.teamId));
-    showToast("Team was deleted successfully", "error");
+  const handleDeleteTeam = async () => {
+    try {
+      await deleteTeam(confirmModal.teamId);
+      showToast("Team deleted successfully.", "error");
+      await fetchTeams();
+    } catch (err) {
+      showToast("Failed to delete team.", "error");
+    }
     setConfirmModal({ visible: false, teamId: null, teamName: '' });
   };
 
@@ -113,7 +132,11 @@ const TeamsDashboard = () => {
       </div>
 
       {/* Teams Display Workspace */}
-      {filteredTeams.length === 0 ? (
+      {loadingTeams ? (
+        <div className="flex justify-center py-20">
+          <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${isDark ? 'border-blue-400' : 'border-blue-600'}`}></div>
+        </div>
+      ) : filteredTeams.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'}`}>
             <i className="fa-solid fa-users text-3xl text-gray-400 opacity-50"></i>
@@ -140,7 +163,7 @@ const TeamsDashboard = () => {
                       {team.name}
                     </h3>
                     <p className={`text-[11px] font-medium mt-0.5 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
-                      Created on {team.createdAt}
+                      Created on {formatDateTime(team.created_at)}
                     </p>
                   </div>
                 </div>
@@ -165,11 +188,11 @@ const TeamsDashboard = () => {
               </div>
 
               <div className="flex items-center justify-between border-t pt-3 mt-4 border-dashed border-neutral-800">
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                  {team.memberCount} Employees
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                  {team.member_count} Employees
                 </span>
                 <span className={`text-xs font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
-                  Manage Rosters <i className="fa-solid fa-arrow-right text-[10px]" />
+                  Manage Members <i className="fa-solid fa-arrow-right text-[10px]" />
                 </span>
               </div>
             </div>

@@ -76,7 +76,7 @@ function App() {
             <Route path="/archives"     element={<ArchivesList />} />
             <Route path="/dashboard"     element={<Dashboard />} />
             <Route path="/teams"     element={<TeamsDashboard />} />
-            <Route path="/teams/:id"   element={<TeamDetails />} />
+            <Route path="/team/:id"   element={<TeamDetails />} />
             <Route path="/files"         element={<PaginatedFiles />} />
             <Route path="/file/:id"   element={<FileDetails />} />
             <Route path="/starred"       element={<Starred />} />
