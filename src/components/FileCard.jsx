@@ -65,6 +65,7 @@ const FileCard = ({
   showSelection = false,
   isSelected = false,
   onSelectChange,
+  onRemove, // callback to remove from collection
 }) => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -168,6 +169,7 @@ const FileCard = ({
 
   // ── Delete ───────────────────────────────────────────────────
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -293,14 +295,27 @@ const FileCard = ({
                 <i className="fa-solid fa-share-nodes" />
               </button>
 
+              {/* Remove from Collection */}
+              {onRemove && (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveModal('remove'); }}
+                  className={`transition-all text-[13px] ${isDark ? 'text-[#666] hover:text-orange-400' : 'text-slate-400 hover:text-orange-500'}`}
+                  title="Remove from Collection"
+                >
+                  <i className="fa-solid fa-folder-minus" />
+                </button>
+              )}
+
               {/* Delete */}
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveModal('delete'); }}
-                className={`transition-all text-[13px] ${isDark ? 'text-[#666] hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}
-                title="Delete"
-              >
-                <i className="fa-regular fa-trash-can" />
-              </button>
+              {!onRemove && (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveModal('delete'); }}
+                  className={`transition-all text-[13px] ${isDark ? 'text-[#666] hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}
+                  title="Delete"
+                >
+                  <i className="fa-regular fa-trash-can" />
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -634,6 +649,47 @@ const FileCard = ({
                   >
                     {isDeleting && <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
                     {isDeleting ? 'Deleting...' : 'Move to Trash'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ════════════ REMOVE MODAL ════════════ */}
+            {activeModal === 'remove' && (
+              <div className={`border w-full max-w-[400px] rounded-2xl p-8 shadow-2xl text-center
+                ${isDark ? 'bg-[#111111] border-[#2a2a2a] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                <div className="w-14 h-14 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center text-xl mb-5 mx-auto">
+                  <i className="fa-solid fa-folder-minus" />
+                </div>
+                <h2 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Remove from Collection?</h2>
+                <p className={`text-sm mb-8 ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+                  <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{display_name}</span> will be removed from this collection, but not deleted from your system.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setActiveModal(null)}
+                    className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors
+                      ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setIsRemoving(true);
+                      try {
+                        await onRemove(id);
+                        setActiveModal(null);
+                      } catch (err) {
+                        showToast('Failed to remove from collection', 'error');
+                      } finally {
+                        setIsRemoving(false);
+                      }
+                    }}
+                    disabled={isRemoving}
+                    className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isRemoving && <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
+                    {isRemoving ? 'Removing...' : 'Remove'}
                   </button>
                 </div>
               </div>

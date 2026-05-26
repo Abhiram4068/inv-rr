@@ -4,7 +4,7 @@ import {
   getChunkUploadStatus,
   controlChunkUpload,
 } from '../../services/fileService';
-
+import { getFileMeta } from '../../utils/fileIcons'; 
 const CHUNK_SIZE = 10 * 1024 * 1024;
 const MAX_FILE_BYTES = 100 * 1024 * 1024;
 const MAX_CHUNK_RETRIES = 3;
@@ -32,72 +32,58 @@ const ALLOWED_CONTENT_TYPES = new Set([
   'text/xml',
 ]);
 
-// ─── Preview helpers ──────────────────────────────────────────────────────────
-const getFileCategory = (rawFile) => {
-  const t = rawFile.type || '';
-  if (t === 'image/jpeg' || t === 'image/png' || t === 'image/webp') return 'image';
-  if (t === 'application/pdf') return 'pdf';
-  if (t.includes('word') || t.includes('document')) return 'word';
-  if (t.includes('sheet') || t.includes('excel') || t === 'text/csv') return 'excel';
-  if (t.includes('powerpoint') || t.includes('presentation')) return 'ppt';
-  if (t === 'text/plain') return 'text';
-  if (t === 'application/json' || t === 'application/xml' || t === 'text/xml') return 'code';
-  if (t === 'application/zip' || t === 'application/x-zip-compressed') return 'zip';
-  return 'other';
-};
 
-const CATEGORY_ICON = {
-  pdf:   { icon: 'ti-file-type-pdf',   color: '#e24b4a' },
-  word:  { icon: 'ti-file-type-doc',   color: '#378add' },
-  excel: { icon: 'ti-file-spreadsheet', color: '#1d9e75' },
-  ppt:   { icon: 'ti-file-type-ppt',   color: '#d85a30' },
-  text:  { icon: 'ti-file-type-txt',   color: '#888780' },
-  code:  { icon: 'ti-file-code',       color: '#7f77dd' },
-  zip:   { icon: 'ti-file-zip',        color: '#ba7517' },
-  other: { icon: 'ti-file',            color: '#888780' },
-};
 
 // ─── File preview thumbnail ───────────────────────────────────────────────────
 const FilePreviewThumb = ({ file, statusDotClass, isDark }) => {
   const [previewUrl, setPreviewUrl] = useState(null);
-  const category = getFileCategory(file.raw);
+  const meta = getFileMeta(file.raw.type || '');
+  const isImage = meta.category === 'image';
 
   useEffect(() => {
-    if (category !== 'image') return;
+    if (!isImage) return;
     const url = URL.createObjectURL(file.raw);
     setPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
-  }, [file.raw, category]);
+  }, [file.raw, isImage]);
 
   const dotBorder = isDark ? '#0a0a0a' : '#ffffff';
 
   return (
     <div style={{ position: 'relative', flexShrink: 0, width: 48, height: 48 }}>
-      {category === 'image' && previewUrl ? (
+      {isImage && previewUrl ? (
         <div style={{
           width: 48, height: 48,
           borderRadius: 8,
           border: '0.5px solid var(--color-border-tertiary)',
           overflow: 'hidden',
         }}>
-          <img src={previewUrl} alt={file.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={previewUrl}
+            alt={file.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         </div>
       ) : (
         <div style={{
           width: 48, height: 48,
           borderRadius: 8,
           border: '0.5px solid var(--color-border-tertiary)',
-          background: 'var(--color-background-secondary)',
+          background: isDark ? '#111' : '#f8fafc',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden',
         }}>
           <i
-            className={`ti ${CATEGORY_ICON[category]?.icon || 'ti-file'}`}
-            style={{ fontSize: 22, color: CATEGORY_ICON[category]?.color || '#888' }}
+            className={`fa-solid ${meta.icon}`}
+            style={{
+              fontSize: meta.fontSize ?? 22,
+              color: meta.color,
+              transform: meta.transform ?? 'none',
+            }}
             aria-hidden="true"
           />
         </div>
       )}
-      {/* status dot badge */}
       <span style={{
         position: 'absolute', bottom: -4, right: -4,
         width: 12, height: 12,
@@ -486,7 +472,7 @@ const UploadFilesMain = () => {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <main style={{
-      flex: 1, overflowY: 'auto', padding: 40,
+      flex: 1, overflowY: 'visible', padding: 40,
       background: isDark ? '#000' : '#E6EBF2',
       position: 'relative', transition: 'background 0.3s',
     }}>
@@ -593,7 +579,7 @@ const UploadFilesMain = () => {
                   <span style={{
                     fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
                     flexShrink: 0, whiteSpace: 'nowrap',
-                    background: badge ? badge.bg : isDark ? '#222' : '#f1f5f9',
+                   
                     color: badge ? badge.color : isDark ? '#888' : '#64748b',
                   }}>
                     {STATUS_LABELS[file.status] || file.status}
@@ -601,7 +587,7 @@ const UploadFilesMain = () => {
                 </div>
 
                 <span style={{ fontSize: 11, color: isDark ? '#808080' : '#94a3b8', fontWeight: 500 }}>
-                  {file.size} MB{file.totalChunks > 1 ? ` · ${file.totalChunks} chunks` : ''}
+                  {file.size} MB
                 </span>
 
                 {showProgress(file) && (
@@ -653,11 +639,8 @@ const UploadFilesMain = () => {
                   <i className="ti ti-circle-check" style={{ fontSize: 16, color: '#10b981', padding: '0 8px' }} aria-hidden="true" />
                 )}
                 {file.status === 'pending' && (
-                  <button onClick={() => removeFile(file.id)} style={{
-                    padding: 8, borderRadius: 8, border: 'none', background: 'transparent',
-                    cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center',
-                  }}>
-                    <i className="ti ti-x" style={{ fontSize: 16 }} aria-label="Remove file" />
+                   <button onClick={() => removeFile(file.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all" title="Remove">
+                      <i className="fa-solid fa-xmark text-xs"></i>
                   </button>
                 )}
               </div>

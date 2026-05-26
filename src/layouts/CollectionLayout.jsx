@@ -46,6 +46,7 @@ const handleUpdateCollection = async (updatedData) => {
     setIsManageOpen(false);
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
@@ -77,7 +78,8 @@ const handleDeleteCollection = async () => {
           ) : (
             <Outlet
               context={{
-                collectionInfo,   
+                collectionInfo,
+                setCollectionInfo,
                 handleUpdateCollection,
                 isManageOpen,handleDeleteCollection,
                 setIsManageOpen,
