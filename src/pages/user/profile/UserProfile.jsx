@@ -99,7 +99,6 @@ const UserProfile = () => {
                   <div className="w-28 h-28 bg-gradient-to-tr from-blue-700 to-blue-500 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-xl">
                     <span className="-rotate-3">{getInitials(userProfile.first_name, userProfile.last_name)}</span>
                   </div>
-                  <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-green-500 border-4 border-[#0F0F0F] rounded-full" title="Active"></div>
                 </div>
 
                 <div className="flex-1 text-center md:text-left">

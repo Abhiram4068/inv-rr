@@ -11,7 +11,7 @@ const AdminLayout = () => {
       <AdminTopNavbar toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
       
       <div className="flex flex-grow overflow-hidden relative">
-        <AdminSidebar isOpen={isSidebarOpen} />
+        <AdminSidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
         
        <main className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
           <Outlet />

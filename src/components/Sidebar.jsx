@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -26,7 +26,7 @@ const Sidebar = ({ isOpen }) => {
   return (
     <aside className={`
       ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-      lg:translate-x-0 lg:static fixed inset-y-0 left-0 w-[260px] 
+      lg:translate-x-0 lg:static fixed top-[60px] lg:top-0 bottom-0 left-0 w-[260px] 
       flex flex-col z-40 transition-all duration-300 ease-in-out p-[24px_16px] overflow-y-auto no-scrollbar
       ${isDark ? 'bg-black border-r border-[#333]' : 'bg-white border-r border-slate-200'}
     `}>
@@ -48,6 +48,7 @@ const Sidebar = ({ isOpen }) => {
         <NavLink 
           key={item.label}
           to={item.to} 
+          onClick={() => onClose?.()}
           className={({ isActive }) => `
             flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1
             ${isActive 
@@ -81,6 +82,7 @@ const Sidebar = ({ isOpen }) => {
         <NavLink 
           key={item.label}
           to={item.to} 
+          onClick={() => onClose?.()}
           className={({ isActive }) => `
             flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1
             ${isActive 
@@ -105,7 +107,7 @@ const Sidebar = ({ isOpen }) => {
       <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#333]' : 'border-slate-100'}`}></div>
 
       {/* FIXED NavLinks below */}
-      <NavLink to="/archives" className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1 ${isActive ? (isDark ? 'bg-[#111] text-white' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-white' : 'text-slate-600 hover:bg-slate-50')}`}>
+      <NavLink to="/archives" onClick={() => onClose?.()} className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1 ${isActive ? (isDark ? 'bg-[#111] text-white' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-white' : 'text-slate-600 hover:bg-slate-50')}`}>
         {({ isActive }) => (
           <>
             <i className={`fa-solid fa-box-archive w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i> Archives
@@ -113,7 +115,7 @@ const Sidebar = ({ isOpen }) => {
         )}
       </NavLink>
 
-      <NavLink to="/storage/trash" className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all ${isActive ? (isDark ? 'bg-[#111] text-white' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-white' : 'text-slate-600 hover:bg-slate-50')}`}>
+      <NavLink to="/storage/trash" onClick={() => onClose?.()} className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all ${isActive ? (isDark ? 'bg-[#111] text-white' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-white' : 'text-slate-600 hover:bg-slate-50')}`}>
         {({ isActive }) => (
           <>
             <i className={`fa-solid fa-trash w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i> Trash
@@ -129,7 +131,7 @@ const Sidebar = ({ isOpen }) => {
           </div>
           <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#3b82f630]' : 'border-blue-100'}`}></div>
 
-          <NavLink to="/admin/dashboard" className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1 ${isActive ? (isDark ? 'bg-[#3b82f610] text-[#3b82f6]' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-[#3b82f6]' : 'text-slate-600 hover:bg-slate-50')}`}>
+          <NavLink to="/admin/dashboard" onClick={() => onClose?.()} className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all mb-1 ${isActive ? (isDark ? 'bg-[#3b82f610] text-[#3b82f6]' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-[#3b82f6]' : 'text-slate-600 hover:bg-slate-50')}`}>
             {({ isActive }) => (
               <>
                 <i className={`fa-solid fa-gauge-high w-5 mr-3 text-base ${isDark ? (isActive ? 'text-[#3b82f6]' : 'text-white') : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i> Dashboard
@@ -137,7 +139,7 @@ const Sidebar = ({ isOpen }) => {
             )}
           </NavLink>
 
-          <NavLink to="/admin/requests" className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all ${isActive ? (isDark ? 'bg-[#3b82f610] text-[#3b82f6]' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-[#3b82f6]' : 'text-slate-600 hover:bg-slate-50')}`}>
+          <NavLink to="/admin/requests" onClick={() => onClose?.()} className={({ isActive }) => `flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all ${isActive ? (isDark ? 'bg-[#3b82f610] text-[#3b82f6]' : 'bg-blue-50 text-blue-600') : (isDark ? 'text-[#808080] hover:text-[#3b82f6]' : 'text-slate-600 hover:bg-slate-50')}`}>
             {({ isActive }) => (
               <>
                 <i className={`fa-solid fa-envelope-open-text w-5 mr-3 text-base ${isDark ? (isActive ? 'text-[#3b82f6]' : 'text-white') : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i> Requests

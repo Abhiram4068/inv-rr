@@ -429,6 +429,7 @@ function FileModal({ open, onClose, node, onChange, showToast }) {
         changed = true;
         lastMessage = getApiSuccessMessage(r, null);
       } catch (e) {
+        onClose();
         showToast?.(getApiErrorMessage(e, "Upload failed"), "error");
       }
     }
@@ -452,7 +453,12 @@ function FileModal({ open, onClose, node, onChange, showToast }) {
       </div>
       {staged.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          {staged.map((f, i) => <div key={i} style={{ fontSize: 12, padding: "6px 10px", background: T.accentSoft, borderRadius: 7, marginBottom: 4, color: T.accent }}>📄 {f.name}</div>)}
+          {staged.map((f, i) => (
+            <div key={i} style={{ fontSize: 12, padding: "6px 10px", background: T.accentSoft, borderRadius: 7, marginBottom: 4, color: T.accent, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span>📄 {f.name}</span>
+              <button onClick={() => setStaged(p => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: T.accent, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "0 2px", opacity: 0.7 }}>×</button>
+            </div>
+          ))}
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
             <Btn onClick={upload} disabled={busy}>{busy ? "Uploading…" : `Upload ${staged.length} file(s)`}</Btn>
           </div>

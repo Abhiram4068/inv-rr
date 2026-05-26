@@ -293,7 +293,7 @@ const Threads = () => {
               <div
                 key={thread.id}
                 onClick={() => navigate(`/thread/${thread.id}`)}
-                className={`border p-5 rounded-[16px] flex flex-col gap-4 transition-all group cursor-pointer ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'}`}
+                className={`border p-5 rounded-[10px] flex flex-col gap-4 transition-all group cursor-pointer ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'}`}
               >
                 <div className="flex items-center justify-between relative" onClick={e => e.stopPropagation()}>
                     <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
@@ -338,7 +338,7 @@ const Threads = () => {
             ))}
           </div>
         ) : (
-          <div className={`overflow-x-auto mb-10 rounded-xl border ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
+          <div className={`overflow-x-auto mb-10 rounded-lg border ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className={`border-b ${isDark ? 'border-[#1a1a1a] bg-[#050505] text-[#666]' : 'border-slate-200 bg-slate-50 text-slate-500'} text-[11px] uppercase font-bold`}>
