@@ -51,7 +51,7 @@ const EditAccount = () => {
   };
 
   // --- Form States ---
-  const [formData, setFormData] = useState({ first_name: "", last_name: "" });
+  const [formData, setFormData] = useState({ first_name: "", last_name: "", date_of_birth: "" });
 
   const [passwordData, setPasswordData] = useState({
     current_password: "",
@@ -72,6 +72,7 @@ const EditAccount = () => {
         setFormData({
           first_name: profileRes.data.first_name,
           last_name: profileRes.data.last_name,
+          date_of_birth: profileRes.data.date_of_birth,
         });
       } catch (err) {
         setError(err.response?.data?.detail || "Failed to fetch profile");
@@ -98,10 +99,22 @@ const EditAccount = () => {
 
   // --- Handler: Update name only (PATCH /api/profile/) ---
   const handleUpdateProfile = async () => {
+      if (formData.date_of_birth) {
+    const dob = new Date(formData.date_of_birth);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate()) ? age - 1 : age;
+    if (actualAge < 18) {
+      setShowUpdateModal(false);
+      showToast("You must be at least 18 years old.", "error");
+      return;
+    }
+  }
     setShowUpdateModal(false);
     setLoading(true);
     try {
-      await updateProfile({ first_name: formData.first_name, last_name: formData.last_name });
+      await updateProfile({ first_name: formData.first_name, last_name: formData.last_name, date_of_birth: formData.date_of_birth });
       const profileRes = await profile();
       setUserProfile(profileRes.data);
       if (user) {
@@ -315,6 +328,16 @@ const validatePasswordChange = () => {
                   label="Last Name"
                   value={formData.last_name}
                   onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  isDark={isDark}
+                />
+                <EditItem
+                  label="Date of Birth"
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(e) => {
+                    const dob = e.target.value;
+                    setFormData({ ...formData, date_of_birth: dob });
+                  }}
                   isDark={isDark}
                 />
                 <EditItem

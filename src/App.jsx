@@ -44,6 +44,7 @@ import ManagerReports from "./pages/user/ManagerReports";
 import AccountDeactivated from "./pages/public/AccountDeactivated";
 import AdminRoute from "./routes/AdminRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminActivityLog from "./pages/admin/AdminActivityLog";
 import UserManagement from "./pages/admin/UserView";
 import UserDetails from "./pages/admin/UserDetails";
 import PendingApprovals from "./pages/admin/PendingApprovals";
@@ -110,6 +111,7 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/activity-logs" element={<AdminActivityLog />} />
               <Route path="/admin/requests" element={<ReactivationRequests />} />
               <Route path="/admin/users" element={<UserManagement />} />
               <Route path="/admin/user/detail/:id/" element={<UserDetails />} />

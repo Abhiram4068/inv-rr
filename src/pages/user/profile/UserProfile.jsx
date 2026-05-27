@@ -136,6 +136,7 @@ const UserProfile = () => {
                 <div className="flex flex-col gap-y-8">
                   <DetailItem label="First Name" value={userProfile.first_name} isDark={isDark} />
                   <DetailItem label="Last Name" value={userProfile.last_name} isDark={isDark} />
+                  <DetailItem label="Date of Birth" value={userProfile.date_of_birth} isDark={isDark} />
                   <DetailItem label="Designation" value={userProfile.designation} isDark={isDark} />
                   
                 </div>
