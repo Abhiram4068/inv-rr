@@ -84,6 +84,12 @@ const userService = {
         const response = await api.post(`/api/admin/designation-requests/${id}/resolve/`, { action });
         return response.data;
     },
+    getActivityLogs: async ({ search = '' } = {}) => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.append('search', search.trim());
+    const response = await api.get(`/api/admin/activity-logs/?${params.toString()}`);
+    return response.data;
+},
 
 };
 
