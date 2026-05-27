@@ -13,7 +13,7 @@ export const getReports = (
 
   return api.get("/report-downloads/", {
     params,
-    responseType: download ? "blob" : "json", 
+    responseType: download ? "blob" : "json",
   });
 };
 
