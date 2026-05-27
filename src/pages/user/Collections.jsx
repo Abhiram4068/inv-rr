@@ -96,8 +96,11 @@ const Collections = () => {
       setCollectionDesc('');
       showToast("Collection created successfully");
     } catch (err) {
-      console.error(err);
-      setError("Failed to create collection");
+      const errorMessage =
+        err?.response?.data?.detail?.name?.[0] ||
+        err?.response?.data?.detail ||
+        "Failed to create collection";
+      showToast(errorMessage, "error");
     } finally {
       setLoading(false);
     }

@@ -244,7 +244,7 @@ const DuplicateManager = () => {
           </div>
         </div>
       )}
-      <div className={`p-4 rounded-xl text-xs font-bold ${isDark ? 'bg-[#111] text-[#808080]' : 'bg-blue-50 text-blue-600'} flex items-center justify-center gap-2 mt-4`}>
+      <div className={`p-4 rounded-xl text-xs font-bold ${isDark ? ' text-[#808080]' : 'text-blue-600'} flex items-center justify-center gap-2 mt-4`}>
         <i className="fa-solid fa-circle-info"></i> Files deleted from this page are permanently removed and will not go to the trash.
       </div>
     </main>

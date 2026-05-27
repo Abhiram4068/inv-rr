@@ -171,9 +171,9 @@ const AdminDashboard = () => {
                     />
                     <DashboardTile 
                         label="History Pending" 
-                        value={stats?.pending_history_approvals || 0} 
+                        value={stats?.pending_registration_approvals || 0} 
                         icon="fa-clock-rotate-left"
-                        onClickAction={() => navigate('/admin/requests?type=history')}
+                        onClickAction={() => navigate('/admin/requests')}
                         actionLabel="View Queue"
                     />
                 </div>

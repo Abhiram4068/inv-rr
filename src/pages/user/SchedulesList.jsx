@@ -595,7 +595,15 @@ const getStatusStyles = (status) => {
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-neutral-900' : 'divide-slate-200'}`}>
-                {filteredSchedules.map((item) => {
+               {filteredSchedules.length === 0 ? (
+    <tr>
+      <td colSpan="6" className="py-20 text-center">
+        <p className={`text-sm font-semibold ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>No schedules found</p>
+        <p className={`text-xs mt-1 ${isDark ? 'text-neutral-700' : 'text-slate-300'}`}>Scheduled file deliveries will appear here</p>
+      </td>
+    </tr>
+  ) : 
+                (filteredSchedules.map((item) => {
                   const visuals = getFileVisuals(item.content_type || item.file_name);
                   return (
                     <tr key={item.id} className={`group transition-colors ${isDark ? 'hover:bg-neutral-900/40' : 'hover:bg-slate-50'}`}>
@@ -640,7 +648,7 @@ const getStatusStyles = (status) => {
                       </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>

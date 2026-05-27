@@ -194,12 +194,22 @@ const PaginatedFiles = () => {
     };
   }, [page, search]);
 
-  const handleToggleStar = (fileId, newState) => {
+const handleToggleStar = async (fileId, newState) => {
+  // Optimistic update
+  setFiles(prev =>
+    prev.map(f => f.id === fileId ? { ...f, is_starred: newState } : f)
+  );
+  try {
+    await updateFile(fileId, { is_starred: newState });
+    showToast(newState ? 'Added to starred' : 'Removed from starred');
+  } catch (err) {
+    // Revert on failure
     setFiles(prev =>
-      prev.map(f => f.id === fileId ? { ...f, is_starred: newState } : f)
+      prev.map(f => f.id === fileId ? { ...f, is_starred: !newState } : f)
     );
-  };
-
+    showToast('Failed to update starred status', 'error');
+  }
+};
   const handleFileDeleted = (fileId) => {
     setFiles(prev => prev.filter(f => f.id !== fileId));
     setSelectedFileIds(prev => prev.filter(id => id !== fileId));
@@ -244,27 +254,31 @@ const PaginatedFiles = () => {
     setIsShareModalOpen(true);
   };
 
-  const executeBulkAction = async () => {
-    const { type, count } = confirmAction;
-    setConfirmAction({ ...confirmAction, visible: false });
+const executeBulkAction = async () => {
+  const { type, count, singleFileId } = confirmAction;
+  setConfirmAction({ ...confirmAction, visible: false });
 
-    try {
-      const { bulkDeleteFiles, bulkArchiveFiles } = await import('../../services/fileService');
-      if (type === 'delete') {
-        await bulkDeleteFiles(selectedFileIds);
-        showToast(`${count} item(s) moved to trash`);
-      } else {
-        await bulkArchiveFiles(selectedFileIds);
-        showToast(`${count} item(s) archived successfully`);
-      }
+  const idsToAction = singleFileId ? [singleFileId] : selectedFileIds;
 
-      setFiles(prev => prev.filter(f => !selectedFileIds.includes(f.id)));
+  try {
+    const { bulkDeleteFiles, bulkArchiveFiles } = await import('../../services/fileService');
+    if (type === 'delete') {
+      await bulkDeleteFiles(idsToAction);
+      showToast(`${count} item(s) moved to trash`);
+    } else {
+      await bulkArchiveFiles(idsToAction);
+      showToast(`${count} item(s) archived successfully`);
+    }
+
+    setFiles(prev => prev.filter(f => !idsToAction.includes(f.id)));
+    if (!singleFileId) {
       setSelectedFileIds([]);
       setIsSelectMode(false);
-    } catch (err) {
-      showToast(err?.response?.data?.error || `Failed to ${type} files`, "error");
     }
-  };
+  } catch (err) {
+    showToast(err?.response?.data?.error || `Failed to ${type} files`, "error");
+  }
+};
 
   // ── Icon color per file type ──────────────────────────────────
   const iconColorForClass = (iconClass) => {
@@ -610,29 +624,42 @@ const PaginatedFiles = () => {
 
                       {/* Actions col */}
                       <td className="py-5 pr-6 text-sm text-right" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-end gap-1">
+                      <div className="flex justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStar(file.id, !file.is_starred)}
+                          title={file.is_starred ? 'Unstar' : 'Star'}
+                          className={`p-2 rounded-lg transition-colors
+                            ${file.is_starred
+                              ? 'text-yellow-400'
+                              : isDark ? 'text-neutral-600 hover:text-yellow-400 hover:bg-neutral-800' : 'text-slate-300 hover:text-yellow-400 hover:bg-slate-100'}`}
+                        >
+                          <i className={`fa-${file.is_starred ? 'solid' : 'regular'} fa-star text-sm`} />
+                        </button>
+                        {!showSel && (
                           <button
                             type="button"
-                            onClick={() => handleToggleStar(file.id, !file.is_starred)}
-                            title={file.is_starred ? 'Unstar' : 'Star'}
-                            className={`p-2 rounded-lg transition-colors
-                              ${file.is_starred
-                                ? 'text-yellow-400'
-                                : isDark ? 'text-neutral-600 hover:text-yellow-400 hover:bg-neutral-800' : 'text-slate-300 hover:text-yellow-400 hover:bg-slate-100'}`}
+                            onClick={() => {
+                              setSelectedFileIds([file.id]);
+                              setIsShareModalOpen(true);
+                            }}
+                            title="Share"
+                            className={`p-2 rounded-lg transition-colors ${isDark ? 'text-neutral-600 hover:text-blue-400 hover:bg-neutral-800' : 'text-slate-300 hover:text-blue-500 hover:bg-slate-100'}`}
                           >
-                            <i className={`fa-${file.is_starred ? 'solid' : 'regular'} fa-star text-sm`} />
+                            <i className="fa-solid fa-share-nodes text-sm" />
                           </button>
-                          {!showSel && (
-                            <button
-                              type="button"
-                              onClick={() => handleFileDeleted(file.id)}
-                              title="Delete"
-                              className={`p-2 rounded-lg transition-colors ${isDark ? 'text-neutral-600 hover:text-red-400 hover:bg-neutral-800' : 'text-slate-300 hover:text-red-500 hover:bg-slate-100'}`}
-                            >
-                              <i className="fa-regular fa-trash-can text-sm" />
-                            </button>
-                          )}
-                        </div>
+                        )}
+                        {!showSel && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmAction({ visible: true, type: 'delete', count: 1, singleFileId: file.id })}
+                            title="Delete"
+                            className={`p-2 rounded-lg transition-colors ${isDark ? 'text-neutral-600 hover:text-red-400 hover:bg-neutral-800' : 'text-slate-300 hover:text-red-500 hover:bg-slate-100'}`}
+                          >
+                            <i className="fa-regular fa-trash-can text-sm" />
+                          </button>
+                        )}
+                      </div>
                       </td>
                     </tr>
                   );

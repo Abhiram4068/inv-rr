@@ -18,8 +18,8 @@ export const deleteCollection = (collectionId) => api.delete(`/collections/${col
 //POST /collections/:id/add-file/
 export const addFileToCollection = (collectionId, fileId) => api.post(`/collections/${collectionId}/files/${fileId}/`);
 
-//POST /collections/:id/remove-file/
-export const removeFileFromCollection = (collectionId, fileId) => api.post(`/collections/${collectionId}/remove-file/`, { file_id: fileId });
+//DELETE /collections/:id/files/:file_id/
+export const removeFileFromCollection = (collectionId, fileId) => api.delete(`/collections/${collectionId}/files/${fileId}/`);
 
 //GET /collections/:id/files/
 export const getCollectionFiles = (collectionId, page = 1, search="") => api.get(`/collections/${collectionId}/files/`, { params: { page, search } });

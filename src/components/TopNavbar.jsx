@@ -4,7 +4,7 @@ import { logout } from "../services/authService";
 
 import useAuth from "../hooks/useAuth";
 
-const TopNavbar = ({ toggleSidebar }) => {
+const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
   const { user, logout: clearUser } = useAuth();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -58,6 +58,17 @@ const TopNavbar = ({ toggleSidebar }) => {
       </div>
 
       <div className="flex items-center gap-3 md:gap-5">
+        {/* Right Sidebar Toggle (Mobile only) */}
+        <button 
+          onClick={toggleRightSidebar}
+          className={`lg:hidden w-9 h-9 rounded-lg flex items-center justify-center transition-all 
+            ${theme === 'dark' 
+              ? 'text-[#808080] hover:bg-[#222]' 
+              : 'text-slate-600 hover:bg-slate-200'}`}
+          title="Toggle Tasks"
+        >
+          <i className="fa-solid fa-layer-group"></i>
+        </button>
         {/* --- Theme Toggle Button --- */}
         <button 
           onClick={toggleTheme}

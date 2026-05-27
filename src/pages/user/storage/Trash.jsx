@@ -444,7 +444,76 @@ ${isDark
           </div>
         </div>
       )}
+{/* DELETE MODAL */}
+{isDeleteModalOpen && (
+  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-6 border animate-in zoom-in-95 duration-200 ${
+      isDark
+        ? 'bg-[#0d0d0d] border-[#1a1a1a]'
+        : 'bg-white border-slate-200'
+    }`}>
+      
+      <div className="text-center">
 
+        <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i className="fa-solid fa-trash text-2xl"></i>
+        </div>
+
+        <h2 className={`text-lg font-bold mb-2 ${
+          isDark ? 'text-white' : 'text-slate-800'
+        }`}>
+          Delete File Permanently?
+        </h2>
+
+        <p className={`text-xs leading-relaxed mb-6 ${
+          isDark ? 'text-[#666]' : 'text-slate-500'
+        }`}>
+          Are you sure you want to permanently delete{" "}
+          <strong className={isDark ? 'text-white' : 'text-slate-800'}>
+            {selectedFile?.original_name}
+          </strong>?
+          {" "}This action cannot be undone.
+        </p>
+
+        <div className="flex gap-3">
+
+          <button
+            onClick={() => setDeleteModalOpen(false)}
+            disabled={actionLoading}
+            className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${
+              isDark
+                ? 'bg-[#1a1a1a] text-[#808080] hover:bg-[#222]'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={handleDeleteFile}
+            disabled={actionLoading}
+            className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {actionLoading
+              ? (
+                <>
+                  <i className="fa-solid fa-circle-notch animate-spin"></i>
+                  Deleting...
+                </>
+              )
+              : (
+                <>
+                  <i className="fa-solid fa-trash"></i>
+                  Delete
+                </>
+              )}
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+)}
       {/* BULK RESTORE MODAL */}
       {isBulkRestoreModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">

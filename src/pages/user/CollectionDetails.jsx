@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
-import {getCollectionById,   getCollectionFiles,   updateCollection,   addFileToCollection } from '../../services/collectionService';
+import {getCollectionById,   getCollectionFiles,   updateCollection,   addFileToCollection, removeFileFromCollection } from '../../services/collectionService';
 import { formatDateTime } from '../../utils/dateFormatter';
 import { sizeFormatter } from '../../utils/sizeFormatter';
 import { getFiles, getFileById } from '../../services/fileService';
@@ -14,7 +14,8 @@ const CollectionDetails = () => {
     isDeleteOpen, 
     setIsDeleteOpen, 
     handleUpdateCollection, 
-    handleDeleteCollection   
+    handleDeleteCollection,
+    setCollectionInfo: setLayoutCollectionInfo
   } = useOutletContext();
   
   const navigate = useNavigate();
@@ -115,6 +116,7 @@ const showToast = (msg, type = 'success') => {
         getCollectionFiles(id, collectionPage, search)
       ]);
       setCollectionInfo(collectionRes.data);
+      if (setLayoutCollectionInfo) setLayoutCollectionInfo(collectionRes.data);
       setCollectionFile(fileRes.data.results || fileRes.data.collection_files || []);
       setTotalFiles(fileRes.data.count || 0);
       setTotalCollectionPages(fileRes.data.next 
@@ -160,13 +162,18 @@ const showToast = (msg, type = 'success') => {
   const handleAddFile = async (fileId) => {
     try {
       await addFileToCollection(id, fileId);
-      const fileRes = await getCollectionFiles(id, collectionPage);
+      const [fileRes, collectionRes] = await Promise.all([
+        getCollectionFiles(id, collectionPage),
+        getCollectionById(id)
+      ]);
       setCollectionFile(fileRes.data.results || fileRes.data.collection_files || []);
       setTotalFiles(fileRes.data.count || 0);
       setTotalCollectionPages(fileRes.data.next 
         ? collectionPage + 1 
         : collectionPage
       );
+      setCollectionInfo(collectionRes.data);
+      if (setLayoutCollectionInfo) setLayoutCollectionInfo(collectionRes.data);
       setIsAddFileOpen(false); 
       showToast("File added to collection successfully!");
     } catch (err) {
@@ -175,11 +182,44 @@ const showToast = (msg, type = 'success') => {
     }
   };
 
-  const handleSave = () => {
-    handleUpdateCollection(formData);
-    setCollectionInfo({ ...collectionInfo, ...formData });
-    setIsManageOpen(false);
-    showToast("Collection updated successfully!");
+  const handleRemoveFile = async (fileId) => {
+    try {
+      await removeFileFromCollection(id, fileId);
+      const [fileRes, collectionRes] = await Promise.all([
+        getCollectionFiles(id, collectionPage),
+        getCollectionById(id)
+      ]);
+      setCollectionFile(fileRes.data.results || fileRes.data.collection_files || []);
+      setTotalFiles(fileRes.data.count || 0);
+      setTotalCollectionPages(fileRes.data.next 
+        ? collectionPage + 1 
+        : collectionPage
+      );
+      setCollectionInfo(collectionRes.data);
+      if (setLayoutCollectionInfo) setLayoutCollectionInfo(collectionRes.data);
+      showToast("File removed from collection successfully!");
+    } catch (err) {
+      showToast(err?.response?.data?.detail || "Failed to remove file","error");
+      throw err;
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await handleUpdateCollection(formData);
+      setCollectionInfo({ ...collectionInfo, ...formData });
+      setIsManageOpen(false);
+      showToast("Collection updated successfully!");
+    } catch (err) {
+      setIsManageOpen(false);
+      if (err.response?.data?.detail?.name) {
+        showToast(err.response.data.detail.name[0], "error");
+      } else if (typeof err.response?.data?.detail === "string") {
+        showToast(err.response.data.detail, "error");
+      } else {
+        showToast("Failed to update collection", "error");
+      }
+    }
   };
 
   const onConfirmDelete = async () => {
@@ -326,7 +366,7 @@ const showToast = (msg, type = 'success') => {
 
         {/* Collection Files Content */}
         {loading ? (
-          <div className="py-20 text-center text-gray-500 italic">Loading collection...</div>
+          <div className="py-20 text-center text-gray-500">Loading collection...</div>
         ) : collectionFile.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
@@ -344,6 +384,7 @@ const showToast = (msg, type = 'success') => {
                   contentType={file.content_type}
                   isStarred={file.is_starred}
                   onToggleStar={handleToggleFileStar}
+                  onRemove={handleRemoveFile}
                   onClick={() => navigate(`/file/${file.file}`)}
                 />
               ))}

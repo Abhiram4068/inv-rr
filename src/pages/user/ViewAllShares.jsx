@@ -224,7 +224,16 @@ const ViewAllShares = () => {
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-neutral-900' : 'divide-slate-100'}`}>
-                {filteredFiles.map((file) => {
+                  {filteredFiles.length === 0 ? (
+    <tr>
+      <td colSpan="6" className="py-20 text-center">
+
+        <p className={`text-sm font-semibold ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>No shared files found</p>
+        <p className={`text-xs mt-1 ${isDark ? 'text-neutral-700' : 'text-slate-300'}`}>Files you share will appear here</p>
+      </td>
+    </tr>
+  ) : 
+                (filteredFiles.map((file) => {
                   const visuals = getFileVisuals(file.file_name || file.content_type);
                   const hasBeenAccessed = !!file.accessed_at;
                   return (
@@ -336,7 +345,7 @@ const ViewAllShares = () => {
                       </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>

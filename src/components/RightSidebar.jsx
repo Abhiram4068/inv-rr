@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from "react-router-dom";
 import { getStorageSummary } from "../services/storageService";
 
-const RightSidebar = () => {
+const RightSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   
   // 1. Theme State Sync
@@ -37,8 +37,12 @@ const RightSidebar = () => {
   }, []);
 
   return (
-    <aside className={`hidden lg:block w-[320px] p-[24px_20px] border-l transition-colors duration-300 overflow-y-auto no-scrollbar 
-      ${isDark ? 'bg-black border-[#555]' : 'bg-[#F8FAFC] border-slate-200'}`}>
+    <aside className={`
+      ${isOpen ? 'translate-x-0' : 'translate-x-full'} 
+      lg:translate-x-0 lg:static fixed top-[60px] lg:top-0 bottom-0 right-0 w-[320px] 
+      p-[24px_20px] border-l shrink-0 z-40 transition-all duration-300 ease-in-out overflow-y-auto no-scrollbar
+      ${isDark ? 'bg-black border-[#262626]' : 'bg-[#F8FAFC] border-slate-200'}
+    `}>
       
       {/* Home Tab */}
       <div className={`border rounded-xl p-5 mb-4 transition-colors 
@@ -49,6 +53,7 @@ const RightSidebar = () => {
         </p>
         <Link 
           to="/upload-file"
+          onClick={() => onClose?.()}
           className={`block w-full p-2.5 rounded-[20px] font-semibold text-center text-sm mb-3 transition-all border
             ${isDark 
               ? 'bg-transparent text-white border-[#1a1a1a] hover:bg-[#111]' 
@@ -59,6 +64,7 @@ const RightSidebar = () => {
 
         <Link 
           to="/collections"
+          onClick={() => onClose?.()}
           className={`block w-full p-2.5 rounded-[20px] font-semibold text-center text-sm transition-all border
             ${isDark 
               ? 'bg-transparent text-white border-[#1a1a1a] hover:bg-[#111]' 
@@ -77,6 +83,7 @@ const RightSidebar = () => {
         </p>
         <Link 
           to="/schedule-mail"
+          onClick={() => onClose?.()}
           className={`block w-full p-2.5 rounded-[20px] font-semibold text-center text-sm transition-all
             ${isDark ? 'bg-[#e3e3e3] text-black hover:bg-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
         >
@@ -108,6 +115,7 @@ const RightSidebar = () => {
 
           <Link 
             to="/storage"
+            onClick={() => onClose?.()}
             className={`block w-full p-2.5 rounded-[20px] font-semibold text-center text-sm transition-all
               ${isDark ? 'text-white border border-[#1a1a1a] hover:bg-[#111]' : 'text-blue-600 bg-blue-50 hover:bg-blue-100'}`}
           >
