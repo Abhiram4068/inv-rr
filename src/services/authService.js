@@ -6,7 +6,11 @@ const api = axios.create({
 });
 
 // Endpoints that should never trigger a refresh attempt
-const AUTH_ENDPOINTS = ["/api/login/", "/api/token/refresh/", "/api/register/"];
+const AUTH_ENDPOINTS = [
+  "/api/auth/login/",
+  "/api/token/refresh/",
+  "/api/auth/register/",
+];
 
 let isRefreshing = false;
 let failedQueue = [];
@@ -50,15 +54,20 @@ api.interceptors.response.use(
     original._retry = true;
     isRefreshing = true;
 
-    try {
-      await api.post("/api/token/refresh/");
-      processQueue(null);
-      return api(original);
-    } catch (refreshError) {
-      processQueue(refreshError);
-      // Let AuthContext handle the redirection to prevent hard jumps
-      return Promise.reject(refreshError);
-    } finally {
+try {
+  await api.post(
+    "/api/token/refresh/",
+    {},
+    { withCredentials: true }
+  );
+
+  processQueue(null);
+
+  return api(original);
+} catch (refreshError) {
+  processQueue(refreshError);
+  return Promise.reject(refreshError);
+} finally {
       isRefreshing = false;
     }
   }
