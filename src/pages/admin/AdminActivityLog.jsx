@@ -19,7 +19,7 @@ const AdminActivityLog = () => {
             setLoading(true);
             const params = { search: searchQuery };
             const data = await adminService.getActivityLogs(params);
-            
+
             const results = data.results || data;
             setLogs(results);
             setStats({
@@ -50,18 +50,18 @@ const AdminActivityLog = () => {
     return (
         <div className="flex-1 bg-[#f0f2f7] min-h-screen p-8 font-sans">
             <div className="max-w-7xl mx-auto">
-                
+
                 {/* Top Headers matching dashboard layout structure */}
                 <div className="bg-white border border-slate-200 p-6 rounded-sm mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl font-bold text-slate-800 tracking-tight">System Activity Log</h1>
                         <p className="text-xs text-slate-400 mt-0.5">
-                            Monitor admin activities, critical updates and access changes. 
+                            Monitor admin activities, critical updates and access changes.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button 
-                            onClick={() => navigate('/admin/dashboard')} 
+                        <button
+                            onClick={() => navigate('/admin/dashboard')}
                             className="text-xs bg-white text-slate-600 font-bold px-4 py-2.5 rounded-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
                         >
                             <i className="fa-solid fa-arrow-left text-[10px]"></i> Dashboard Overview
@@ -103,14 +103,14 @@ const AdminActivityLog = () => {
 
                 {/* Sub-Header Management Panel */}
                 <div className="bg-white border border-slate-200 rounded-sm mb-6 overflow-hidden">
-                    
+
                     {/* Control Panel: Filters and Searching */}
                     <div className="p-4 bg-white border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                        
+
                         {/* Search Wireframe */}
                         <div className="relative flex-1">
                             <i className="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                            <input 
+                            <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -167,8 +167,10 @@ const AdminActivityLog = () => {
                                 ) : (
                                     <tr>
                                         <td colSpan="5" className="py-12 text-center text-slate-400 text-xs">
-                                            <i className="fa-solid fa-folder-open block text-xl mb-2 text-slate-300"></i>
-                                            No tracking footprints found.
+                                            <div className="flex items-center justify-center gap-2">
+                                                <i className="fa-solid fa-folder-open text-base text-slate-300"></i>
+                                                <span>No active logs found.</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}

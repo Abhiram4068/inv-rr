@@ -113,7 +113,7 @@ const DuplicateModal = ({ isDark, file, onResolve }) => {
           background: isDark ? 'rgba(251,191,36,0.1)' : '#fffbeb',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <i className="ti ti-alert-triangle" style={{ fontSize: 20, color: '#f59e0b' }} aria-hidden="true" />
+          <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: 20, color: '#f59e0b' }} aria-hidden="true" />
         </div>
         <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 6px', color: isDark ? '#fff' : '#1e293b' }}>
           Duplicate file detected
@@ -129,7 +129,7 @@ const DuplicateModal = ({ isDark, file, onResolve }) => {
           background: isDark ? '#111' : '#f8fafc',
           fontSize: 12,
         }}>
-          <i className="ti ti-file" style={{ color: isDark ? '#444' : '#94a3b8' }} aria-hidden="true" />
+          <i className="fa-solid fa-file" style={{ color: isDark ? '#444' : '#94a3b8' }} aria-hidden="true" />
           <span style={{ flex: 1, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isDark ? '#fff' : '#334155' }}>
             {file.name}
           </span>
@@ -141,7 +141,7 @@ const DuplicateModal = ({ isDark, file, onResolve }) => {
             padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
             background: '#fff', color: '#000', fontWeight: 600, fontSize: 13,
           }}>
-            <i className="ti ti-refresh" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
+            <i className="fa-solid fa-rotate-right" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
             <span style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
               <span>Replace existing</span>
               <span style={{ fontSize: 10, opacity: 0.5, fontWeight: 400, marginTop: 2 }}>Overwrite the old file with this one</span>
@@ -154,7 +154,7 @@ const DuplicateModal = ({ isDark, file, onResolve }) => {
             border: `0.5px solid ${isDark ? '#222' : '#e2e8f0'}`,
             color: isDark ? '#fff' : '#334155',
           }}>
-            <i className="ti ti-copy" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
+            <i className="fa-solid fa-copy" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
             <span style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
               <span>Keep both</span>
               <span style={{ fontSize: 10, opacity: 0.5, fontWeight: 400, marginTop: 2 }}>Save as a renamed copy alongside the original</span>
@@ -507,7 +507,7 @@ const UploadFilesMain = () => {
                 : (isDark ? 'rgba(16,185,129,0.1)' : '#f0fdf4'),
               color: toast.type === 'error' ? '#f87171' : '#34d399',
             }}>
-              <i className={`ti ${toast.type === 'error' ? 'ti-alert-circle' : 'ti-circle-check'}`} style={{ fontSize: 13 }} aria-hidden="true" />
+              <i className={`fa-solid ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`} style={{ fontSize: 13 }} aria-hidden="true" />
             </div>
             <span style={{ flex: 1, letterSpacing: '0.01em' }}>{toast.message}</span>
           </div>
@@ -538,7 +538,7 @@ const UploadFilesMain = () => {
           transition: 'all 0.2s',
         }}
       >
-        <i className="ti ti-cloud-upload" style={{ fontSize: 40, color: '#3b82f6', marginBottom: 12 }} aria-hidden="true" />
+        <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: 40, color: '#3b82f6', marginBottom: 12 }} aria-hidden="true" />
         <span style={{ fontSize: 14, fontWeight: 500, color: isDark ? '#fff' : '#475569' }}>
           Drop files here or click to upload
         </span>
@@ -614,9 +614,9 @@ const UploadFilesMain = () => {
                       padding: 8, borderRadius: 8, border: 'none', background: 'transparent',
                       cursor: 'pointer', color: '#f59e0b', display: 'flex', alignItems: 'center',
                     }}>
-                      <i className="ti ti-player-pause" style={{ fontSize: 15 }} aria-label="Pause" />
+                      <i className="fa-solid fa-pause" style={{ fontSize: 15 }} aria-label="Pause" />
                     </button>
-                    <i className="ti ti-loader-2" style={{ fontSize: 15, color: '#f59e0b', padding: '0 4px' }} aria-hidden="true" />
+                    <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 15, color: '#f59e0b', padding: '0 4px' }} aria-hidden="true" />
                   </>
                 )}
                 {(['paused', 'error'].includes(file.status) && file.uploadId) && (
@@ -625,18 +625,18 @@ const UploadFilesMain = () => {
                       padding: 8, borderRadius: 8, border: 'none', background: 'transparent',
                       cursor: 'pointer', color: '#10b981', display: 'flex', alignItems: 'center',
                     }}>
-                      <i className="ti ti-player-play" style={{ fontSize: 15 }} aria-label="Resume" />
+                      <i className="fa-solid fa-play" style={{ fontSize: 15 }} aria-label="Resume" />
                     </button>
                     <button onClick={() => handleCancelUpload(file)} title="Cancel" style={{
                       padding: 8, borderRadius: 8, border: 'none', background: 'transparent',
                       cursor: 'pointer', color: '#f87171', display: 'flex', alignItems: 'center',
                     }}>
-                      <i className="ti ti-player-stop" style={{ fontSize: 15 }} aria-label="Cancel" />
+                      <i className="fa-solid fa-stop" style={{ fontSize: 15 }} aria-label="Cancel" />
                     </button>
                   </>
                 )}
                 {file.status === 'completed' && (
-                  <i className="ti ti-circle-check" style={{ fontSize: 16, color: '#10b981', padding: '0 8px' }} aria-hidden="true" />
+                  <i className="fa-solid fa-circle-check" style={{ fontSize: 16, color: '#10b981', padding: '0 8px' }} aria-hidden="true" />
                 )}
                 {file.status === 'pending' && (
                    <button onClick={() => removeFile(file.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all" title="Remove">
@@ -685,7 +685,7 @@ const UploadFilesMain = () => {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        .ti-loader-2 { animation: spin 1s linear infinite; }
+        .fa-spinner { animation: spin 1s linear infinite; }
         .animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
         .bg-\\[\\#333\\] { background: #333; }

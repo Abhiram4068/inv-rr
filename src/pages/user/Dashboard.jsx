@@ -579,9 +579,7 @@ const Dashboard = () => {
         <div className={`lg:col-span-1 border rounded-3xl p-6 flex flex-col items-center justify-center transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
           <div className="w-full flex justify-between items-center mb-4">
             <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Storage Overview</span>
-            <button className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-1">
-              Manage <i className="fa-solid fa-chevron-right text-[8px]"></i>
-            </button>
+
           </div>
           
           <div className="relative flex items-center justify-center py-2">
@@ -607,9 +605,16 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <button className={`w-full py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isDark ? 'bg-[#111] text-white border border-[#222] hover:bg-[#1a1a1a]' : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-white hover:shadow-md'}`}>
-              Manage Storage
-            </button>
+          <button
+            onClick={() => navigate("/storage/storage-cleanup")}
+            className={`w-full py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+              isDark
+                ? 'bg-[#111] text-white border border-[#222] hover:bg-[#1a1a1a]'
+                : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-white hover:shadow-md'
+            }`}
+          >
+            Manage Storage
+          </button>
           </div>
         </div>
 

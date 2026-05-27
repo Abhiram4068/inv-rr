@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 const AdminSidebar = ({ isOpen, onClose }) => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const { logout, logout: clearUser } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // even if the server call fails, clear client state
+    } finally {
+      clearUser(null);
+      navigate("/login", { replace: true });
+    }
+  };
 
   useEffect(() => {
     const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
@@ -38,22 +52,20 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     `}>
 
       {/* SECTION 1: ADMINISTRATION */}
-      <div className={sectionHeaderClass}>
-        Administration
-      </div>
+      <div className={sectionHeaderClass}>Administration</div>
       <div className="space-y-1">
         <NavLink onClick={() => onClose?.()} to="/admin/dashboard" className={getNavLinkClass}>
           <i className="fa-solid fa-gauge-high w-5 mr-3 text-base"></i> Overview
         </NavLink>
         <NavLink onClick={() => onClose?.()} to="/admin/activity-logs" className={getNavLinkClass}>
-    <i className="fa-solid fa-clock-rotate-left w-5 mr-3 text-base"></i> Activity Logs
-  </NavLink>
+          <i className="fa-solid fa-clock-rotate-left w-5 mr-3 text-base"></i> Activity Logs
+        </NavLink>
       </div>
-  <div className={dividerClass}></div>
+
+      <div className={dividerClass}></div>
+
       {/* SECTION 2: USERS & ACCESS CONTROL */}
-      <div className={sectionHeaderClass}>
-        Users & Access Control
-      </div>
+      <div className={sectionHeaderClass}>Users & Access Control</div>
       <div className="space-y-1">
         <NavLink onClick={() => onClose?.()} to="/admin/users" className={getNavLinkClass}>
           <i className="fa-solid fa-user-group w-5 mr-3 text-base"></i> User Profiles
@@ -61,7 +73,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         <NavLink onClick={() => onClose?.()} to="/admin/pending-users" className={getNavLinkClass}>
           <i className="fa-solid fa-users w-5 mr-3 text-base"></i> Pending Approvals
         </NavLink>
-          <NavLink onClick={() => onClose?.()} to="/admin/designations" className={getNavLinkClass}>
+        <NavLink onClick={() => onClose?.()} to="/admin/designations" className={getNavLinkClass}>
           <i className="fa-solid fa-id-badge w-5 mr-3 text-base"></i> Manage Designations
         </NavLink>
         <NavLink onClick={() => onClose?.()} to="/admin/role-change" className={getNavLinkClass}>
@@ -77,7 +89,21 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           <i className="fa-solid fa-user-minus w-5 mr-3 text-base"></i> Deleted Users
         </NavLink>
       </div>
-     
+
+      {/* Logout */}
+      <div className={`border-t mt-auto pt-4 mx-0 ${isDark ? 'border-[#262626]' : 'border-slate-200'}`}>
+       <button
+  onClick={handleLogout}
+  className={`w-full flex items-center p-[10px_12px] rounded-lg text-sm font-medium transition-all duration-200 ${
+    isDark
+      ? 'text-red-400 hover:bg-[#111] hover:text-red-500'
+      : 'text-red-500 hover:bg-white hover:text-red-600'
+  }`}
+>
+  <i className="fa-solid fa-right-from-bracket w-5 mr-3 text-base text-red-500"></i>
+  Logout
+</button>
+      </div>
 
     </aside>
   );

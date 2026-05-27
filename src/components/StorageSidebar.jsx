@@ -40,24 +40,44 @@ const Sidebar = ({ isOpen }) => {
       <div className={`text-[11px] uppercase tracking-widest m-[24px_0_12px_12px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
         HiveDrive Storage
       </div>
+ <div className={`border-b mx-3 mb-2 ${isDark ? 'border-[#333]' : 'border-slate-100'}`}></div>
+<div className="space-y-1">
 
-      <div className="space-y-1">
-        <NavLink to="/dashboard" className={getNavLinkClass}>
-          <i className="fa-solid fa-house w-5 mr-3 text-base"></i> Home
-        </NavLink>
+  <NavLink to="/dashboard" className={getNavLinkClass}>
+    {({ isActive }) => (
+      <>
+        <i className={`fa-solid fa-house w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i>
+        Home
+      </>
+    )}
+  </NavLink>
+<NavLink to="/storage/storage-cleanup" className={getNavLinkClass}>
+    {({ isActive }) => (
+      <>
+        <i className={`fa-solid fa-broom w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i>
+        Clean Up Recommendations
+      </>
+    )}
+  </NavLink>
+  <NavLink to="/storage/view-duplicates" className={getNavLinkClass}>
+    {({ isActive }) => (
+      <>
+        <i className={`fa-solid fa-copy w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i>
+        Duplicates
+      </>
+    )}
+  </NavLink>
 
-        <NavLink to="/storage/view-duplicates" className={getNavLinkClass}>
-          <i className="fa-solid fa-copy w-5 mr-3 text-base"></i> Duplicates
-        </NavLink>
+  <NavLink to="/storage/view-oldfiles" className={getNavLinkClass}>
+    {({ isActive }) => (
+      <>
+        <i className={`fa-solid fa-clock-rotate-left w-5 mr-3 text-base ${isDark ? 'text-white' : (isActive ? 'text-blue-600' : 'text-slate-400')}`}></i>
+        Old Files
+      </>
+    )}
+  </NavLink>
 
-        <NavLink to="/storage/view-oldfiles" className={getNavLinkClass}>
-          <i className="fa-solid fa-clock-rotate-left w-5 mr-3 text-base"></i> Old Files
-        </NavLink>
-
-        <NavLink to="/storage/trash" className={getNavLinkClass}>
-          <i className="fa-solid fa-trash-can w-5 mr-3 text-base"></i> Trash
-        </NavLink>
-      </div>
+</div>
 
     </aside>
   );
