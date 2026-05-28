@@ -784,10 +784,13 @@ const executeBulkAction = async () => {
         fileIds={selectedFileIds}
         isBulk={true}
         isDark={isDark}
-        onShareSuccess={() => {
+        onShareSuccess={(message) => {
           setSelectedFileIds([]);
           setIsSelectMode(false);
-          showToast(`${selectedFileIds.length} file(s) shared successfully`);
+
+          setTimeout(() => {
+            showToast(message, "success");
+          }, 150);
         }}
       />
 

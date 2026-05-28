@@ -147,12 +147,15 @@ const showToast = (msg, type = 'success') => {
     }
   }, [activeModal]);
 
-  const handleShareSuccess = () => {
-    setActiveModal(null);
-    showToast(`Shared successfully`);
-    fetchFile();
-  };
+const handleShareSuccess = (message) => {
+  setActiveModal(null);
 
+  setTimeout(() => {
+    showToast(message || "File shared successfully");
+  }, 150);
+
+  fetchFile();
+};
 const saveDetails = async () => {
   setSaveLoading(true);
   setSaveError("");

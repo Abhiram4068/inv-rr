@@ -17,7 +17,7 @@ const getFileIcon = (contentType) => {
 const ExternalShareView = () => {
   const { token } = useParams();
 
-  const [phase, setPhase] = useState('loading'); // loading | ready | expired | revoked | error
+  const [phase, setPhase] = useState('loading'); // loading | ready | expired | revoked | error || used
   const [fileData, setFileData] = useState(null);
   const [backendError, setBackendError] = useState('');
   const [actionLoading, setActionLoading] = useState(null); // 'view' | 'download' | null
@@ -33,7 +33,9 @@ const ExternalShareView = () => {
           setBackendError(data.error || 'Access denied.');
           if (res.status === 410 || (data.error && data.error.toLowerCase().includes('expired'))) {
             setPhase('expired');
-          } else if (data.error && (data.error.toLowerCase().includes('revoked') || data.error.toLowerCase().includes('used'))) {
+          } else if (data.error && data.error.toLowerCase().includes('used')) {
+            setPhase('used');
+          } else if (data.error && data.error.toLowerCase().includes('revoked')) {
             setPhase('revoked');
             setRevokedModalVisible(true);
           } else {
@@ -43,6 +45,10 @@ const ExternalShareView = () => {
         }
         
         setFileData(data);
+        if (data.permission === 'one_time_download' && data.is_active === false) {
+      setPhase('used');
+      return;
+    }
         setPhase('ready');
       } catch {
         setPhase('error');
@@ -75,9 +81,7 @@ const ExternalShareView = () => {
         
         // Update local state for feedback
         if (fileData?.permission === 'one_time_download') {
-            setPhase('revoked'); // Link is now dead
-            setBackendError('This one-time link has already been used.');
-            setRevokedModalVisible(true);
+            setPhase('used');
         } else if (fileData?.download_limit !== null) {
             setFileData(prev => ({ ...prev, download_count: (prev.download_count || 0) + 1 }));
         }
@@ -133,7 +137,7 @@ const ExternalShareView = () => {
 
   const accentColor = {
     loading: '#3b82f6', ready: '#22c55e',
-    expired: '#f59e0b', revoked: '#ef4444', error: '#ef4444',
+    expired: '#f59e0b', revoked: '#ef4444', error: '#ef4444', used: '#22c55e',
   }[phase] || '#3b82f6';
 
   const renderBody = () => {
@@ -165,7 +169,35 @@ const ExternalShareView = () => {
         <p style={{ fontSize: 14, color: '#808080', margin: 0, lineHeight: 1.6 }}>This link has been revoked.</p>
       </div>
     );
-
+if (phase === 'used') return (
+  <div style={{ textAlign: 'center' }}>
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      width: 72, height: 72, borderRadius: 20,
+      background: '#052e1620', border: '1px solid #22c55e30',
+      marginBottom: '1.5rem'
+    }}>
+      <i className="fa-solid fa-circle-check" style={{ fontSize: 28, color: '#22c55e' }}></i>
+    </div>
+    <h1 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 10px', color: '#fff' }}>
+      Download Complete
+    </h1>
+    <p style={{ fontSize: 14, color: '#808080', margin: '0 0 1.5rem', lineHeight: 1.6 }}>
+      This file has already been downloaded. One-time links expire after a single use.
+    </p>
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 8,
+      background: 'rgba(34,197,94,0.07)',
+      border: '1px solid rgba(34,197,94,0.15)',
+      borderRadius: 10, padding: '8px 14px',
+    }}>
+      <i className="fa-solid fa-circle-info" style={{ fontSize: 12, color: '#22c55e' }}></i>
+      <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>
+        Contact the file owner if you need another copy
+      </span>
+    </div>
+  </div>
+);
     if (phase === 'error') return (
       <div style={{ textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 72, borderRadius: 20, background: '#ef444420', border: '1px solid #ef444430', marginBottom: '1.5rem' }}>
@@ -450,11 +482,6 @@ const ExternalShareView = () => {
             </div>
           </div>
         </div>
-
-        <div className="relative z-10 flex items-center gap-3 text-[#71717a] text-[10px] tracking-[0.2em] uppercase pt-8 border-t border-[#1e1e20]">
-            <i className="fa-solid fa-lock text-[8px]"></i>
-            Verified Connection Secure
-        </div>
       </div>
 
       {/* RIGHT SIDE: Content Area */}
@@ -503,7 +530,7 @@ const ExternalShareView = () => {
           <div className="text-center mt-12">
               <p className="text-[10px] text-[#4a4a4a] text-uppercase tracking-[0.25em] flex items-center justify-center gap-2 m-0 uppercase font-medium">
                 <i className="fa-solid fa-shield-halved text-[9px]"></i>
-                Secured by HiveDrive Protocol
+                HiveDrive Secure Share
               </p>
           </div>
         </div>

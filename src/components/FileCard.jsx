@@ -152,9 +152,13 @@ const FileCard = ({
 
     setIsSharing(true);
     try {
-      await shareFile(id, payload);
+      const response = await shareFile(id, payload);
+
       setActiveModal(null);
-      showToast(`Shared with ${validEmails.length} recipient(s)`);
+
+      setTimeout(() => {
+        showToast(response.data.message);
+      }, 150);
       setRecipients(['']);
       setShareData({ title: '', message: '', expiration_datetime: 48, permission: 'view_only', download_limit: null, view_limit: null });
       setIsCustomExpiry(false);

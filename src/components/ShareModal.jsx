@@ -74,19 +74,19 @@ const ShareModal = ({
 
     setIsSharing(true);
     try {
-      if (isBulk) {
-        payload.file_ids = fileIds;
-        await bulkShareFiles(payload);
-        showToast(`${fileIds.length} file(s) shared successfully`);
-      } else {
-        await shareFile(fileIds[0], payload);
-        showToast(`File shared successfully`);
-      }
-      
-      setTimeout(() => {
-        onShareSuccess?.();
-        onClose();
-      }, 1000);
+let response;
+
+if (isBulk) {
+  payload.file_ids = fileIds;
+  response = await bulkShareFiles(payload);
+} else {
+  response = await shareFile(fileIds[0], payload);
+}
+
+setTimeout(() => {
+  onShareSuccess?.(response.data.message);
+  onClose();
+}, 300);
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to share files';
       showToast(msg, 'error');
