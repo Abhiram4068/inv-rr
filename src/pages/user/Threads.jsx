@@ -311,7 +311,7 @@ const [titleError, setTitleError] = useState(false);
                 className={`border p-5 rounded-[10px] flex flex-col gap-4 transition-all group cursor-pointer ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]' : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'}`}
               >
                 <div className="flex items-center justify-between relative" onClick={e => e.stopPropagation()}>
-                    <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full  flex items-center justify-center">
                         <i className="fa-solid fa-code-branch text-blue-500 rotate-90"></i>
                     </div>
                     <button 
@@ -353,62 +353,85 @@ const [titleError, setTitleError] = useState(false);
             ))}
           </div>
         ) : (
-          <div className={`overflow-x-auto mb-10 rounded-lg border ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className={`border-b ${isDark ? 'border-[#1a1a1a] bg-[#050505] text-[#666]' : 'border-slate-200 bg-slate-50 text-slate-500'} text-[11px] uppercase font-bold`}>
-                  <th className="px-6 py-4">Workflow Thread</th>
-                  <th className="px-6 py-4">Nodes</th>
-                  <th className="px-6 py-4">Files</th>
-                  <th className="px-6 py-4">Created</th>
-                  <th className="px-6 py-4 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className={`text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                {threads.map((thread) => (
-                  <tr key={thread.id} className={`group border-b-0 transition-colors ${isDark ? 'hover:bg-[#ffffff05]' : 'hover:bg-white/50'}`}>
-                    <td className="px-6 py-4">
-                      <Link to={`/thread/${thread.id}`} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><i className="fa-solid fa-diagram-project"></i></div>
-                        <span className="font-semibold">{thread.title}</span>
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-[#808080]">{thread.node_count} Nodes</td>
-                    <td className="px-6 py-4 text-xs text-[#808080]">{thread.file_count} Assets</td>
-                    <td className="px-6 py-4 text-xs font-mono text-[#666]">{new Date(thread.created_at).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-right">
-                       <div className="relative inline-block text-left">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMenuOpenId(menuOpenId === thread.id ? null : thread.id);
-                          }}
-                          className={`p-1.5 rounded-lg hover:bg-white/5 transition-all ${isDark ? 'text-[#666]' : 'text-slate-400'}`}
-                        >
-                          <i className="fa-solid fa-ellipsis-vertical"></i>
-                        </button>
-                        {menuOpenId === thread.id && (
-                          <div className={`absolute top-0 right-10 z-[100] w-40 border rounded-xl shadow-xl p-1.5 ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-slate-200'}`}>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); setEditingThread(thread); setMenuOpenId(null); }}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${isDark ? 'hover:bg-[#222] text-[#ccc]' : 'hover:bg-slate-100 text-slate-600'}`}
-                            >
-                              <i className="fa-solid fa-pen-to-square"></i> Rename/Edit
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); setDeletingThread(thread); setMenuOpenId(null); }}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-rose-500 transition-colors ${isDark ? 'hover:bg-rose-500/10' : 'hover:bg-rose-50'}`}
-                            >
-                              <i className="fa-solid fa-trash"></i> Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
+          <div
+            className={`rounded-lg overflow-hidden shadow-2xl mb-10 border ${isDark ? 'border-neutral-900 bg-[#050505]' : 'border-slate-200 bg-white'}`}
+            style={{
+              contain: 'paint',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+            }}
+          >
+            {/* Table top bar */}
+            <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
+              <div>
+                <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>Project Threads</h3>
+                <p className={`text-[10px] font-bold mt-0.5 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
+                  {threads.length} thread(s) on this page
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className={`w-full text-left border-collapse ${isDark ? 'bg-[#050505]' : 'bg-white'}`}>
+                <thead>
+                  <tr className={`border-b ${isDark ? 'border-neutral-900 bg-[#080808]/70 text-neutral-500' : 'border-slate-100 bg-slate-50/50 text-slate-400'} text-[10px] uppercase tracking-[0.15em]`}>
+                    <th className="px-6 py-4 font-bold">Workflow Thread</th>
+                    <th className="px-6 py-4 font-bold">Nodes</th>
+                    <th className="px-6 py-4 font-bold">Files</th>
+                    <th className="px-6 py-4 font-bold">Created</th>
+                    <th className="px-6 py-4 font-bold text-right"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className={`divide-y text-sm ${isDark ? 'divide-neutral-900 text-white' : 'divide-slate-100 text-slate-700'}`}>
+                  {threads.map((thread) => (
+                    <tr key={thread.id} className={`group transition-colors ${isDark ? 'hover:bg-neutral-900/40' : 'hover:bg-slate-50'}`}>
+                      <td className="px-6 py-5">
+                        <Link to={`/thread/${thread.id}`} className="flex items-center gap-3 no-underline">
+                          <div className={`w-9 h-9  flex items-center justify-center flex-shrink-0`}>
+<i className="fa-solid fa-code-branch text-blue-500 rotate-90"></i>                          </div>
+                          <span className={`font-bold truncate max-w-[220px] ${isDark ? 'text-white hover:text-blue-400' : 'text-slate-700 hover:text-blue-600'} transition-colors`}>
+                            {thread.title}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className={`px-6 py-5 text-sm font-medium whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>{thread.node_count} Nodes</td>
+                      <td className={`px-6 py-5 text-sm whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>{thread.file_count} Assets</td>
+                      <td className={`px-6 py-5 text-sm font-mono whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>{new Date(thread.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="relative inline-block text-left">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMenuOpenId(menuOpenId === thread.id ? null : thread.id);
+                            }}
+                            className={`p-1.5 rounded-lg hover:bg-white/5 transition-all ${isDark ? 'text-[#666]' : 'text-slate-400'}`}
+                          >
+                            <i className="fa-solid fa-ellipsis-vertical"></i>
+                          </button>
+                          {menuOpenId === thread.id && (
+                            <div className={`absolute top-0 right-10 z-[100] w-40 border rounded-xl shadow-xl p-1.5 ${isDark ? 'bg-[#111] border-[#222]' : 'bg-white border-slate-200'}`}>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setEditingThread(thread); setMenuOpenId(null); }}
+                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${isDark ? 'hover:bg-[#222] text-[#ccc]' : 'hover:bg-slate-100 text-slate-600'}`}
+                              >
+                                <i className="fa-solid fa-pen-to-square"></i> Rename/Edit
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setDeletingThread(thread); setMenuOpenId(null); }}
+                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-rose-500 transition-colors ${isDark ? 'hover:bg-rose-500/10' : 'hover:bg-rose-50'}`}
+                              >
+                                <i className="fa-solid fa-trash"></i> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

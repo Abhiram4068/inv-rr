@@ -9,7 +9,8 @@ const Collections = () => {
   const [collectionName, setCollectionName] = useState('');
   const [collectionDesc, setCollectionDesc] = useState('');
   const [viewMode, setViewMode] = useState(localStorage.getItem('viewMode') || 'grid'); // 'grid' or 'list'
-const [nameError, setNameError] = useState(false);
+  const [nameError, setNameError] = useState(false);
+
   // Toast State
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
@@ -78,7 +79,7 @@ const [nameError, setNameError] = useState(false);
 
   const handleCreate = async () => {
     if (!collectionName.trim()) {
-       setNameError(true);
+      setNameError(true);
       return;
     }
     setNameError(false);
@@ -224,6 +225,7 @@ const [nameError, setNameError] = useState(false);
             </button>
           ))}
         </div>
+
         {/* CONTENT AREA */}
         {loading ? (
           <div className="py-16 flex items-center justify-center">
@@ -267,40 +269,62 @@ const [nameError, setNameError] = useState(false);
           </div>
         ) : (
           /* LIST VIEW (TABLE FORMAT) */
-          <div className="overflow-x-auto mb-10">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className={`border-b ${isDark ? 'border-[#1a1a1a] text-[#808080]' : 'border-slate-200 text-slate-500'} text-[12px] uppercase tracking-wider`}>
-                  <th className="px-4 py-3 font-semibold">Name</th>
-                  <th className="px-4 py-3 font-semibold">Size</th>
-                  <th className="px-4 py-3 font-semibold">Total Files</th>
-                  <th className="px-4 py-3 font-semibold">Created At</th>
-                </tr>
-              </thead>
-              <tbody className={`text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                {collections.map((folder) => (
-                  <tr key={folder.id} className={`group border-b last:border-0 transition-colors ${isDark ? 'border-[#1a1a1a] hover:bg-[#ffffff05]' : 'border-slate-100 hover:bg-white/50'}`}>
-                    <td className="px-4 py-4">
-                      <Link to={`/viewcollection/${folder.id}`} className="flex items-center gap-3">
-                        <i className="fa-solid fa-folder text-lg text-[#3b82f6]"></i>
-                        <span className="font-medium truncate max-w-[200px]">{folder.name}</span>
-                      </Link>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      {folder.total_size ? formatSize(folder.total_size) : "0 B"}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                       <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{folder.total_files}</span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-                        {folder.created_at ? new Date(folder.created_at).toLocaleDateString() : '—'}
-                      </span>
-                    </td>
+          <div
+            className={`rounded-lg overflow-hidden shadow-2xl mb-10 border ${isDark ? 'border-neutral-900 bg-[#050505]' : 'border-slate-200 bg-white'}`}
+            style={{
+              contain: 'paint',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+            }}
+          >
+            {/* Table top bar */}
+            <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
+              <div>
+                <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>My Collections</h3>
+                <p className={`text-[10px] font-bold mt-0.5 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
+                  {collections.length} collection(s) on this page
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className={`w-full text-left border-collapse ${isDark ? 'bg-[#050505]' : 'bg-white'}`}>
+                <thead>
+                  <tr className={`border-b ${isDark ? 'border-neutral-900 bg-[#080808]/70 text-neutral-500' : 'border-slate-100 bg-slate-50/50 text-slate-400'} text-[10px] uppercase tracking-[0.15em]`}>
+                    <th className="px-6 py-4 font-bold">Name</th>
+                    <th className="px-6 py-4 font-bold">Size</th>
+                    <th className="px-6 py-4 font-bold">Total Files</th>
+                    <th className="px-6 py-4 font-bold">Created At</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className={`divide-y text-sm ${isDark ? 'divide-neutral-900 text-white' : 'divide-slate-100 text-slate-700'}`}>
+                  {collections.map((folder) => (
+                    <tr key={folder.id} className={`group transition-colors ${isDark ? 'hover:bg-neutral-900/40' : 'hover:bg-slate-50'}`}>
+                      <td className="px-6 py-5">
+                        <Link to={`/viewcollection/${folder.id}`} className="flex items-center gap-3 no-underline">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-neutral-900' : 'bg-slate-100'}`}>
+                            <i className="fa-solid fa-folder text-base text-[#3b82f6]"></i>
+                          </div>
+                          <span className={`font-bold truncate max-w-[200px] ${isDark ? 'text-white hover:text-blue-400' : 'text-slate-700 hover:text-blue-600'} transition-colors`}>
+                            {folder.name}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className={`px-6 py-5 text-sm font-medium whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                        {folder.total_size ? formatSize(folder.total_size) : "0 B"}
+                      </td>
+                      <td className={`px-6 py-5 text-sm whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                        {folder.total_files}
+                      </td>
+                      <td className={`px-6 py-5 text-sm whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                        {folder.created_at ? new Date(folder.created_at).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -309,7 +333,7 @@ const [nameError, setNameError] = useState(false);
       {/* NEW COLLECTION MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-[4px] flex justify-center items-center z-[2000] p-4">
-          <div className={`border w-full max-w-[420px] p-6 rounded-[10px] shadow-[0_20px_40px_rgba(0,0,0,0.6)] transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+          <div className={`border w-full max-w-[420px] p-6 rounded-[16px] shadow-[0_20px_40px_rgba(0,0,0,0.6)] transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
 
             <div className={`flex justify-between items-center mb-6 text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               <span>Create New Collection</span>
@@ -319,27 +343,27 @@ const [nameError, setNameError] = useState(false);
               ></i>
             </div>
 
-<div className="mb-5">
-  <label className={`block text-[11px] mb-2 uppercase tracking-[0.5px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
-    Collection Name <span className="text-red-500">*</span>
-  </label>
-  <input
-    type="text"
-    value={collectionName}
-    onChange={(e) => { setCollectionName(e.target.value); setNameError(false); }}
-    placeholder="e.g. Brand Guidelines"
-    className={`w-full border rounded-lg p-3 outline-none transition-colors ${
-      nameError
-        ? 'border-red-500 bg-red-500/5'
-        : isDark
-          ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
-          : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
-    }`}
-  />
-  {nameError && (
-    <p className="text-red-500 text-[11px] mt-1.5 font-medium">Collection name is required</p>
-  )}
-</div>
+            <div className="mb-5">
+              <label className={`block text-[11px] mb-2 uppercase tracking-[0.5px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+                Collection Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={collectionName}
+                onChange={(e) => { setCollectionName(e.target.value); setNameError(false); }}
+                placeholder="e.g. Brand Guidelines"
+                className={`w-full border rounded-lg p-3 outline-none transition-colors ${
+                  nameError
+                    ? 'border-red-500 bg-red-500/5'
+                    : isDark
+                      ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
+                      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
+                }`}
+              />
+              {nameError && (
+                <p className="text-red-500 text-[11px] mt-1.5 font-medium">Collection name is required</p>
+              )}
+            </div>
 
             <div className="mb-5">
               <label className={`block text-[11px] mb-2 uppercase tracking-[0.5px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Description</label>
@@ -357,7 +381,7 @@ const [nameError, setNameError] = useState(false);
 
             <div className="mt-8 flex gap-3">
               <button
-                className={`flex-1 border py-3 rounded-lg font-semibold transition-all ${isDark
+                className={`flex-1 border py-2.5 text-sm rounded-lg font-semibold transition-all ${isDark
                     ? 'bg-transparent text-[#808080] border-[#1a1a1a] hover:bg-[#111] hover:text-white'
                     : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                   }`}
@@ -366,7 +390,7 @@ const [nameError, setNameError] = useState(false);
                 Cancel
               </button>
               <button
-                className="flex-[2] bg-[#3b82f6] text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-opacity"
+                className="flex-[2] bg-[#3b82f6] text-white py-2.5 text-sm rounded-lg font-semibold hover:bg-blue-600 transition-opacity"
                 onClick={handleCreate}
               >
                 Create Collection
