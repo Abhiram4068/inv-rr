@@ -7,6 +7,7 @@ import {
   deleteThread,
   getApiErrorMessage,
 } from '../../services/threadService';
+import HelpModal from '../../components/HelpModal';
 
 const Threads = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const Threads = () => {
     document.documentElement.classList.contains('dark') ? 'dark' : 'light'
   );
   const [isModalOpen, setModalOpen] = useState(false);
-  
+  const [isHelpModalOpen, setHelpModalOpen] = useState(false);
   // Set viewMode using thread_grid and thread_list keys, defaulting to thread_grid
   const [viewMode, setViewMode] = useState(() => {
     const savedMode = localStorage.getItem('viewMode');
@@ -27,7 +28,7 @@ const Threads = () => {
   // Thread Form State
   const [threadTitle, setThreadTitle] = useState('');
   const [threadObjective, setThreadObjective] = useState('');
-
+const [titleError, setTitleError] = useState(false);
   // Local Data State
   const [allThreads, setAllThreads] = useState([]);
   const [threads, setThreads] = useState([]);
@@ -115,9 +116,10 @@ const Threads = () => {
 
   const handleCreateThread = async () => {
     if (!threadTitle.trim()) {
-      alert("Please provide a title.");
+ setTitleError(true);
       return;
     }
+    setTitleError(false);
     setLoading(true);
     try {
       const newThread = await createThread({ title: threadTitle, description: threadObjective });
@@ -228,20 +230,34 @@ const Threads = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleViewModeToggle}
-              className={`p-[10px] rounded-[10px] transition-all ${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-500 hover:text-blue-500'}`}
-            >
-              <i className={`fa-solid ${viewMode === 'thread_grid' ? 'fa-list' : 'fa-grip'}`}></i>
-            </button>
+  <button
+    onClick={handleViewModeToggle}
+    className={`p-[10px] rounded-[10px] transition-all ${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-500 hover:text-blue-500'}`}
+  >
+    <i className={`fa-solid ${viewMode === 'thread_grid' ? 'fa-list' : 'fa-grip'}`}></i>
+  </button>
 
-            <button
-              onClick={() => setModalOpen(true)}
-              className="bg-[#3b82f6] text-white px-5 py-[10px] rounded-[10px] font-semibold text-sm flex items-center gap-[10px] whitespace-nowrap hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20"
-            >
-              <i className="fa-solid fa-plus"></i> New Thread
-            </button>
-          </div>
+  {/* ADD THIS BUTTON HERE */}
+<button
+  onClick={() => setHelpModalOpen(true)}
+  className={`w-9 h-9 rounded-[10px] flex items-center justify-center border text-sm font-semibold transition-all shadow-sm ${
+    isDark 
+      ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]' 
+      : 'bg-white border-slate-200 text-slate-500 hover:text-blue-500 hover:border-blue-200'
+  }`}
+  title="How to use Threads"
+>
+  <i className="fa-solid fa-circle-question text-base"></i>
+</button>
+
+  <button
+    onClick={() => setModalOpen(true)}
+    className="bg-[#3b82f6] text-white px-5 py-[10px] rounded-[10px] font-semibold text-sm flex items-center gap-[10px] whitespace-nowrap hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20"
+  >
+    <i className="fa-solid fa-plus"></i> New Thread
+  </button>
+</div>
+
         </div>
 
         {/* PAGE HEADER */}
@@ -400,28 +416,65 @@ const Threads = () => {
       </div>
 
       {/* NEW THREAD MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-[6px] flex justify-center items-center z-[2000] p-4" onClick={() => setModalOpen(false)}>
-          <div className={`border w-full max-w-[460px] p-8 rounded-[24px] shadow-2xl ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-xl font-bold">Initialize Thread</h2>
-              <i className="fa-solid fa-xmark text-[#808080] cursor-pointer hover:text-white" onClick={() => setModalOpen(false)}></i>
-            </div>
-            <div className="mb-6">
-              <label className="block text-[11px] mb-2 uppercase font-bold text-[#666]">Thread Title</label>
-              <input type="text" value={threadTitle} onChange={(e) => setThreadTitle(e.target.value)} placeholder="e.g. Q4 Website Redesign" className={`w-full border rounded-xl p-4 outline-none ${isDark ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]' : 'bg-slate-50 border-slate-200 text-slate-800'}`} />
-            </div>
-            <div className="mb-8">
-              <label className="block text-[11px] mb-2 uppercase font-bold text-[#666]">Main Objective</label>
-              <textarea rows="4" value={threadObjective} onChange={(e) => setThreadObjective(e.target.value)} placeholder="High-level sequence..." className={`w-full border rounded-xl p-4 outline-none resize-none ${isDark ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]' : 'bg-slate-50 border-slate-200 text-slate-800'}`}></textarea>
-            </div>
-            <div className="flex gap-3">
-              <button className="flex-1 py-4 rounded-xl font-bold border border-[#1a1a1a]" onClick={() => setModalOpen(false)}>Cancel</button>
-              <button className="flex-[2] bg-[#3b82f6] text-white py-4 rounded-xl font-bold hover:bg-blue-600 shadow-lg" onClick={handleCreateThread}>Start Workflow</button>
-            </div>
-          </div>
-        </div>
-      )}
+{isModalOpen && (
+  <div className="fixed inset-0 bg-black/90 backdrop-blur-[6px] flex justify-center items-center z-[2000] p-4" onClick={() => setModalOpen(false)}>
+    <div className={`border w-full max-w-[460px] p-8 rounded-[10px] shadow-2xl ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-xl font-bold">Initialize Thread</h2>
+        <i className="fa-solid fa-xmark text-[#808080] cursor-pointer hover:text-white" onClick={() => setModalOpen(false)}></i>
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-[11px] mb-2 uppercase font-bold text-[#666]">
+          Thread Title <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          value={threadTitle}
+          onChange={(e) => { setThreadTitle(e.target.value); setTitleError(false); }}
+          placeholder="e.g. Q4 Website Redesign"
+          className={`w-full border rounded-xl p-4 outline-none ${
+            titleError
+              ? 'border-red-500 bg-red-500/5'
+              : isDark
+                ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
+                : 'bg-slate-50 border-slate-200 text-slate-800'
+          }`}
+        />
+        {titleError && (
+          <p className="text-red-500 text-[11px] mt-1.5 font-medium">Title is required</p>
+        )}
+      </div>
+
+      <div className="mb-8">
+        <label className="block text-[11px] mb-2 uppercase font-bold text-[#666]">Main Objective</label>
+        <textarea
+          rows="4"
+          value={threadObjective}
+          onChange={(e) => setThreadObjective(e.target.value)}
+          placeholder="High-level sequence..."
+          className={`w-full border rounded-xl p-4 outline-none resize-none ${isDark ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]' : 'bg-slate-50 border-slate-200 text-slate-800'}`}
+        />
+      </div>
+
+      {/* Smaller buttons: py-2.5 instead of py-4, text-sm */}
+      <div className="flex gap-3">
+        <button
+          className="flex-1 py-2.5 text-sm rounded-xl font-bold border border-[#1a1a1a]"
+          onClick={() => setModalOpen(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className="flex-[2] bg-[#3b82f6] text-white py-2.5 text-sm rounded-xl font-bold hover:bg-blue-600 shadow-lg"
+          onClick={handleCreateThread}
+        >
+          Start Workflow
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* EDIT THREAD MODAL */}
       {editingThread && (
@@ -453,6 +506,13 @@ const Threads = () => {
           </div>
         </div>
       )}
+
+      {/* HELP / INSTRUCTIONS MODAL */}
+      <HelpModal 
+        isOpen={isHelpModalOpen} 
+        onClose={() => setHelpModalOpen(false)} 
+        isDark={isDark} 
+      />
     </div>
   );
 };

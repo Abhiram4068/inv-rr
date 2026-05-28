@@ -9,7 +9,7 @@ const Collections = () => {
   const [collectionName, setCollectionName] = useState('');
   const [collectionDesc, setCollectionDesc] = useState('');
   const [viewMode, setViewMode] = useState(localStorage.getItem('viewMode') || 'grid'); // 'grid' or 'list'
-
+const [nameError, setNameError] = useState(false);
   // Toast State
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
@@ -78,9 +78,10 @@ const Collections = () => {
 
   const handleCreate = async () => {
     if (!collectionName.trim()) {
-      alert("Enter the collection name!")
+       setNameError(true);
       return;
     }
+    setNameError(false);
     try {
       setLoading(true)
       const payload = {
@@ -308,7 +309,7 @@ const Collections = () => {
       {/* NEW COLLECTION MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-[4px] flex justify-center items-center z-[2000] p-4">
-          <div className={`border w-full max-w-[420px] p-6 rounded-[16px] shadow-[0_20px_40px_rgba(0,0,0,0.6)] transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+          <div className={`border w-full max-w-[420px] p-6 rounded-[10px] shadow-[0_20px_40px_rgba(0,0,0,0.6)] transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
 
             <div className={`flex justify-between items-center mb-6 text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               <span>Create New Collection</span>
@@ -318,19 +319,27 @@ const Collections = () => {
               ></i>
             </div>
 
-            <div className="mb-5">
-              <label className={`block text-[11px] mb-2 uppercase tracking-[0.5px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Collection Name</label>
-              <input
-                type="text"
-                value={collectionName}
-                onChange={(e) => setCollectionName(e.target.value)}
-                placeholder="e.g. Brand Guidelines"
-                className={`w-full border rounded-lg p-3 outline-none transition-colors ${isDark
-                    ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
-                    : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
-                  }`}
-              />
-            </div>
+<div className="mb-5">
+  <label className={`block text-[11px] mb-2 uppercase tracking-[0.5px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+    Collection Name <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    value={collectionName}
+    onChange={(e) => { setCollectionName(e.target.value); setNameError(false); }}
+    placeholder="e.g. Brand Guidelines"
+    className={`w-full border rounded-lg p-3 outline-none transition-colors ${
+      nameError
+        ? 'border-red-500 bg-red-500/5'
+        : isDark
+          ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
+          : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
+    }`}
+  />
+  {nameError && (
+    <p className="text-red-500 text-[11px] mt-1.5 font-medium">Collection name is required</p>
+  )}
+</div>
 
             <div className="mb-5">
               <label className={`block text-[11px] mb-2 uppercase tracking-[0.5px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Description</label>

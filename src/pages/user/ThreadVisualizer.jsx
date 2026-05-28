@@ -35,6 +35,7 @@ import {
   getApiErrorMessage,
   getApiSuccessMessage,
 } from "../../services/threadService";
+import HelpModal from "../../components/HelpModal";
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const ff = "'Inter', 'DM Sans', system-ui, sans-serif";
@@ -286,7 +287,7 @@ function Dots({ onEdit, onFiles, onDelete }) {
         <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: T.cardBg, borderRadius: 10, border: `1px solid ${T.border}`, boxShadow: "var(--t-shadowSoft)", minWidth: 150, overflow: "hidden", fontFamily: ff }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
           {row("✏️", "Edit", onEdit)}
           {row("📎", "Files", onFiles)}
-          {onDelete && <><div style={{ borderTop: `1px solid ${T.borderSoft}`, margin: "3px 0" }} />{row("🗑", "Archive", onDelete, true)}</>}
+          {onDelete && <><div style={{ borderTop: `1px solid ${T.borderSoft}`, margin: "3px 0" }} />{row("🗑", "Delete", onDelete, true)}</>}
         </div>
       )}
     </div>
@@ -655,7 +656,7 @@ function NodePanel({ node, onClose, onEdit, onFiles, onDelete, onRefresh, showCo
           <Btn small variant="ghost" onClick={() => onFiles(node)} style={{ flex: 1 }}>📎 Files</Btn>
         </div>
         {!node.is_root && (
-          <Btn small variant="ghost" onClick={() => onDelete(node)} style={{ color: "var(--t-dangerText)", borderColor: "var(--t-dangerBorder)" }}>🗑 Archive Node</Btn>
+          <Btn small variant="ghost" onClick={() => onDelete(node)} style={{ color: "var(--t-dangerText)", borderColor: "var(--t-dangerBorder)" }}>🗑 Delete Node</Btn>
         )}
       </div>
     </div>
@@ -766,6 +767,7 @@ function CanvasInner({ thread, onBack, showToast }) {
   const notifyError = (e) => showToast(getApiErrorMessage(e), "error");
 
   const { fitView, zoomIn, zoomOut } = useReactFlow();
+  const [isHelpModalOpen, setHelpModalOpen] = useState(false);
 
   // ── Compute canvas content dimensions for scroll container ──────────────────
   const canvasContentWidth = useMemo(() => {
@@ -783,16 +785,16 @@ function CanvasInner({ thread, onBack, showToast }) {
   async function handleDelete(node) {
     setConfirm({
       open: true,
-      title: "Archive Node",
-      message: `Are you sure you want to archive "${node.title}"?`,
-      confirmText: "Archive",
+      title: "Delete Node",
+      message: `Are you sure you want to delete "${node.title}"?`,
+      confirmText: "Delete",
       variant: "danger",
       onConfirm: async () => {
         try {
           const res = await deleteNode(node.id);
           setSelectedNode(null);
           loadGraph();
-          showToast(getApiSuccessMessage(res, "Node archived"), "success");
+          showToast(getApiSuccessMessage(res, "Node deleted"), "success");
         } catch (e) {
           notifyError(e);
         }
@@ -1006,10 +1008,26 @@ function CanvasInner({ thread, onBack, showToast }) {
               <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: T.text }}>{thread.title}</h1>
               <span style={{ background: T.accentSoft, color: T.accent, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999 }}>Active</span>
             </div>
-            <div style={{ fontSize: 12.5, color: T.textMuted, marginTop: 4 }}>Main thread for the {thread.title.toLowerCase()} project</div>
+            {thread.description ? (
+              <div style={{ fontSize: 12.5, color: T.textMuted, marginTop: 4, maxWidth: 480, lineHeight: 1.5 }}>{thread.description}</div>
+            ) : (
+              <div style={{ fontSize: 12.5, color: T.textFaint, marginTop: 4 }}>No description provided.</div>
+            )}
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+<button
+  onClick={() => setHelpModalOpen(true)}
+  className={`w-[30px] h-[30px] rounded-lg flex items-center justify-center border text-sm font-semibold transition-all shadow-sm ${
+    isDark 
+      ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]' 
+      : 'bg-white border-slate-200 text-slate-500 hover:text-blue-500 hover:border-blue-200'
+  }`}
+  title="How to use"
+>
+  <i className="fa-solid fa-circle-question text-sm"></i>
+</button>
+            <div style={{ width: 1, height: 20, background: T.border, margin: "0 2px" }} />
             {stages.map((stg, i) => (
               <button key={stg.id} onClick={() => setAddNodeModal({ open: true, stageId: stg.id })}
                 style={{
@@ -1190,6 +1208,7 @@ function CanvasInner({ thread, onBack, showToast }) {
 
       <ConfirmModal open={confirm.open} onClose={() => setConfirm(p => ({ ...p, open: false }))} onConfirm={confirm.onConfirm} title={confirm.title} message={confirm.message} confirmText={confirm.confirmText} variant={confirm.variant} />
       <PromptModal open={prompt.open} onClose={() => setPrompt(p => ({ ...p, open: false }))} onSubmit={prompt.onSubmit} title={prompt.title} label={prompt.label} initialValue={prompt.initialValue} />
+      <HelpModal isOpen={isHelpModalOpen} onClose={() => setHelpModalOpen(false)} isDark={isDark} />
     </div>
   );
 }
