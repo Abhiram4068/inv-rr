@@ -102,7 +102,7 @@ const OldFilesManager = () => {
         <nav className="flex items-center gap-2 text-sm font-bold">
           <Link to="/storage/storage-cleanup" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Home</Link>
           <i className={`fa-solid fa-chevron-right text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
-          <Link to="/storage-management" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Storage Management</Link>
+          <Link to="/storage" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Storage Management</Link>
           <i className={`fa-solid fa-chevron-right text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
           <span className={isDark ? 'text-white' : 'text-slate-800'}>Old Files</span>
         </nav>
@@ -129,6 +129,7 @@ const OldFilesManager = () => {
           </div>
         </div>
       </div>
+      <div className={`rounded-lg border overflow-hidden ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
 
       {/* Content Area - Data Table */}
       <div className="overflow-x-auto">
@@ -195,6 +196,7 @@ const OldFilesManager = () => {
             <p className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>No old files detected. Everything is current!</p>
           </div>
         )}
+      </div>
       </div>
 
       {/* Footer Stats */}

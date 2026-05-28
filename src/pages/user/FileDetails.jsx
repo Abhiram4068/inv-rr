@@ -4,7 +4,7 @@ import { updateFile, getFileById,  archiveFile, deleteFile, getFileViewUrl, down
 import ShareModal from '../../components/ShareModal';
 import { getCollections, addFileToCollection } from '../../services/collectionService';
 import { useNavigate } from 'react-router-dom';
-
+import { getFileMeta } from '../../utils/fileIcons';
 
 const FileDetails = () => {
 
@@ -289,22 +289,6 @@ const handleDownload = async () => {
     return `${days}d ago`;
   };
 
-  const iconClassForFile = (f) => {
-    const name = f?.original_name || "";
-    const ct = f?.content_type || "";
-    const lower = String(name).toLowerCase();
-
-    if (lower.endsWith(".pdf") || String(ct).includes("pdf")) return "fa-file-pdf";
-    if ((lower.endsWith(".doc") || lower.endsWith(".docx")) || String(ct).includes("word")) return "fa-file-word";
-    if ((lower.endsWith(".xls") || lower.endsWith(".xlsx")) || String(ct).includes("excel")) return "fa-file-excel";
-    if ((lower.endsWith(".ppt") || lower.endsWith(".pptx")) || String(ct).includes("powerpoint")) return "fa-file-powerpoint";
-    if ((lower.endsWith(".zip") || lower.endsWith(".rar")) || String(ct).includes("zip")) return "fa-file-zipper";
-    if (/\.(png|jpe?g|gif|webp)$/.test(lower) || String(ct).includes("image")) return "fa-file-image";
-    if (/\.(mp4|mov|mkv|webm)$/.test(lower) || String(ct).includes("video")) return "fa-file-video";
-    if (lower.endsWith(".txt") || String(ct).includes("text")) return "fa-file-lines";
-    return "fa-file";
-  };
-
   const getFileDocType = (f) => {
     const name = f?.original_name || "";
     const lower = String(name).toLowerCase();
@@ -326,6 +310,7 @@ const handleDownload = async () => {
       {fetchError}
     </div>
   );
+  const fileMeta = getFileMeta(file?.content_type || "");
   return (
     <div className={`flex-1 flex flex-col lg:flex-row overflow-hidden transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
 
@@ -386,8 +371,8 @@ const handleDownload = async () => {
         {/* Top Header Section */}
         <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-500/20 text-white">
-              <i className={`fa-solid ${iconClassForFile(file)}`}></i>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style={{ color: fileMeta.color }}>
+            <i className={`fa-solid ${fileMeta.icon}`}></i>          
             </div>
             <div>
               <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{fileData.display_name}</h1>

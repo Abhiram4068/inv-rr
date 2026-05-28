@@ -1,26 +1,39 @@
 export const getFileMeta = (contentType = "") => {
   const type = contentType.toLowerCase();
 
-  // PDF
-  if (type.includes("pdf")) {
-    return {
-      icon: "fa-file-pdf",
-      color: "#ef4444",
-      canPreview: true,
-      category: "pdf"
-    };
-  }
+// PDF
+if (type.includes("pdf")) {
+  return {
+    icon: "fa-file-pdf",
+    color: "#ef4444",
+    canPreview: true,
+    category: "pdf"
+  };
+}
 
-  // Word (doc, docx)
-  if (type.includes("word") || type.includes("document")) {
-    return {
-      icon: "fa-file-word",
-      color: "#3b82f6", // blue
-      canPreview: false,
-      category: "doc",
-      
-    };
-  }
+// PowerPoint
+if (
+  type.includes("powerpoint") ||
+  type.includes("presentation") ||
+  type.includes("ppt")
+) {
+  return {
+    icon: "fa-file-powerpoint",
+    color: "#f97316",
+    canPreview: false,
+    category: "powerpoint"
+  };
+}
+
+// Word
+if (type.includes("word") || type.includes("document")) {
+  return {
+    icon: "fa-file-word",
+    color: "#3b82f6",
+    canPreview: false,
+    category: "doc"
+  };
+}
 
   // Excel
   if (type.includes("excel") || type.includes("spreadsheet") || type.includes("sheet")) {

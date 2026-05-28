@@ -284,7 +284,6 @@ const Threads = () => {
           </div>
         ) : threads.length === 0 ? (
           <div className="py-20 text-center">
-             <i className="fa-solid fa-route text-4xl mb-4 text-[#333]"></i>
              <div className={`text-sm ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No matches found.</div>
           </div>
         ) : viewMode === 'thread_grid' ? (
