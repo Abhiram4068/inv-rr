@@ -141,7 +141,11 @@ const ViewAllShares = () => {
         </div>
 
         {/* Table container */}
-        <div className={`border rounded-lg overflow-hidden shadow-2xl ${isDark ? 'border-neutral-900' : 'border-slate-200'}`}>
+        <div className={`border rounded-lg overflow-hidden shadow-2xl
+  ${isDark
+    ? 'border-neutral-900 bg-[#050505]'
+    : 'border-slate-200 bg-slate-50/50'}
+`}>
 
           {/* Pagination bar */}
           <div className={`px-4 sm:px-6 py-4 border-b flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
@@ -178,7 +182,11 @@ const ViewAllShares = () => {
 
           {/* ── DESKTOP TABLE (md+) ── */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table
+  className={`w-full text-left border-collapse ${
+    isDark ? 'bg-[#050505]' : 'bg-slate-50/50'
+  }`}
+>
               <thead>
                 <tr className={`text-[10px] uppercase tracking-[0.12em] border-b
                   ${isDark ? 'text-neutral-500 border-neutral-900 bg-[#080808]/70' : 'text-slate-400 border-slate-100 bg-slate-50/50'}`}>

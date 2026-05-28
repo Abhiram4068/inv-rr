@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getFiles } from '../../services/fileService';
 import { scheduleShareFile } from '../../services/shareService';
 import { Link } from 'react-router-dom';
-
+import { sizeFormatter } from '../../utils/sizeFormatter';
 
 const ScheduleMail = () => {
   // 1. Theme State Sync Logic
@@ -34,13 +34,7 @@ const ScheduleMail = () => {
   const [isScheduling, setIsScheduling] = useState(false);
   const [expirationHours, setExpirationHours] = useState(24);
 
-  const sizeFormatter = (value) => {
-    if (value == null) return "-";
-    const mb = value / (1024 * 1024);
-    if (mb >= 1) return `${mb.toFixed(1)} MB`;
-    const kb = value / 1024;
-    return `${kb.toFixed(0)} KB`;
-  };
+ 
 
   const iconClassForFile = (file) => {
     const name = String(file?.original_name || "").toLowerCase();
