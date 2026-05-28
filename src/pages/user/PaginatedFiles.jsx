@@ -114,6 +114,42 @@ const PaginatedFiles = () => {
     return `${kb.toFixed(0)} KB`;
   };
 
+
+  const getReadableFileType = (file) => {
+  const ct = String(file?.content_type || "").toLowerCase();
+  const name = String(file?.original_name || "").toLowerCase();
+
+  if (ct.includes("pdf") || name.endsWith(".pdf")) return "PDF";
+  
+  if (
+    ct.includes("presentation") ||
+    ct.includes("powerpoint") ||
+    name.endsWith(".ppt") ||
+    name.endsWith(".pptx")
+  ) return "PowerPoint";
+
+  if (
+    ct.includes("word") ||
+    ct.includes("wordprocessingml") ||
+    name.endsWith(".doc") ||
+    name.endsWith(".docx")
+  ) return "Word";
+
+  if (
+    ct.includes("excel") ||
+    ct.includes("spreadsheet") ||
+    name.endsWith(".xls") ||
+    name.endsWith(".xlsx")
+  ) return "Excel";
+
+  if (ct.includes("image")) return "Image";
+  if (ct.includes("video")) return "Video";
+  if (ct.includes("zip")) return "Archive";
+
+  return "File";
+};
+
+
   const timeFormatter = (isoOrDate) => {
     if (!isoOrDate) return "-";
     const d = new Date(isoOrDate);
@@ -471,6 +507,7 @@ const executeBulkAction = async () => {
               id={file.id}
               title={file.original_name}
               display_name={file.display_name || file.description || "Untitled"}
+              originalName={file.original_name}
               size={sizeFormatter(file.file_size)}
               time={timeFormatter(file.created_at)}
               iconClass={iconClassForFile(file)}
@@ -608,7 +645,7 @@ const executeBulkAction = async () => {
                       {/* Type col */}
                       <td className="py-5 text-sm">
                         <span className={`inline-flex items-center px-2 py-0.5  text-[10px] font-bold ${isDark ? 'text-neutral-400' : ' text-slate-500'}`}>
-                          {file.content_type ? (file.content_type.split('/')[1]?.toUpperCase() || file.content_type) : '—'}
+{getReadableFileType(file)}
                         </span>
                       </td>
 
@@ -784,10 +821,13 @@ const executeBulkAction = async () => {
         fileIds={selectedFileIds}
         isBulk={true}
         isDark={isDark}
-        onShareSuccess={() => {
+        onShareSuccess={(message) => {
           setSelectedFileIds([]);
           setIsSelectMode(false);
-          showToast(`${selectedFileIds.length} file(s) shared successfully`);
+
+          setTimeout(() => {
+            showToast(message, "success");
+          }, 150);
         }}
       />
 

@@ -41,15 +41,15 @@ const AdminActivityLog = () => {
 
     if (loading && logs.length === 0) {
         return (
-            <div className="flex-1 bg-[#f0f2f7] min-h-screen flex items-center justify-center w-full">
+            <div className="flex-1 bg-[#f0f2f7] flex items-center justify-center w-full">
                 <div className="w-8 h-8 border-2 border-indigo-500 border-top-color-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="flex-1 bg-[#f0f2f7] min-h-screen p-8 font-sans">
-            <div className="max-w-7xl mx-auto">
+        <div className="w-full bg-[#f0f2f7] p-8 pb-16 font-sans">          
+          <div className="max-w-7xl mx-auto">
 
                 {/* Top Headers matching dashboard layout structure */}
                 <div className="bg-white border border-slate-200 p-6 rounded-sm mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -102,7 +102,7 @@ const AdminActivityLog = () => {
                 </div>
 
                 {/* Sub-Header Management Panel */}
-                <div className="bg-white border border-slate-200 rounded-sm mb-6 overflow-hidden">
+                <div className="bg-white border border-slate-200 rounded-sm mb-10 overflow-hidden">
 
                     {/* Control Panel: Filters and Searching */}
                     <div className="p-4 bg-white border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
@@ -157,7 +157,7 @@ const AdminActivityLog = () => {
 
                                                 {/* Operational Activity Type Tag */}
                                                 <td className="py-4 px-6 text-right whitespace-nowrap">
-                                                    <span className="inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-sm  text-slate-600 border-slate-200">
+<span className="inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-sm bg-slate-100 text-slate-600 border border-slate-200">
                                                         {log.activity_type_display}
                                                     </span>
                                                 </td>
@@ -179,7 +179,7 @@ const AdminActivityLog = () => {
                     </div>
 
                     {/* Pagination / Stream Status Bar */}
-                    <div className="bg-slate-50 border-t border-slate-100 px-6 py-3 flex items-center justify-between text-[11px] font-medium text-slate-400">
+                    <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex items-center justify-between text-[11px] font-medium text-slate-500">
                         <span>Showing {logs.length} of {logs.length} live activity logs</span>
                     </div>
 

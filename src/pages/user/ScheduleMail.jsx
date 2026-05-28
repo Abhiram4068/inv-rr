@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getFiles } from '../../services/fileService';
 import { scheduleShareFile } from '../../services/shareService';
 import { Link } from 'react-router-dom';
-
+import { sizeFormatter } from '../../utils/sizeFormatter';
 
 const ScheduleMail = () => {
   // 1. Theme State Sync Logic
@@ -34,13 +34,7 @@ const ScheduleMail = () => {
   const [isScheduling, setIsScheduling] = useState(false);
   const [expirationHours, setExpirationHours] = useState(24);
 
-  const sizeFormatter = (value) => {
-    if (value == null) return "-";
-    const mb = value / (1024 * 1024);
-    if (mb >= 1) return `${mb.toFixed(1)} MB`;
-    const kb = value / 1024;
-    return `${kb.toFixed(0)} KB`;
-  };
+ 
 
   const iconClassForFile = (file) => {
     const name = String(file?.original_name || "").toLowerCase();
@@ -394,28 +388,6 @@ setExpirationHours(24);
             {/* Actions Section */}
             <div className={`flex flex-col gap-2 pt-4 border-t ${isDark ? 'border-[#1a1a1a]' : 'border-slate-300'}`}>
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-6 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Actions</div>
-
-              <button 
-                onClick={() => { setIsProtected(!isProtected); showToast(isProtected ? "Identity Validation Disabled" : "Identity Validation Enabled", isProtected ? "error" : "success"); }}
-                className={`w-full text-left p-3 rounded-xl border transition-all flex flex-col gap-2 ${
-                  isProtected ? (isDark ? 'bg-blue-600/10 border-blue-500/50' : 'bg-blue-50 border-blue-200 shadow-sm') : (isDark ? 'bg-transparent border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-slate-50')
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-3">
-                    <i className={`fa-solid fa-shield-halved ${isProtected ? 'text-blue-500' : 'text-[#444]'}`}></i>
-                    <span className={`text-xs font-bold ${!isDark && !isProtected ? 'text-slate-600' : ''}`}>Email Validation</span>
-                  </div>
-                  <div className={`w-8 h-4 rounded-full relative transition-colors ${isProtected ? 'bg-blue-600' : 'bg-[#333]'}`}>
-                    <div className={`absolute top-1 w-2 h-2 bg-white rounded-full transition-all ${isProtected ? 'right-1' : 'left-1'}`}></div>
-                  </div>
-                </div>
-                {isProtected && (
-                  <p className={`text-[10px] leading-tight font-medium ${isDark ? 'text-blue-400/80' : 'text-blue-600'}`}>
-                    Recipients must enter their email to unlock the file.
-                  </p>
-                )}
-              </button>
               
               <button onClick={() => { setAttachedFile(null); showToast("Cleared file"); }} className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 text-xs font-bold text-red-500 mb-6 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-red-50'}`}>
                 <i className="fa-solid fa-trash-can"></i> Clear Selection
