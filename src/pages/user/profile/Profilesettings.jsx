@@ -249,7 +249,7 @@ const validatePasswordChange = () => {
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
         <div 
-          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none outline-none border-none
             transition-all duration-[350ms]
             ${toast.animateOut 
               ? 'opacity-0 -translate-y-6 scale-95' 
@@ -257,14 +257,15 @@ const validatePasswordChange = () => {
             }`}
           style={{
             transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none'
+            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none',
+            outline: 'none',
+            border: 'none',
           }}
         >
-          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            <div style={{ outline: 'none', border: 'none' }} className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] pointer-events-auto min-w-[300px] max-w-[450px]
             ${isDark 
-              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
-              : 'bg-white border-slate-100 text-slate-800'}`}>
-            
+              ? 'bg-[#0d0d0d] text-slate-200' 
+              : 'bg-white text-slate-800'}`}>
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
               ${toast.type === 'error' 
                 ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
@@ -374,8 +375,8 @@ const validatePasswordChange = () => {
                     New Designation
                   </label>
                   <div className="relative flex items-center">
-                    <select
-                      value={requestedDesignation}
+<select
+                      value={requestedDesignation || userProfile?.designation_id || userProfile?.designation || ""}
                       onChange={(e) => setRequestedDesignation(e.target.value)}
                       className={`w-full text-[14px] font-semibold py-2.5 pl-4 pr-10 rounded-lg border outline-none transition-all appearance-none cursor-pointer ${
                         isDark
@@ -383,14 +384,11 @@ const validatePasswordChange = () => {
                           : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-blue-500 focus:bg-white'
                       }`}
                     >
-                      <option value="" disabled className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>Select new designation</option>
-                      {designations
-                        .filter((d) => d.id !== userProfile?.designation)
-                        .map((desig) => (
-                          <option key={desig.id} value={desig.id}>
-                            {desig.name}
-                          </option>
-                        ))}
+                      {designations.map((desig) => (
+                        <option key={desig.id} value={desig.id} className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>
+                          {desig.name}{(desig.id === (userProfile?.designation_id || userProfile?.designation)) ? '' : ''}
+                        </option>
+                      ))}
                     </select>
                     <div className={`absolute right-4 pointer-events-none ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
                       <i className="fa-solid fa-chevron-down text-[10px]"></i>
@@ -402,7 +400,7 @@ const validatePasswordChange = () => {
                 <button
                   type="button"
                   onClick={() => setShowDesignationModal(true)}
-                  disabled={!requestedDesignation}
+                 disabled={!requestedDesignation || requestedDesignation === String(userProfile?.designation_id || userProfile?.designation)}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm transition-all"
                 >
                   Send Request
