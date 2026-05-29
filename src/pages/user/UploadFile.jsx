@@ -200,7 +200,7 @@ const STATUS_BADGE = {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 const UploadFilesMain = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -212,7 +212,7 @@ const UploadFilesMain = () => {
   const isDark = theme === 'dark';
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -473,7 +473,7 @@ const UploadFilesMain = () => {
   return (
     <main style={{
       flex: 1, overflowY: 'visible', padding: 40,
-      background: isDark ? '#000' : '#E6EBF2',
+      background: isDark ? '#000' : '#EFEFEF',
       position: 'relative', transition: 'background 0.3s',
     }}>
       {duplicateModal && (

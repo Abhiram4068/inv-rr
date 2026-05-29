@@ -30,7 +30,7 @@ if (!collectionInfo) {
 }
   return (
     <aside className={`w-[320px] p-6 flex flex-col overflow-y-auto hidden xl:flex border-l transition-colors duration-300 no-scrollbar
-      ${isDark ? 'bg-black border-[#555]' : 'bg-[#F1F5F9] border-slate-200'}`}>
+      ${isDark ? 'bg-black border-[#555]' : 'bg-slate-200 border-r border-slate-300'}`}>
      <div className={`border rounded-lg p-5 mb-4 transition-colors 
   ${isDark ? 'bg-[#0a0a0a] border-[#555]' : 'bg-white border-slate-200 shadow-sm'}`}>
   <h3 className={`text-base font-semibold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>

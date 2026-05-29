@@ -59,6 +59,7 @@ const RoleChangeRequests = () => {
             // Splice tracking record locally out of stack queue
             setRequests(prev => prev.filter(req => req.id !== targetRequest.id));
             closeModal();
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error(`Failed to handle role migration clearance context:`, error);
         } finally {

@@ -23,7 +23,7 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
       document.documentElement.classList.remove('dark');
       // Optional: if you aren't using Tailwind dark mode yet, 
       // this ensures the body background matches your new white theme
-      document.body.style.backgroundColor = '#F8FAFC'; 
+      document.body.style.backgroundColor = '#E6EBF2'; 
     } else {
       document.documentElement.classList.add('dark');
       document.body.style.backgroundColor = 'black';
@@ -45,7 +45,7 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
   };
   return (
     <nav className={`h-[60px] flex items-center justify-between px-4 md:px-6 border-b shrink-0 z-50 transition-colors duration-300 
-      ${theme === 'dark' ? 'bg-black border-[#333]' : 'bg-white border-slate-200 shadow-sm'}`}>
+      ${theme === 'dark' ? 'bg-black border-[#333]' : 'bg-slate-200 border-slate-300 shadow-sm'}`}>
       
       <div className="flex items-center gap-4">
         <button onClick={toggleSidebar} className="lg:hidden text-[#808080] hover:text-blue-500">

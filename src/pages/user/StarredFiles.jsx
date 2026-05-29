@@ -5,10 +5,10 @@ import { getStarredFiles } from '../../services/fileService';
 
 const StarredFiles = () => {
   // 1. Theme State Sync
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -41,7 +41,7 @@ const StarredFiles = () => {
     }, 3000);
     return () => clearTimeout(timer);
   }, [toast.visible]);
-  
+
 
   const [page, setPage] = useState(1);
   const [count, setCount] = useState(null);
@@ -165,7 +165,7 @@ const StarredFiles = () => {
   }, [page, search]);
 
   return (
-    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
+    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#EFEFEF]'}`}>
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
         <div
@@ -185,20 +185,20 @@ const StarredFiles = () => {
           </div>
         </div>
       )}
-      
+
       {/* Search and Action Bar */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
         <div className={`w-full max-w-[450px] border p-[10px_16px] rounded-xl flex items-center transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
           <i className={`fa fa-search ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}></i>
-          <input 
-            type="text" 
-            placeholder="Search Your Files..." 
+          <input
+            type="text"
+            placeholder="Search Your Files..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`} 
+            className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}
           />
         </div>
-        <Link to="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+        <Link to="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg  ">
           <i className="fa-solid fa-plus"></i> New Document
         </Link>
       </div>
@@ -257,15 +257,14 @@ const StarredFiles = () => {
           type="button"
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1 || loading}
-          className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-            page === 1 || loading
+          className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${page === 1 || loading
               ? isDark
                 ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
                 : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
               : isDark
                 ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
                 : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
+            }`}
         >
           <i className="fa fa-chevron-left text-xs" />
         </button>
@@ -276,15 +275,14 @@ const StarredFiles = () => {
             type="button"
             onClick={() => setPage(p)}
             disabled={loading}
-            className={`w-10 h-10 rounded-lg font-semibold border transition-all ${
-              p === page
+            className={`w-10 h-10 rounded-lg font-semibold border transition-all ${p === page
                 ? isDark
                   ? "bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]"
                   : "bg-blue-600 border-blue-600 text-white"
                 : isDark
                   ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
+              }`}
           >
             {p}
           </button>
@@ -294,15 +292,14 @@ const StarredFiles = () => {
           type="button"
           onClick={() => setPage((p) => p + 1)}
           disabled={!hasNext || loading}
-          className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-            !hasNext || loading
+          className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${!hasNext || loading
               ? isDark
                 ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
                 : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
               : isDark
                 ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
                 : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
+            }`}
         >
           <i className="fa fa-chevron-right text-xs" />
         </button>

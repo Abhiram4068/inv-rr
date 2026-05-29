@@ -8,6 +8,8 @@ import {
   getApiErrorMessage,
 } from '../../services/threadService';
 import HelpModal from '../../components/HelpModal';
+import { useViewMode } from '../../hooks/useViewMode';
+import ViewModeToggle from '../../components/ViewModeToggle';
 
 const Threads = () => {
   const navigate = useNavigate();
@@ -17,11 +19,8 @@ const Threads = () => {
   );
   const [isModalOpen, setModalOpen] = useState(false);
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
-  // Set viewMode using thread_grid and thread_list keys, defaulting to thread_grid
-  const [viewMode, setViewMode] = useState(() => {
-    const savedMode = localStorage.getItem('viewMode');
-    return savedMode === 'thread_list' ? 'thread_list' : 'thread_grid';
-  });
+  // Set viewMode using standardized keys
+  const [viewMode, handleViewModeChange] = useViewMode('thread');
   
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
@@ -163,15 +162,9 @@ const [titleError, setTitleError] = useState(false);
     }
   };
 
-  // Toggle view layout state and synchronize correct thread keys to localStorage
-  const handleViewModeToggle = () => {
-    const nextMode = viewMode === 'thread_grid' ? 'thread_list' : 'thread_grid';
-    setViewMode(nextMode);
-    localStorage.setItem('viewMode', nextMode);
-  };
 
   return (
-    <div className={`flex-1 min-w-0 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <div className={`flex-1 min-w-0 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
@@ -230,12 +223,7 @@ const [titleError, setTitleError] = useState(false);
           </div>
 
           <div className="flex items-center gap-3">
-  <button
-    onClick={handleViewModeToggle}
-    className={`p-[10px] rounded-[10px] transition-all ${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-500 hover:text-blue-500'}`}
-  >
-    <i className={`fa-solid ${viewMode === 'thread_grid' ? 'fa-list' : 'fa-grip'}`}></i>
-  </button>
+  <ViewModeToggle viewMode={viewMode} onChange={handleViewModeChange} isDark={isDark} />
 
   {/* ADD THIS BUTTON HERE */}
 <button
@@ -252,9 +240,9 @@ const [titleError, setTitleError] = useState(false);
 
   <button
     onClick={() => setModalOpen(true)}
-    className="bg-[#3b82f6] text-white px-5 py-[10px] rounded-[10px] font-semibold text-sm flex items-center gap-[10px] whitespace-nowrap hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20"
+    className="bg-[#3b82f6] text-white px-5 py-[10px] rounded-[10px] font-semibold text-sm flex items-center gap-[10px] whitespace-nowrap hover:bg-blue-600 transition-all shadow-lg"
   >
-    <i className="fa-solid fa-plus"></i> New Thread
+    <i className="fa-solid fa-plus"></i> Create Thread
   </button>
 </div>
 
@@ -300,7 +288,7 @@ const [titleError, setTitleError] = useState(false);
           </div>
         ) : threads.length === 0 ? (
           <div className="py-20 text-center">
-             <div className={`text-sm ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No matches found.</div>
+             <div className={`text-sm ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No threads created yet.</div>
           </div>
         ) : viewMode === 'thread_grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
@@ -372,7 +360,10 @@ const [titleError, setTitleError] = useState(false);
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+           <div className="overflow-x-auto" style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: isDark ? '#1a1a1a transparent' : '#e2e8f0 transparent',
+          }}>
               <table className={`w-full text-left border-collapse ${isDark ? 'bg-[#050505]' : 'bg-white'}`}>
                 <thead>
                   <tr className={`border-b ${isDark ? 'border-neutral-900 bg-[#080808]/70 text-neutral-500' : 'border-slate-100 bg-slate-50/50 text-slate-400'} text-[10px] uppercase tracking-[0.15em]`}>

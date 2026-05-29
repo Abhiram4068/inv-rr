@@ -84,6 +84,7 @@ const ReactivationRequests = () => {
             // Splice tracking record locally out of active buffer list
             setRequests(prev => prev.filter(req => req.id !== targetRequest.id));
             closeConfirmationModal();
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error(`Failed to execute profile appeal decision:`, error);
         } finally {

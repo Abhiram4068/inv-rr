@@ -79,6 +79,7 @@ const BlockedUsers = () => {
                 setTotalCount(prev => prev - 1);
             }
             closeModal();
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error(`Operation failure:`, error);
         } finally {

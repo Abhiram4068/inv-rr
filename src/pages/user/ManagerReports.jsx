@@ -3,7 +3,7 @@ import { getReports, toggleMonthlyReport } from '../../services/reportService';
 import { formatDateTime } from '../../utils/dateFormatter';
 
 const ManagerReports = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 12;
 
@@ -18,7 +18,7 @@ const ManagerReports = () => {
 
   // Theme sync
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -108,7 +108,7 @@ const ManagerReports = () => {
   };
 
   return (
-    <div className={`flex-1 overflow-y-auto no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'} p-6 lg:p-10`}>
+    <div className={`flex-1 overflow-y-auto no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'} p-6 lg:p-10`}>
 
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">

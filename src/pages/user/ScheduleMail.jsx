@@ -6,7 +6,7 @@ import { sizeFormatter } from '../../utils/sizeFormatter';
 
 const ScheduleMail = () => {
   // 1. Theme State Sync Logic
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [activeModal, setActiveModal] = useState(null);
   const [isProtected, setIsProtected] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
@@ -15,7 +15,7 @@ const ScheduleMail = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -34,7 +34,7 @@ const ScheduleMail = () => {
   const [isScheduling, setIsScheduling] = useState(false);
   const [expirationHours, setExpirationHours] = useState(24);
 
- 
+
 
   const iconClassForFile = (file) => {
     const name = String(file?.original_name || "").toLowerCase();
@@ -53,7 +53,7 @@ const ScheduleMail = () => {
         const res = await getFiles(1, ""); // fetch first page for picker
         const data = res.data;
         const results = Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : data?.items || []);
-        
+
         const mapped = results.map(f => {
           const iconColorClass = iconClassForFile(f);
           const parts = iconColorClass.split(' ');
@@ -76,7 +76,7 @@ const ScheduleMail = () => {
     fetchFiles();
   }, []);
 
-  const filteredFiles = libraryFiles.filter(file => 
+  const filteredFiles = libraryFiles.filter(file =>
     file.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const getCurrentDateTime = () => {
@@ -89,18 +89,18 @@ const ScheduleMail = () => {
     return { date, time };
   };
   const formatTo12Hour = (time24) => {
-  const [hour, minute] = time24.split(":");
-  let h = parseInt(hour);
-  const ampm = h >= 12 ? "PM" : "AM";
+    const [hour, minute] = time24.split(":");
+    let h = parseInt(hour);
+    const ampm = h >= 12 ? "PM" : "AM";
 
-  h = h % 12 || 12;
+    h = h % 12 || 12;
 
-  return `${h}:${minute} ${ampm}`;
-};
+    return `${h}:${minute} ${ampm}`;
+  };
   const [attachedFile, setAttachedFile] = useState(null);
   const [recipients, setRecipients] = useState(['']);
   const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState(""); 
+  const [message, setMessage] = useState("");
   const [scheduleDate, setScheduleDate] = useState(getCurrentDateTime().date);
   const [scheduleTime, setScheduleTime] = useState((getCurrentDateTime().time));
 
@@ -145,7 +145,7 @@ const ScheduleMail = () => {
     setSearchTerm("");
     showToast(`File updated`);
   };
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const handleScheduleSubmit = async () => {
     if (!attachedFile) {
       setActiveModal(null);
@@ -159,18 +159,18 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       return;
     }
     if (validRecipients.some(email => !isValidEmail(email))) {
-  setActiveModal(null);
-  showToast("Enter valid email addresses", "error");
-  return;
-}
-    const selectedDateTime = new Date(`${scheduleDate}T${scheduleTime}:00`);
-    const now = new Date();
-    if(selectedDateTime <= now){
       setActiveModal(null);
-  showToast("Schedule date and time must be in the future.", "error");
+      showToast("Enter valid email addresses", "error");
       return;
     }
-    if(subject.trim() === ""){
+    const selectedDateTime = new Date(`${scheduleDate}T${scheduleTime}:00`);
+    const now = new Date();
+    if (selectedDateTime <= now) {
+      setActiveModal(null);
+      showToast("Schedule date and time must be in the future.", "error");
+      return;
+    }
+    if (subject.trim() === "") {
       setActiveModal(null);
       showToast("Please enter a subject.", "error");
       return;
@@ -186,17 +186,17 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     setIsScheduling(true);
     try {
-await scheduleShareFile(attachedFile.id, payload);
-setActiveModal(null);
-showToast("Transfer Scheduled Successfully");
-setSubject("");
-setMessage("");
-setRecipients(['']);
-setAttachedFile(null);
-setIsProtected(false);
-setScheduleDate("2026-03-20");
-setScheduleTime("09:00");
-setExpirationHours(24);
+      await scheduleShareFile(attachedFile.id, payload);
+      setActiveModal(null);
+      showToast("Transfer Scheduled Successfully");
+      setSubject("");
+      setMessage("");
+      setRecipients(['']);
+      setAttachedFile(null);
+      setIsProtected(false);
+      setScheduleDate("2026-03-20");
+      setScheduleTime("09:00");
+      setExpirationHours(24);
     } catch (err) {
       console.error("Schedule error", err);
       showToast(err?.response?.data?.detail || "Failed to schedule file sharing");
@@ -206,15 +206,15 @@ setExpirationHours(24);
   };
 
   return (
-    <div className={`flex-1 flex flex-col lg:flex-row overflow-hidden transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
-      
+    <div className={`flex-1 flex flex-col lg:flex-row overflow-hidden transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
+
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
-        <div 
+        <div
           className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none
             transition-all duration-[350ms]
-            ${toast.animateOut 
-              ? 'opacity-0 -translate-y-6 scale-95' 
+            ${toast.animateOut
+              ? 'opacity-0 -translate-y-6 scale-95'
               : 'opacity-100 translate-y-0 scale-100'
             }`}
           style={{
@@ -223,18 +223,18 @@ setExpirationHours(24);
           }}
         >
           <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
-            ${isDark 
-              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+            ${isDark
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200'
               : 'bg-white border-slate-100 text-slate-800'}`}>
-            
+
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
-              ${toast.type === 'error' 
-                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+              ${toast.type === 'error'
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500')
                 : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
               }`}>
               <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
             </div>
-            
+
             <span className="flex-1 leading-normal tracking-wide text-[13px]">
               {toast.message}
             </span>
@@ -250,7 +250,7 @@ setExpirationHours(24);
       `}</style>
 
       <main className="flex-1 overflow-y-auto no-scrollbar p-6 lg:p-10 flex flex-col gap-8">
-               
+
         {/* Header */}
         <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b ${isDark ? 'border-[#1a1a1a]' : 'border-slate-300'}`}>
           <div className="flex items-center gap-5">
@@ -268,25 +268,25 @@ setExpirationHours(24);
           <div className="xl:col-span-2 space-y-6">
             {/* Subject and Message Card */}
             <div className={`border rounded-lg p-6 space-y-6 shadow-sm transition-colors ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                <div>
-                    <label className={`block text-[10px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Title</label>
-                    <input 
-                      value={subject} 
-                      onChange={(e) => setSubject(e.target.value)}
-                      className={`w-full bg-transparent text-lg font-semibold outline-none transition-all ${isDark ? 'text-white' : 'text-slate-800'}`}
-                      placeholder="Your title over here"
-                    />
-                </div>
-                <div>
-                    <label className={`block text-[10px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Message (optional)</label>
-                    <textarea 
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      rows="4"
-                      className={`w-full border rounded-lg p-4 text-sm outline-none focus:border-blue-500 transition-all resize-none ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
-                      placeholder="Add a note to your recipients..."
-                    />
-                </div>
+              <div>
+                <label className={`block text-[10px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Title</label>
+                <input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className={`w-full bg-transparent text-lg font-semibold outline-none transition-all ${isDark ? 'text-white' : 'text-slate-800'}`}
+                  placeholder="Your title over here"
+                />
+              </div>
+              <div>
+                <label className={`block text-[10px] uppercase font-bold tracking-widest mb-3 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Message (optional)</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows="4"
+                  className={`w-full border rounded-lg p-4 text-sm outline-none focus:border-blue-500 transition-all resize-none ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+                  placeholder="Add a note to your recipients..."
+                />
+              </div>
             </div>
 
             {/* File Selection Card */}
@@ -319,9 +319,9 @@ setExpirationHours(24);
                 </div>
               ) : (
                 <div className={`flex-1 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors ${isDark ? 'border-[#111] text-[#444]' : 'border-slate-200 text-slate-300'}`}>
-                    <i className="fa-solid fa-cloud-arrow-up text-4xl mb-4 opacity-20"></i>
-                    <p className="text-sm font-bold">No file selected</p>
-                    <button onClick={() => setIsPickerOpen(true)} className="mt-6 px-6 py-2 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Browse Library</button>
+                  <i className="fa-solid fa-cloud-arrow-up text-4xl mb-4 opacity-20"></i>
+                  <p className="text-sm font-bold">No file selected</p>
+                  <button onClick={() => setIsPickerOpen(true)} className="mt-6 px-6 py-2 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Browse Library</button>
                 </div>
               )}
             </div>
@@ -332,55 +332,54 @@ setExpirationHours(24);
             <div>
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-4 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Deliver To</div>
               <div className="flex flex-col gap-3">
-             {recipients.map((email, i) => (
-              <div key={i} className={`border px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs group transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                <div className="w-5 h-5 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center text-[8px] font-bold shrink-0">
-                  {email ? email[0].toUpperCase() : '?'}
-                </div>
-                <input 
-                  value={email} 
-                  onChange={(e) => handleEmailChange(i, e.target.value)}
-                  placeholder="Recipient email"
-                  className={`bg-transparent outline-none flex-1 min-w-0 ${
-                    email === "" || isValidEmail(email)
-                      ? (isDark ? 'text-[#808080]' : 'text-slate-600')
-                      : 'text-red-500'
-                  }`}
-                />
-                {email && !isValidEmail(email) && (
-                <p className="text-[10px] text-red-500 mt-1">
-                Invalid email
-                </p>
-                )}
-                
-              {email.trim() !== "" && (  <i 
-                  onClick={() => removeRecipient(i)} 
-                  className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors ml-auto"
-                ></i>)}
-                
-              </div>
-            ))}
+                {recipients.map((email, i) => (
+                  <div key={i} className={`border px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs group transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+                    <div className="w-5 h-5 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center text-[8px] font-bold shrink-0">
+                      {email ? email[0].toUpperCase() : '?'}
+                    </div>
+                    <input
+                      value={email}
+                      onChange={(e) => handleEmailChange(i, e.target.value)}
+                      placeholder="Recipient email"
+                      className={`bg-transparent outline-none flex-1 min-w-0 ${email === "" || isValidEmail(email)
+                        ? (isDark ? 'text-[#808080]' : 'text-slate-600')
+                        : 'text-red-500'
+                        }`}
+                    />
+                    {email && !isValidEmail(email) && (
+                      <p className="text-[10px] text-red-500 mt-1">
+                        Invalid email
+                      </p>
+                    )}
+
+                    {email.trim() !== "" && (<i
+                      onClick={() => removeRecipient(i)}
+                      className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors ml-auto"
+                    ></i>)}
+
+                  </div>
+                ))}
                 <button onClick={addRecipient} className={`border border-dashed p-2.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-slate-600 hover:border-slate-600'}`}>
                   <i className="fa-solid fa-plus"></i> Add Recipient
                 </button>
               </div>
             </div>
-<div className={`my-2 border-t ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}></div>
+            <div className={`my-2 border-t ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}></div>
             {/* Schedule Section */}
             <div>
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-6 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Schedule Properties</div>
               <div className="space-y-5">
                 <div>
-                    <label className={`text-[10px] font-bold block mb-2 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Release Date</label>
-                    <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className={`w-full border rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
+                  <label className={`text-[10px] font-bold block mb-2 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Release Date</label>
+                  <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className={`w-full border rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
                 </div>
                 <div>
-                    <label className={`text-[10px] font-bold block mb-2 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Release Time</label>
-                    <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className={`w-full border rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
+                  <label className={`text-[10px] font-bold block mb-2 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Release Time</label>
+                  <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className={`w-full border rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
                 </div>
                 <div>
-                    <label className={`text-[10px] font-bold block mb-2 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Expiration (Hours)</label>
-                    <input type="number" min="1" value={expirationHours} onChange={(e) => setExpirationHours(parseInt(e.target.value) || 24)} className={`w-full border rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
+                  <label className={`text-[10px] font-bold block mb-2 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Expiration (Hours)</label>
+                  <input type="number" min="1" value={expirationHours} onChange={(e) => setExpirationHours(parseInt(e.target.value) || 24)} className={`w-full border rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white' : 'bg-white border-slate-200 text-slate-700'}`} />
                 </div>
               </div>
             </div>
@@ -388,15 +387,15 @@ setExpirationHours(24);
             {/* Actions Section */}
             <div className={`flex flex-col gap-2 pt-4 border-t ${isDark ? 'border-[#1a1a1a]' : 'border-slate-300'}`}>
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-6 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Actions</div>
-              
+
               <button onClick={() => { setAttachedFile(null); showToast("Cleared file"); }} className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 text-xs font-bold text-red-500 mb-6 ${isDark ? 'border-[#1a1a1a] hover:bg-[#111]' : 'bg-white border-slate-200 hover:bg-red-50'}`}>
                 <i className="fa-solid fa-trash-can"></i> Clear Selection
               </button>
 
-              <button 
+              <button
                 onClick={() => setActiveModal('confirm')}
                 disabled={!attachedFile}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-500/20 group disabled:opacity-50"
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-3 transition-all shadow-xl   group disabled:opacity-50"
               >
                 <span>Schedule Transfer</span>
                 <i className="fa-solid fa-paper-plane group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
@@ -416,14 +415,14 @@ setExpirationHours(24);
                   <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>HiveDrive Library</h2>
                   <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Select a file to attach</p>
                 </div>
-                <button onClick={() => {setIsPickerOpen(false); setSearchTerm("");}} className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${isDark ? 'hover:bg-[#111]' : 'hover:bg-slate-200'}`}>
+                <button onClick={() => { setIsPickerOpen(false); setSearchTerm(""); }} className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${isDark ? 'hover:bg-[#111]' : 'hover:bg-slate-200'}`}>
                   <i className="fa-solid fa-xmark text-[#444]"></i>
                 </button>
               </div>
               <div className="relative">
                 <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[#444] text-xs"></i>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search your files..."
@@ -434,7 +433,7 @@ setExpirationHours(24);
 
             <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 no-scrollbar">
               {filteredFiles.map((file) => {
-                
+
                 const isSelected = selectedInPicker?.id === file.id;
                 return (
                   <div key={file.id} onClick={() => setSelectedInPicker(file)} className={`p-4 rounded-xl border transition-all cursor-pointer group flex flex-col gap-3 ${isSelected ? 'bg-blue-600/10 border-blue-500 shadow-sm' : (isDark ? 'bg-[#050505] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-100 hover:border-blue-300 shadow-sm')}`}>
@@ -457,8 +456,8 @@ setExpirationHours(24);
 
             <div className={`p-6 border-t flex justify-end items-center ${isDark ? 'border-[#1a1a1a] bg-[#050505]' : 'border-slate-100 bg-slate-50'}`}>
               <div className="flex gap-3">
-                <button onClick={() => {setIsPickerOpen(false); setSearchTerm("");}} className="px-6 py-2.5 text-xs font-bold text-[#808080]">Cancel</button>
-                <button onClick={confirmPickerSelection} disabled={!selectedInPicker} className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold disabled:opacity-50 shadow-lg shadow-blue-500/20">Confirm Selection</button>
+                <button onClick={() => { setIsPickerOpen(false); setSearchTerm(""); }} className="px-6 py-2.5 text-xs font-bold text-[#808080]">Cancel</button>
+                <button onClick={confirmPickerSelection} disabled={!selectedInPicker} className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold disabled:opacity-50 shadow-lg  ">Confirm Selection</button>
               </div>
             </div>
           </div>
@@ -479,7 +478,7 @@ setExpirationHours(24);
             </p>
             <div className="flex gap-3">
               <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`} disabled={isScheduling}>Go Back</button>
-              <button onClick={handleScheduleSubmit} disabled={isScheduling} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 flex justify-center items-center gap-2">
+              <button onClick={handleScheduleSubmit} disabled={isScheduling} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg   disabled:opacity-50 flex justify-center items-center gap-2">
                 {isScheduling ? <i className="fa-solid fa-spinner fa-spin"></i> : "Confirm Schedule"}
               </button>
             </div>

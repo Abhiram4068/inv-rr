@@ -7,10 +7,10 @@ import { formatDateTime } from '../../utils/dateFormatter';
 
 const ArchivesList = () => {
   // --- THEME ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -143,7 +143,7 @@ const handleDeleteArchive=async(item)=>{
   const indexOfFirstRow = (currentPage - 1) * rowsPerPage;
 
   return (
-    <div className={`flex-1 min-h-screen p-6 lg:p-10 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <div className={`flex-1 min-h-screen p-6 lg:p-10 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
         <div 
@@ -206,7 +206,7 @@ const handleDeleteArchive=async(item)=>{
                 <button
                   onClick={handleUnarchive}
                   disabled={actionLoading}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20"
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg "
                 >
                   Confirm Restore
                 </button>
@@ -238,7 +238,7 @@ const handleDeleteArchive=async(item)=>{
                 <button
                   onClick={handleRestoreAll}
                   disabled={actionLoading}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg disabled:opacity-50"
                 >
                   {actionLoading ? <><i className="fa-solid fa-circle-notch animate-spin mr-2"></i>Restoring...</> : "Confirm"}
                 </button>

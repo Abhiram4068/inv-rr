@@ -5,7 +5,7 @@ import { getSharedFiles, revokeShare } from '../../services/shareService';
 import { formatDateTime } from "../../utils/dateFormatter";
 
 const ViewAllShares = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [isModalOpen, setModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,7 +17,7 @@ const ViewAllShares = () => {
   const rowsPerPage = 7;
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -32,10 +32,10 @@ const ViewAllShares = () => {
 
   const getStatusClasses = (status) => {
     switch (status) {
-      case 'Active':   return isDark ? 'text-emerald-400' : 'text-emerald-600';
-      case 'Expired':  return isDark ? 'text-amber-400'   : 'text-amber-600';
-      case 'Revoked':  return isDark ? 'text-red-400'     : 'text-red-600';
-      case 'Accessed': return isDark ? 'text-blue-400'    : 'text-blue-600';
+      case 'Active': return isDark ? 'text-emerald-400' : 'text-emerald-600';
+      case 'Expired': return isDark ? 'text-amber-400' : 'text-amber-600';
+      case 'Revoked': return isDark ? 'text-red-400' : 'text-red-600';
+      case 'Accessed': return isDark ? 'text-blue-400' : 'text-blue-600';
       default: return '';
     }
   };
@@ -99,7 +99,7 @@ const ViewAllShares = () => {
   };
 
   return (
-    <div className={`w-full transition-colors duration-300 relative ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
+    <div className={`w-full min-h-full transition-colors duration-300 relative ${isDark ? 'bg-black' : 'bg-[#EFEFEF]'}`}>
 
       {/* Toast */}
       {toast.visible && (
@@ -134,7 +134,7 @@ const ViewAllShares = () => {
               placeholder="Search files or emails..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className={`text-sm rounded-full py-2.5 pl-9 pr-5 w-full sm:w-72 focus:outline-none transition-all border
+              className={`text-sm rounded-[10px] py-2.5 pl-9 pr-5 w-full sm:w-72 focus:outline-none transition-all border-[0.5px]
                 ${isDark ? 'bg-neutral-900/50 border-neutral-800 text-white focus:border-neutral-600' : 'bg-white border-slate-200 text-slate-800 focus:border-blue-400 shadow-sm'}`}
             />
           </div>
@@ -143,8 +143,8 @@ const ViewAllShares = () => {
         {/* Table container */}
         <div className={`border rounded-lg overflow-hidden shadow-2xl
   ${isDark
-    ? 'border-neutral-900 bg-[#050505]'
-    : 'border-slate-200 bg-slate-50/50'}
+            ? 'border-neutral-900 bg-[#050505]'
+            : 'border-slate-200 bg-slate-50/50'}
 `}>
 
           {/* Pagination bar */}
@@ -183,10 +183,9 @@ const ViewAllShares = () => {
           {/* ── DESKTOP TABLE (md+) ── */}
           <div className="hidden md:block overflow-x-auto">
             <table
-  className={`w-full text-left border-collapse ${
-    isDark ? 'bg-[#050505]' : 'bg-slate-50/50'
-  }`}
->
+              className={`w-full text-left border-collapse ${isDark ? 'bg-[#050505]' : 'bg-slate-50/50'
+                }`}
+            >
               <thead>
                 <tr className={`text-[10px] uppercase tracking-[0.12em] border-b
                   ${isDark ? 'text-neutral-500 border-neutral-900 bg-[#080808]/70' : 'text-slate-400 border-slate-100 bg-slate-50/50'}`}>
@@ -390,14 +389,14 @@ const ViewAllShares = () => {
             <div className="p-6 overflow-y-auto" style={{ maxHeight: '65vh' }}>
               <div className="grid grid-cols-2 gap-x-4 gap-y-5">
                 {[
-                  { label: 'Owner',      val: selectedFile.owner_email,     truncate: true },
-                  { label: 'Recipient',  val: selectedFile.recipient_email,  truncate: true },
+                  { label: 'Owner', val: selectedFile.owner_email, truncate: true },
+                  { label: 'Recipient', val: selectedFile.recipient_email, truncate: true },
                   { label: 'Expires On', val: formatDateTime(selectedFile.expiration_datetime), color: isDark ? 'text-red-400' : 'text-red-500' },
                   { label: 'Created On', val: formatDateTime(selectedFile.created_at), color: isDark ? 'text-neutral-400' : 'text-slate-600' },
                   selectedFile.is_active
                     ? { label: 'Last Accessed', val: formatDateTime(selectedFile.accessed_at) || 'Not yet accessed' }
-                    : { label: 'Revoked On',    val: formatDateTime(selectedFile.revoked_at) },
-                  { label: 'File Size',  val: `${(selectedFile.file_size / 1024).toFixed(2)} KB` },
+                    : { label: 'Revoked On', val: formatDateTime(selectedFile.revoked_at) },
+                  { label: 'File Size', val: `${(selectedFile.file_size / 1024).toFixed(2)} KB` },
                 ].map((item, i) => (
                   <div key={i}>
                     <p className={`text-[10px] uppercase font-bold mb-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>{item.label}</p>
@@ -416,14 +415,14 @@ const ViewAllShares = () => {
                   <p className={`text-[10px] uppercase font-bold mb-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Permission</p>
                   <span className={`text-[10px] px-2 py-0.5 rounded font-bold inline-flex items-center gap-1.5
                     ${selectedFile.permission === 'view_only' ? (isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600')
-                    : selectedFile.permission === 'view_download' ? (isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600')
-                    : selectedFile.permission === 'one_time_download' ? (isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600')
-                    : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')}`}>
+                      : selectedFile.permission === 'view_download' ? (isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600')
+                        : selectedFile.permission === 'one_time_download' ? (isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600')
+                          : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')}`}>
                     <i className={`fa-solid ${permissionIcon(selectedFile.permission)}`} />
                     {selectedFile.permission === 'view_only' ? 'View only'
-                     : selectedFile.permission === 'view_download' ? 'View + Download'
-                     : selectedFile.permission === 'one_time_download' ? 'One-time'
-                     : 'Full access'}
+                      : selectedFile.permission === 'view_download' ? 'View + Download'
+                        : selectedFile.permission === 'one_time_download' ? 'One-time'
+                          : 'Full access'}
                   </span>
                 </div>
 

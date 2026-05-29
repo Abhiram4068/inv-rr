@@ -22,7 +22,7 @@ const CollectionDetails = () => {
   const { id } = useParams();
 
   // --- States ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [collectionInfo, setCollectionInfo] = useState(null);
   const [collectionFile, setCollectionFile] = useState([]);
   const [totalFiles, setTotalFiles] = useState(0);
@@ -95,7 +95,7 @@ const showToast = (msg, type = 'success') => {
 
   // --- Theme Sync ---
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -246,7 +246,7 @@ const showToast = (msg, type = 'success') => {
 
 
   return (
-    <div className="collection-container transition-colors duration-300" style={{ width: '100%', height: '100%', overflowY: 'hidden', display: 'flex', flexDirection: 'column', background: isDark ? 'transparent' : '#E6EBF2' }}>
+    <div className="collection-container transition-colors duration-300" style={{ width: '100%', height: '100%', overflowY: 'hidden', display: 'flex', flexDirection: 'column', background: isDark ? 'transparent' : '#EFEFEF' }}>
       
       
       {/* Professional Top-Sliding Toast */}
@@ -319,7 +319,7 @@ const showToast = (msg, type = 'success') => {
 
             <button 
               onClick={() => setIsAddFileOpen(true)}
-              className="bg-[#3b82f6] text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center gap-2 shadow-lg shadow-blue-500/20"
+              className="bg-[#3b82f6] text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center gap-2 shadow-lg"
             >
               <i className="fa-solid fa-plus"></i> Add Files
             </button>

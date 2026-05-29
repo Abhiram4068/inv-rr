@@ -178,7 +178,7 @@ const STATUS_LABELS = {
 const Dashboard = () => {
   const navigate = useNavigate();
   // --- THEME STATE ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   
   // --- UPLOAD FUNCTIONALITY STATE ---
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -208,7 +208,7 @@ const Dashboard = () => {
 
   // Theme Sync Logic
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -489,7 +489,7 @@ const Dashboard = () => {
   };
 
   return (
-    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       
       {duplicateModal && (
         <DuplicateModal isDark={isDark} file={duplicateModal.file} onResolve={handleModalResolve} />

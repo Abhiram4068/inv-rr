@@ -7,7 +7,7 @@ import FileCard from '../../components/FileCard';
 
 const StarredItems = () => {
   // --- THEME STATE SYNC ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   
   // --- STATE FOR STARRED ITEMS ---
   const [starredFiles, setStarredFiles] = useState([]);
@@ -69,7 +69,7 @@ const StarredItems = () => {
 
   // --- THEME SYNC EFFECT ---
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -116,7 +116,7 @@ const StarredItems = () => {
     }
   };
   return (
-    <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
+    <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#EFEFEF]'}`}>
       
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (

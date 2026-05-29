@@ -41,7 +41,7 @@ const RightSidebar = ({ isOpen, onClose }) => {
       ${isOpen ? 'translate-x-0' : 'translate-x-full'} 
       lg:translate-x-0 lg:static fixed top-[60px] lg:top-0 bottom-0 right-0 w-[320px] 
       p-[24px_20px] border-l shrink-0 z-40 transition-all duration-300 ease-in-out overflow-y-auto no-scrollbar
-      ${isDark ? 'bg-black border-[#262626]' : 'bg-[#F8FAFC] border-slate-200'}
+      ${isDark ? 'bg-black border-[#262626]' : 'bg-slate-200 border-r border-slate-300'}
     `}>
       
       {/* Home Tab */}
