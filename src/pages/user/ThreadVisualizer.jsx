@@ -36,6 +36,8 @@ import {
   getApiSuccessMessage,
 } from "../../services/threadService";
 import HelpModal from "../../components/HelpModal";
+import { getFileMeta } from "../../utils/fileIcons";
+import { formatDateTime } from "../../utils/dateFormatter";
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const ff = "'Inter', 'DM Sans', system-ui, sans-serif";
@@ -157,12 +159,12 @@ const T = {
 };
 
 const STATUS_CFG = {
-  INACTIVE:     { label: "Inactive",      color: "var(--t-statusInactiveColor)",  bg: "var(--t-statusInactiveBg)",  dot: T.statusNotStarted, top: "#94a3b8" },
-  ACTIVE:       { label: "Active",        color: "var(--t-statusActiveColor)",    bg: "var(--t-statusActiveBg)",    dot: T.statusInProgress,  top: "#3b82f6" },
-  NEEDS_REVIEW: { label: "Needs Review",  color: "var(--t-statusReviewColor)",    bg: "var(--t-statusReviewBg)",    dot: T.statusInReview,    top: "#f59e0b" },
-  OUTDATED:     { label: "Outdated",      color: "var(--t-statusBlockedColor)",   bg: "var(--t-statusBlockedBg)",   dot: T.statusBlocked,     top: "#ef4444" },
-  BLOCKED:      { label: "Blocked",       color: "var(--t-statusBlockedColor)",   bg: "var(--t-statusBlockedBg)",   dot: T.statusBlocked,     top: "#ef4444" },
-  ARCHIVED:     { label: "Completed",     color: "var(--t-statusCompletedColor)", bg: "var(--t-statusCompletedBg)", dot: T.statusCompleted,   top: "#22c55e" },
+  INACTIVE:     { label: "Inactive",      color: "var(--t-statusInactiveColor)",    dot: T.statusNotStarted, top: "#94a3b8" },
+  ACTIVE:       { label: "Active",        color: "var(--t-statusActiveColor)",    dot: T.statusInProgress,  top: "#3b82f6" },
+  NEEDS_REVIEW: { label: "Needs Review",  color: "var(--t-statusReviewColor)",    dot: T.statusInReview,    top: "#f59e0b" },
+  OUTDATED:     { label: "Outdated",      color: "var(--t-statusBlockedColor)",   dot: T.statusBlocked,     top: "#ef4444" },
+  BLOCKED:      { label: "Blocked",       color: "var(--t-statusBlockedColor)",   dot: T.statusBlocked,     top: "#ef4444" },
+  COMPLETED:     { label: "Completed",     color: "var(--t-statusCompletedColor)", dot: T.statusCompleted,   top: "#22c55e" },
 };
 
 const SW = 240;
@@ -246,7 +248,7 @@ function Modal({ open, onClose, title, children, width = 440 }) {
   if (!open) return null;
   return (
     <div style={{ position: "fixed", inset: 0, background: "var(--t-modalOverlay)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div style={{ background: T.cardBg, borderRadius: 14, width, maxWidth: "94vw", maxHeight: "90vh", overflow: "auto", boxShadow: "var(--t-shadowSoft)", border: `1px solid ${T.border}`, fontFamily: ff }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: T.cardBg, borderRadius: 10, width, maxWidth: "94vw", maxHeight: "90vh", overflow: "auto", boxShadow: "var(--t-shadowSoft)", border: `1px solid ${T.border}`, fontFamily: ff }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${T.borderSoft}` }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: T.text }}>{title}</span>
           <button onClick={onClose} style={{ background: "var(--t-btnSoftBg)", border: "none", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 16, color: T.textMuted, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
@@ -268,15 +270,29 @@ function Dots({ onEdit, onFiles, onDelete }) {
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
 
-  const row = (icon, label, fn, danger) => (
-    <button onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); fn(); setOpen(false); }}
-      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 12, color: danger ? "var(--t-dangerText)" : T.text, textAlign: "left", fontFamily: ff }}
-      onMouseEnter={e => e.currentTarget.style.background = danger ? "var(--t-dangerBg)" : "var(--t-hoverRowBg)"}
-      onMouseLeave={e => e.currentTarget.style.background = "none"}>
-      <span>{icon}</span>{label}
-    </button>
-  );
-
+const row = (label, fn, danger) => (
+  <button
+    onMouseDown={e => e.stopPropagation()}
+    onClick={e => { e.stopPropagation(); fn(); setOpen(false); }}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      width: "100%",
+      padding: "8px 12px",
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      fontSize: 12,
+      color: danger ? "var(--t-dangerText)" : T.text,
+      textAlign: "left",
+      fontFamily: ff
+    }}
+    onMouseEnter={e => e.currentTarget.style.background = danger ? "var(--t-dangerBg)" : "var(--t-hoverRowBg)"}
+    onMouseLeave={e => e.currentTarget.style.background = "none"}
+  >
+    {label}
+  </button>
+);
   return (
     <div ref={ref} style={{ position: "absolute", top: 8, right: 8, zIndex: 20 }}>
       <button onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setOpen(p => !p); }}
@@ -284,11 +300,10 @@ function Dots({ onEdit, onFiles, onDelete }) {
         ⋯
       </button>
       {open && (
-        <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: T.cardBg, borderRadius: 10, border: `1px solid ${T.border}`, boxShadow: "var(--t-shadowSoft)", minWidth: 150, overflow: "hidden", fontFamily: ff }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
-          {row("✏️", "Edit", onEdit)}
-          {row("📎", "Files", onFiles)}
-          {onDelete && <><div style={{ borderTop: `1px solid ${T.borderSoft}`, margin: "3px 0" }} />{row("🗑", "Delete", onDelete, true)}</>}
-        </div>
+        <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: T.cardBg, borderRadius: 6, border: `1px solid ${T.border}`, boxShadow: "var(--t-shadowSoft)", minWidth: 150, overflow: "hidden", fontFamily: ff }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+          {row("Edit Node", onEdit)}
+          {row("View & Upload Files", onFiles)}
+{onDelete && <><div style={{ borderTop: `1px solid ${T.borderSoft}`, margin: "3px 0" }} />{row("Delete", onDelete, true)}</>}        </div>
       )}
     </div>
   );
@@ -317,10 +332,14 @@ function StageLane({ data }) {
           pointerEvents: "auto",
         }}>
           <span>{label}</span>
-          <div style={{ display: "flex", gap: 2 }}>
-            <button onClick={() => data.onRenameStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: "2px 4px", color: T.textFaint, borderRadius: 4 }}>✏️</button>
-            <button onClick={() => data.onDeleteStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: "2px 4px", color: T.textFaint, borderRadius: 4 }}>🗑</button>
-          </div>
+<div style={{ display: "flex", gap: 4 }}>
+  <button onClick={() => data.onRenameStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: "2px 4px", color: T.textFaint, borderRadius: 4 }}>
+    Edit
+  </button>
+  <button onClick={() => data.onDeleteStage(data)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: "2px 4px", color: "var(--t-dangerText)", borderRadius: 4 }}>
+    Delete
+  </button>
+</div>
         </div>
       </div>
     </div>
@@ -374,7 +393,7 @@ function ThreadNode({ data, selected }) {
           paddingTop: 8, borderTop: "1px solid var(--t-borderSoft)",
         }}>
           <span style={{ fontSize: 10.5, color: T.textFaint, fontWeight: 500 }}>
-            Files: <span style={{ color: T.textMuted, fontWeight: 700 }}>{node.file_count}</span>
+            File(s): <span style={{ color: T.textMuted, fontWeight: 700 }}>{node.file_count}</span>
           </span>
           <StatusPill status={node.status} />
         </div>
@@ -408,6 +427,53 @@ const DEPENDENCY_TYPES = [
 ];
 
 // ── File modal ─────────────────────────────────────────────────────────────────
+function StagedFileThumb({ f }) {
+  const meta = getFileMeta(f.type || "");
+  const isImage = meta.category === "image";
+  const [previewUrl, setPreviewUrl] = useState(null);
+  useEffect(() => {
+    if (!isImage) return;
+    const url = URL.createObjectURL(f);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [f, isImage]);
+
+  return (
+    <div style={{
+      width: 40, height: 40, borderRadius: 7, flexShrink: 0,
+      overflow: "hidden", border: `1px solid ${T.border}`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "var(--t-inputBg)",
+    }}>
+      {isImage && previewUrl ? (
+        <img src={previewUrl} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      ) : (
+        <i className={`fa-solid ${meta.icon}`} style={{ fontSize: 18, color: meta.color }} />
+      )}
+    </div>
+  );
+}
+
+function UploadedFileThumb({ f, size = 40 }) {
+  const meta = getFileMeta(f.content_type || "");
+  const isImage = meta.category === "image";
+
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 7, flexShrink: 0,
+      overflow: "hidden", border: `1px solid ${T.border}`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "var(--t-inputBg)",
+    }}>
+      {isImage && f.file_url ? (
+        <img src={f.file_url} alt={f.original_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      ) : (
+        <i className={`fa-solid ${meta.icon}`} style={{ fontSize: size * 0.45, color: meta.color }} />
+      )}
+    </div>
+  );
+}
+
 function FileModal({ open, onClose, node, onChange, showToast }) {
   const [files, setFiles] = useState([]);
   const [staged, setStaged] = useState([]);
@@ -417,6 +483,14 @@ function FileModal({ open, onClose, node, onChange, showToast }) {
     if (open && node) getNodeFiles(node.id).then(setFiles).catch(() => setFiles([]));
     setStaged([]);
   }, [open, node?.id]);
+
+  const addUniqueFiles = (newFiles) => {
+    setStaged(prev => {
+      const existing = new Set(prev.map(f => `${f.name}-${f.size}`));
+      const unique = newFiles.filter(f => !existing.has(`${f.name}-${f.size}`));
+      return [...prev, ...unique];
+    });
+  };
 
   const upload = async () => {
     setBusy(true);
@@ -447,28 +521,52 @@ function FileModal({ open, onClose, node, onChange, showToast }) {
     <Modal open={open} onClose={onClose} title={`Files — ${node?.title || ""}`} width={480}>
       <div style={{ border: `2px dashed ${T.border}`, borderRadius: 12, padding: 20, textAlign: "center", background: T.pageBg, marginBottom: 14, cursor: "pointer" }}
         onClick={() => document.getElementById("_fi_").click()}
-        onDrop={e => { e.preventDefault(); setStaged(Array.from(e.dataTransfer.files)); }}
+        onDrop={e => { e.preventDefault(); addUniqueFiles(Array.from(e.dataTransfer.files)); }}
         onDragOver={e => e.preventDefault()}>
         <div style={{ fontSize: 13, color: T.textMuted }}>Drop files or <span style={{ color: T.accent, fontWeight: 600 }}>browse</span></div>
-        <input id="_fi_" type="file" multiple style={{ display: "none" }} onChange={e => setStaged(Array.from(e.target.files))} />
+        <input id="_fi_" type="file" multiple style={{ display: "none" }} onChange={e => { addUniqueFiles(Array.from(e.target.files)); e.target.value = ""; }} />
       </div>
-      {staged.length > 0 && (
+{staged.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          {staged.map((f, i) => (
-            <div key={i} style={{ fontSize: 12, padding: "6px 10px", background: T.accentSoft, borderRadius: 7, marginBottom: 4, color: T.accent, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span>📄 {f.name}</span>
-              <button onClick={() => setStaged(p => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: T.accent, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "0 2px", opacity: 0.7 }}>×</button>
-            </div>
-          ))}
+{staged.map((f, i) => {
+            return (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "8px 10px", background: T.accentSoft,
+                borderRadius: 9, marginBottom: 6, border: `1px solid ${T.border}`,
+              }}>
+                {/* Thumbnail */}
+ <StagedFileThumb f={f} />
+
+                {/* Name + size */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {f.name}
+                  </div>
+                  <div style={{ fontSize: 10, color: T.textFaint, marginTop: 2 }}>
+                    {(f.size / (1024 * 1024)).toFixed(2)} MB
+                  </div>
+                </div>
+
+                <button onClick={() => setStaged(p => p.filter((_, j) => j !== i))}
+                  style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: "2px 4px" }}>
+                  ×
+                </button>
+              </div>
+            );
+          })}
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
             <Btn onClick={upload} disabled={busy}>{busy ? "Uploading…" : `Upload ${staged.length} file(s)`}</Btn>
           </div>
         </div>
       )}
       {files.map(f => (
-        <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 11px", border: `1px solid ${T.borderSoft}`, borderRadius: 9, marginBottom: 6 }}>
-          <span>📎</span>
-          <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.original_name}</div>
+        <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", border: `1px solid ${T.borderSoft}`, borderRadius: 9, marginBottom: 6 }}>
+          <UploadedFileThumb f={f} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.original_name}</div>
+            <div style={{ fontSize: 10, color: T.textFaint, marginTop: 2 }}>{f.uploaded_by}</div>
+          </div>
           {f.file_url && <a href={f.file_url} download style={{ fontSize: 12, color: T.accent }}>⬇</a>}
           <button onClick={() => deleteNodeFile(f.id).then((res) => {
             setFiles((p) => p.filter((x) => x.id !== f.id));
@@ -581,7 +679,6 @@ function NodePanel({ node, onClose, onEdit, onFiles, onDelete, onRefresh, showCo
   };
 
   if (!node) return null;
-  const EVT = { CREATED: "🌱", UPDATED: "✏️", FILE_UPLOADED: "📎", FILE_DELETED: "🗑", STATUS_CHANGED: "🔄", DEPENDENCY_ADDED: "🔗" };
 
   return (
     <div style={{ width: 320, background: T.cardBg, borderLeft: `1px solid ${T.border}`, display: "flex", flexDirection: "column", flexShrink: 0, fontFamily: ff }}>
@@ -598,8 +695,17 @@ function NodePanel({ node, onClose, onEdit, onFiles, onDelete, onRefresh, showCo
           </div>
           <button onClick={onClose} style={{ background: "var(--t-btnSoftBg)", border: "none", borderRadius: 8, width: 26, height: 26, cursor: "pointer", fontSize: 14, color: T.textMuted, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
         </div>
-        <StatusPill status={node.status} />
+<StatusPill status={node.status} />
         {node.description && <div style={{ fontSize: 12, color: T.textMuted, marginTop: 10, lineHeight: 1.6 }}>{node.description}</div>}
+        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+          <Btn small variant="ghost" onClick={() => onEdit(node)} style={{ flex: 1 }}> Edit</Btn>
+          <Btn small variant="ghost" onClick={() => onFiles(node)} style={{ flex: 1 }}> Files</Btn>
+        </div>
+        {!node.is_root && (
+          <div style={{ marginTop: 6 }}>
+            <Btn small variant="ghost" onClick={() => onDelete(node)} style={{ width: "100%", color: "var(--t-dangerText)", borderColor: "var(--t-dangerBorder)" }}> Delete Node</Btn>
+          </div>
+        )}
       </div>
 
       <div style={{ display: "flex", borderBottom: `1px solid ${T.borderSoft}`, padding: "0 12px" }}>
@@ -620,8 +726,8 @@ function NodePanel({ node, onClose, onEdit, onFiles, onDelete, onRefresh, showCo
           ? <div style={{ color: T.textFaint, fontSize: 12, textAlign: "center", marginTop: 18 }}>No activity yet</div>
           : activity.map(a => (
             <div key={a.id} style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "flex-start" }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.accentSoft, color: T.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>
-                {EVT[a.event_type] || "•"}
+              <div style={{ width: 28, height: 28, borderRadius: "50%",  color: T.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>
+                {"•"}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 12, color: T.text, lineHeight: 1.5, fontWeight: 500 }}>{a.message}</div>
@@ -634,29 +740,17 @@ function NodePanel({ node, onClose, onEdit, onFiles, onDelete, onRefresh, showCo
           ? <div style={{ color: T.textFaint, fontSize: 12, textAlign: "center", marginTop: 18 }}>No files uploaded</div>
           : files.map(f => (
             <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: `1px solid ${T.borderSoft}` }}>
-              <div style={{ width: 28, height: 28, borderRadius: 6, background: "var(--t-iconBg)", color: T.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>📎</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.original_name}</div>
-                <div style={{ fontSize: 10.5, color: T.textFaint }}>{f.uploaded_by}</div>
-              </div>
+              <UploadedFileThumb f={f} size={32} />
+                <div onClick={() => f.file_url && window.open(f.file_url, "_blank")} style={{ flex: 1, minWidth: 0, cursor: f.file_url ? "pointer" : "default" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.original_name}</div>
+                  <div style={{ fontSize: 10.5, color: T.textFaint }}>{formatDateTime(f.created_at)}</div>
+                </div>
               <div style={{ display: "flex", gap: 4 }}>
-                {f.file_url && (
-                  <button onClick={() => window.open(f.file_url, "_blank")} title="View File" style={{ width: 26, height: 26, borderRadius: 6, border: "none", background: "var(--t-btnSoftBg)", color: T.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>👁️</button>
-                )}
-                <button onClick={() => onRemoveFile(f)} title="Remove from node" style={{ width: 26, height: 26, borderRadius: 6, border: "none", background: "var(--t-dangerBg)", color: "var(--t-dangerText)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🗑️</button>
+                
+                <button onClick={() => onRemoveFile(f)} title="Remove from node" style={{ width: 26, height: 26, borderRadius: 6, border: "none", color: "var(--t-dangerText)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>❌</button>
               </div>
             </div>
           ))
-        )}
-      </div>
-
-      <div style={{ padding: "12px 16px", borderTop: `1px solid ${T.borderSoft}`, display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Btn small variant="ghost" onClick={() => onEdit(node)} style={{ flex: 1 }}>✏️ Rename / Edit</Btn>
-          <Btn small variant="ghost" onClick={() => onFiles(node)} style={{ flex: 1 }}>📎 Files</Btn>
-        </div>
-        {!node.is_root && (
-          <Btn small variant="ghost" onClick={() => onDelete(node)} style={{ color: "var(--t-dangerText)", borderColor: "var(--t-dangerBorder)" }}>🗑 Delete Node</Btn>
         )}
       </div>
     </div>
@@ -1048,7 +1142,7 @@ function CanvasInner({ thread, onBack, showToast }) {
             <div style={{ width: 1, height: 20, background: T.border, margin: "0 2px" }} />
             <button onClick={() => setAddStageModal(true)}
               style={{
-                background: T.accent, color: "#fff", border: "none",
+                background: "#ffffff",color:"#000000", border: "none",
                 borderRadius: 7, padding: "5px 12px",
                 fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: ff,
                 display: "flex", alignItems: "center", gap: 5,
@@ -1163,7 +1257,7 @@ function CanvasInner({ thread, onBack, showToast }) {
         onClose={() => setEditModal({ open: false, node: null })}
         onSubmit={handleEdit}
         initial={editModal.node}
-        title="Edit node"
+        title="Node Detail"
       />
       <FileModal
         open={fileModal.open}

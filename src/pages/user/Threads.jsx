@@ -129,7 +129,7 @@ const [titleError, setTitleError] = useState(false);
       setThreadObjective('');
       showToast("Workflow thread initialized successfully");
     } catch (e) {
-      alert(getApiErrorMessage(e, 'Failed to create thread'));
+      showToast(getApiErrorMessage(e, 'Failed to create thread'), 'error');
     } finally {
       setLoading(false);
     }
@@ -139,11 +139,11 @@ const [titleError, setTitleError] = useState(false);
     setLoading(true);
     try {
       const updated = await updateThread(id, data);
-      setAllThreads(prev => prev.map(t => t.id === id ? updated : t));
+      setAllThreads(prev => prev.map(t => t.id === id ? updated.data : t));
       setEditingThread(null);
-      showToast("Thread updated successfully");
+      showToast(updated.message);
     } catch (e) {
-      alert(getApiErrorMessage(e, 'Failed to update thread'));
+      showToast(getApiErrorMessage(e, 'Failed to update thread'), 'error');
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,7 @@ const [titleError, setTitleError] = useState(false);
       setDeletingThread(null);
       showToast("Thread deleted successfully");
     } catch (e) {
-      alert(getApiErrorMessage(e, 'Failed to delete thread'));
+      showToast(getApiErrorMessage(e, 'Failed to delete thread'), 'error');
     } finally {
       setLoading(false);
     }
@@ -330,7 +330,7 @@ const [titleError, setTitleError] = useState(false);
                           onClick={(e) => { e.stopPropagation(); setEditingThread(thread); setMenuOpenId(null); }}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${isDark ? 'hover:bg-[#222] text-[#ccc]' : 'hover:bg-slate-100 text-slate-600'}`}
                         >
-                          <i className="fa-solid fa-pen-to-square"></i> Rename
+                          <i className="fa-solid fa-pen-to-square"></i> Edit thread
                         </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); setDeletingThread(thread); setMenuOpenId(null); }}
@@ -346,8 +346,8 @@ const [titleError, setTitleError] = useState(false);
                   <p className={`text-xs line-clamp-2 leading-relaxed ${isDark ? 'text-[#666]' : 'text-slate-400'}`}>{new Date(thread.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className={`flex items-center gap-30 pt-4 border-t ${isDark ? 'border-[#1a1a1a]' : 'border-slate-100'}`} style={{ gap: '30px' }}>
-                  <span className="text-[11px] font-medium text-[#808080]"><i className="fa-solid fa-paperclip mr-1"></i>{thread.file_count} Files</span>
-                  <span className="text-[11px] font-medium text-[#808080]"><i className="fa-solid fa-circle-nodes mr-1"></i>{thread.node_count} Nodes</span>
+                  <span className="text-[11px] font-medium text-[#808080]"><i className="fa-solid fa-paperclip mr-1"></i>{thread.file_count} File(s)</span>
+                  <span className="text-[11px] font-medium text-[#808080]"><i className="fa-solid fa-circle-nodes mr-1"></i>{thread.node_count} Node(s)</span>
                 </div>
               </div>
             ))}
@@ -380,7 +380,7 @@ const [titleError, setTitleError] = useState(false);
                     <th className="px-6 py-4 font-bold">Nodes</th>
                     <th className="px-6 py-4 font-bold">Files</th>
                     <th className="px-6 py-4 font-bold">Created</th>
-                    <th className="px-6 py-4 font-bold text-right"></th>
+                    <th className="px-6 py-4 font-bold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y text-sm ${isDark ? 'divide-neutral-900 text-white' : 'divide-slate-100 text-slate-700'}`}>
@@ -415,7 +415,7 @@ const [titleError, setTitleError] = useState(false);
                                 onClick={(e) => { e.stopPropagation(); setEditingThread(thread); setMenuOpenId(null); }}
                                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${isDark ? 'hover:bg-[#222] text-[#ccc]' : 'hover:bg-slate-100 text-slate-600'}`}
                               >
-                                <i className="fa-solid fa-pen-to-square"></i> Rename/Edit
+                                <i className="fa-solid fa-pen-to-square"></i> Edit
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setDeletingThread(thread); setMenuOpenId(null); }}
