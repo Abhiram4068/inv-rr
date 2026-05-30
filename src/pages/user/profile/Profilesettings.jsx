@@ -9,7 +9,7 @@ const EditAccount = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [designations, setDesignations] = useState([]);
-  const { user, login } = useAuth();
+  const { user, updateUser  } = useAuth();
 
   // --- Modal States ---
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -117,9 +117,7 @@ const EditAccount = () => {
       await updateProfile({ first_name: formData.first_name, last_name: formData.last_name, date_of_birth: formData.date_of_birth });
       const profileRes = await profile();
       setUserProfile(profileRes.data);
-      if (user) {
-        login({ ...user, first_name: profileRes.data.first_name, last_name: profileRes.data.last_name });
-      }
+      updateUser({ first_name: profileRes.data.first_name, last_name: profileRes.data.last_name });
       showToast('Profile updated successfully.', 'success');
     } catch (err) {
       showToast(err.response?.data?.current_password || 'Failed to update profile.', 'error');

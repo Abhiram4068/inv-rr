@@ -3,6 +3,67 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { register, getDesignations  } from "../../services/authService";
 import useAuth from "../../hooks/useAuth";
 
+// ─── Success Screen ───────────────────────────────────────────────────────────
+const SuccessScreen = () => (
+  <div className="h-screen w-screen bg-[#09090b] flex items-center justify-center font-['Inter'] antialiased px-6">
+    <div className="w-full max-w-[420px] flex flex-col items-center text-center">
+
+      {/* Animated checkmark circle */}
+      <div className="relative mb-8">
+        <div className="w-20 h-20 rounded-full bg-blue-600/10 border border-blue-500/20 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-full bg-blue-600/20 flex items-center justify-center">
+            <i className="fa-solid fa-envelope-circle-check text-blue-400 text-2xl"></i>
+          </div>
+        </div>
+        {/* Ping ring */}
+      </div>
+
+      {/* Brand */}
+      <div className="text-sm font-bold tracking-tight text-white mb-6">
+        HiveDrive<span className="text-blue-500">.</span>
+      </div>
+
+      {/* Heading */}
+      <h2 className="text-2xl font-medium tracking-tight text-white mb-3">
+        Request sent!
+      </h2>
+
+      {/* Message */}
+      <p className="text-[#a1a1aa] text-sm font-light leading-relaxed mb-2">
+        Your registration request has been submitted successfully.
+      </p>
+      <p className="text-[#71717a] text-xs leading-relaxed mb-8">
+        You'll receive an email once an admin reviews and approves your account.
+      </p>
+
+      {/* Divider */}
+      <div className="w-full border-t border-[#1e1e20] mb-8" />
+
+      {/* Actions */}
+      <div className="flex flex-col gap-3 w-full">
+        <Link
+  to="/login"
+  className="w-full py-3 text-blue-500 rounded-md font-medium text-sm tracking-wide text-center no-underline transition-colors"
+>
+  Go to Login <i className="fa-solid fa-arrow-right"></i>
+</Link>
+        <Link
+          to="/"
+          className="w-full py-3  text-[#a1a1aa] hover:text-white rounded-md font-medium text-sm tracking-wide text-center no-underline transition-colors"
+        >
+          <i className="fa-solid fa-arrow-left"></i> Back to Home
+        </Link>
+      </div>
+
+      {/* Footer note */}
+      <p className="mt-8 text-[11px] text-[#4a4a4a] tracking-wide">
+        Didn't get an email? Check your spam folder.
+      </p>
+    </div>
+  </div>
+);
+
+// ─── Main Register Component ──────────────────────────────────────────────────
 const Register = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, login: setUser } = useAuth();
@@ -20,7 +81,8 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [designationsLoading, setDesignationsLoading] = useState(false);
-  
+  const [registrationSuccess, setRegistrationSuccess] = useState(false); // ← new
+
   const buildErrorMessage = (data) => {
     if (!data) return "Registration failed. Please try again.";
     if (typeof data === "string") return data;
@@ -59,6 +121,14 @@ const Register = () => {
     return age;
   };
 
+  // ─── Sanitization helper ────────────────────────────────────────────────────
+  // Detects HTML tags, JS event handlers, and common SQL injection patterns.
+  const containsMaliciousInput = (value) => {
+    const htmlTagPattern = /<[^>]*>/i;
+    const sqlInjectionPattern = /('|--|;|\/\*|\*\/|xp_|union\s+select|drop\s+table|insert\s+into|select\s+.*\s+from|or\s+1\s*=\s*1)/i;
+    return htmlTagPattern.test(value) || sqlInjectionPattern.test(value);
+  };
+
   const validateForm = () => {
     const {
       firstName,
@@ -70,29 +140,64 @@ const Register = () => {
       confirm_password,
     } = formData;
 
-    if (!firstName.trim()) return "First name is required.";
-    if (firstName.trim().length < 2) return "First name must contain at least 2 characters.";
-    if (!/^[A-Za-z\s]+$/.test(firstName)) return "First name should contain only alphabets.";
+    // ── First Name ────────────────────────────────────────────────────────────
+    const trimmedFirst = firstName.trim();
+    if (!trimmedFirst) return "First name is required.";
+    if (containsMaliciousInput(trimmedFirst)) return "First name contains invalid characters.";
+    if (trimmedFirst.length < 2) return "First name must contain at least 2 characters.";
+    if (trimmedFirst.length > 50) return "First name must not exceed 50 characters.";
+    if (!/^[A-Za-z\s'\-]+$/.test(trimmedFirst)) return "First name should contain only letters, spaces, hyphens, or apostrophes.";
+    if (/\d/.test(trimmedFirst)) return "First name should not contain numbers.";
+    if (/^\s+$/.test(firstName)) return "First name cannot be only spaces.";
 
-    if (!lastName.trim()) return "Last name is required.";
-    if (lastName.trim().length < 1) return "Last name must contain at least 1 character.";
-    if (!/^[A-Za-z\s]+$/.test(lastName)) return "Last name should contain only alphabets.";
+    // ── Last Name ─────────────────────────────────────────────────────────────
+    const trimmedLast = lastName.trim();
+    if (!trimmedLast) return "Last name is required.";
+    if (containsMaliciousInput(trimmedLast)) return "Last name contains invalid characters.";
+    if (trimmedLast.length < 1) return "Last name must contain at least 1 character.";
+    if (trimmedLast.length > 50) return "Last name must not exceed 50 characters.";
+    if (!/^[A-Za-z\s'\-]+$/.test(trimmedLast)) return "Last name should contain only letters, spaces, hyphens, or apostrophes.";
+    if (/\d/.test(trimmedLast)) return "Last name should not contain numbers.";
+    if (/^\s+$/.test(lastName)) return "Last name cannot be only spaces.";
 
+    // ── Email ─────────────────────────────────────────────────────────────────
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) return "Email address is required.";
+    if (containsMaliciousInput(trimmedEmail)) return "Email address contains invalid characters.";
+    if (trimmedEmail.length > 254) return "Email address must not exceed 254 characters.";
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
-    if (!emailRegex.test(email)) return "Please enter a valid email address.";
+    if (!emailRegex.test(trimmedEmail)) return "Please enter a valid email address.";
+    // Block consecutive dots in local part
+    if (/\.{2,}/.test(trimmedEmail.split("@")[0])) return "Please enter a valid email address.";
 
+    // ── Date of Birth ─────────────────────────────────────────────────────────
     if (!dob) return "Date of birth is required.";
+    const selectedDate = new Date(dob);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate > today) return "Date of birth cannot be a future date.";
     const age = calculateAge(dob);
-    if (age < 18) return "Minimum age required is 18 years.";
+    if (age < 18) return "You must be at least 18 years old to register.";
     if (age > 80) return "Please enter a valid date of birth.";
 
+    // ── Designation ───────────────────────────────────────────────────────────
     if (!designation) return "Please select your designation.";
+    const isValidDesignation = designations.some(
+      (d) => String(d.id) === String(designation)
+    );
+    if (!isValidDesignation) return "Please select a valid designation from the list.";
 
+    // ── Password ──────────────────────────────────────────────────────────────
+    if (!password) return "Password is required.";
     if (password.length < 8) return "Password must contain at least 8 characters.";
+    if (password.length > 128) return "Password must not exceed 128 characters.";
     const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
     if (!strongPasswordRegex.test(password)) {
       return "Password must include uppercase, lowercase, number, and special character.";
     }
+
+    // ── Confirm Password ──────────────────────────────────────────────────────
+    if (!confirm_password) return "Please confirm your password.";
     if (password !== confirm_password) return "Passwords do not match.";
 
     return null;
@@ -111,9 +216,9 @@ const Register = () => {
     try {
       const username = formData.email.split("@")[0];
       const payload = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
+        first_name: formData.firstName.trim(),
+        last_name: formData.lastName.trim(),
+        email: formData.email.trim(),
         date_of_birth: formData.dob,
         username,
         designation: formData.designation,
@@ -131,7 +236,8 @@ const Register = () => {
         }
         return;
       }
-      navigate("/login", { replace: true });
+      // ← show success screen instead of navigating to /login
+      setRegistrationSuccess(true);
     } catch (err) {
       setError((err.response?.data?.email));
     } finally {
@@ -157,14 +263,21 @@ const Register = () => {
   if (authLoading) return null;
   if (user) return <Navigate to={(user.is_staff || user.is_superuser) ? "/admin/dashboard" : "/dashboard"} replace />;
 
+  // ← Show success screen after successful registration
+  if (registrationSuccess) return <SuccessScreen />;
+
   return (
     <div className="h-screen w-screen bg-[#09090b] flex font-['Inter'] antialiased overflow-hidden">
       
       {/* LEFT SIDE: Brand & Info */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-16 bg-black border-r border-[#1e1e20] relative overflow-y-auto">
         {/* Top-aligned Brand Logo */}
-        <div className="text-xl font-bold tracking-tight text-white mb-12">
-          HiveDrive<span className="text-blue-500">.</span>
+        <div className="flex items-center gap-2 mb-24">
+        <i className="fa-solid fa-users text-white text-lg"></i>
+
+        <div className="text-xl font-bold tracking-tight text-white">
+        HiveDrive<span className="text-blue-500">.</span>
+        </div>
         </div>
 
         {/* Core Description - Shifted downward using margins to visually align with the Right-side form header */}
@@ -181,18 +294,18 @@ const Register = () => {
         {/* Bottom Feature Badges */}
         <div className="relative z-10 grid grid-cols-2 gap-12 border-t border-[#1e1e20] pt-8 mt-12">
           <div>
-            <div className="text-white text-sm font-medium tracking-wide uppercase mb-1">Secure Storage</div>
-            <div className="text-[#71717a] text-xs leading-relaxed">Enterprise-grade encryption for all project assets.</div>
+            <div className="text-white text-sm font-medium tracking-wide uppercase mb-1">Work Smarter</div>
+            <div className="text-[#71717a] text-xs leading-relaxed">Keep projects organized and teams aligned from one workspace.</div>
           </div>
           <div>
-            <div className="text-white text-sm font-medium tracking-wide uppercase mb-1">Instant Sharing</div>
-            <div className="text-[#71717a] text-xs leading-relaxed">Share files with stakeholders in a single click.</div>
+            <div className="text-white text-sm font-medium tracking-wide uppercase mb-1">Built for Productivity</div>
+            <div className="text-[#71717a] text-xs leading-relaxed">Focus on getting work done, not managing complexity.</div>
           </div>
         </div>
       </div>
 
       {/* RIGHT SIDE: Form Section (Scroll Fix Implemented) */}
-      <div className="w-full lg:w-1/2 h-full bg-[#09090b] overflow-y-auto flex justify-center items-start">
+      <div className="w-full lg:w-1/2 h-full bg-[#09090b] overflow-y-auto flex justify-center items-start no-scrollbar">
         <div className="w-full max-w-[440px] px-6 md:px-0 py-16">
           
           {/* Mobile Header (Visible only on mobile) */}
@@ -222,10 +335,11 @@ const Register = () => {
                   <input 
                     type="text" 
                     name="firstName"
+                    placeholder="Enter first name"
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500"
+                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm placeholder:text-xs placeholder:italic placeholder:text-[#4a4a4a] outline-none transition-colors focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -238,10 +352,12 @@ const Register = () => {
                   <input 
                     type="text" 
                     name="lastName"
+                    placeholder="Enter last name"
+                    
                     required
                     value={formData.lastName}
                     onChange={handleChange}
-                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500"
+                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm placeholder:text-xs placeholder:italic placeholder:text-[#4a4a4a] outline-none transition-colors focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -254,10 +370,14 @@ const Register = () => {
                   <input 
                     type="email" 
                     name="email"
+                    placeholder:text-xs
+                    
+
+                    placeholder="name@company.com"
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500"
+                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm placeholder:text-xs placeholder:italic placeholder:text-[#4a4a4a] outline-none transition-colors focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -275,7 +395,7 @@ const Register = () => {
                     value={formData.dob}
                     onChange={handleChange}
                     style={{ colorScheme: 'dark' }}
-                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500"
+                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm placeholder:text-xs placeholder:italic placeholder:text-[#4a4a4a] outline-none transition-colors focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -290,9 +410,9 @@ const Register = () => {
                     required
                     value={formData.designation}
                     onChange={handleChange}
-                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-10 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500 appearance-none cursor-pointer"
+                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-10 rounded-md text-white text-sm placeholder:text-xs placeholder:italic placeholder:text-[#4a4a4a] outline-none transition-colors focus:border-blue-500 appearance-none cursor-pointer"
                   >
-                    <option value="" disabled className="bg-[#121214]">Select designation</option>
+                    <option value="" disabled className="bg-[#121214]">Choose your designation</option>
                     {designations.map((designation) => (
                       <option key={designation.id} value={designation.id} className="bg-[#121214]">
                         {designation.name}
@@ -314,9 +434,10 @@ const Register = () => {
                     type={showPassword ? "text" : "password"}
                     name="password"
                     required
+                    placeholder="Enter password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-11 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500"
+                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-11 rounded-md text-white text-sm placeholder:text-xs placeholder:italic placeholder:text-[#4a4a4a] outline-none transition-colors focus:border-blue-500"
                   />
                   <button
                     type="button"
@@ -337,9 +458,10 @@ const Register = () => {
                     type={showPassword ? "text" : "password"}
                     name="confirm_password"
                     required
+                    placeholder="Confirm password"
                     value={formData.confirm_password}
                     onChange={handleChange}
-                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-11 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500"
+                    className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-11 rounded-md text-white text-sm placeholder:text-xs placeholder:italic placeholder:text-[#4a4a4a] outline-none transition-colors focus:border-blue-500"
                   />
                 </div>
               </div>

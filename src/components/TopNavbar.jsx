@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../services/authService";
 
@@ -33,6 +33,18 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
+const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleLogout = async () => {
     try {
       await logout();          // tells the server to blacklist / clear the refresh cookie
@@ -82,9 +94,8 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
         </button>
 
        
-
-        {/* User Profile Dropdown */}
-        <div className={`relative flex items-center p-1 rounded-lg cursor-pointer transition-colors group
+      {/* User Profile Dropdown */}
+      <div ref={dropdownRef} className={`relative flex items-center p-1 rounded-lg cursor-pointer transition-colors group
              ${theme === 'dark' ? 'hover:bg-[#111]' : 'hover:bg-slate-100'}`} 
              onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
           
@@ -103,7 +114,7 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
               
               <Link to="/myprofile" className={`flex items-center gap-[10px] p-[10px_12px] no-underline text-[13px] rounded-md transition-all 
                 ${theme === 'dark' ? 'text-[#808080] hover:bg-[#222] hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}>
-                <i className="fa-solid fa-user"></i> Account
+                <i className="fa-solid fa-user"></i> My Profile
               </Link>
               
               <hr className={`my-2 border-0 border-t ${theme === 'dark' ? 'border-[#333]' : 'border-slate-100'}`} />
