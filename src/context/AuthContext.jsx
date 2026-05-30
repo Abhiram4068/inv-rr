@@ -26,14 +26,18 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   }, []);
 
-  const logout = useCallback(async () => {
+const logout = useCallback(async () => {
     try { await logoutApi(); } catch (_) {}
     setUser(null);
     window.location.href = "/login";
   }, []);
 
+  const updateUser = useCallback((updatedFields) => {
+    setUser(prev => ({ ...prev, ...updatedFields }));
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,11 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
-
+import adminService from '../services/adminservice/userservice';
 const AdminSidebar = ({ isOpen, onClose }) => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const { logout, logout: clearUser } = useAuth();
+   const [counts, setCounts] = useState({ pending: 0, roleChange: 0, reactivation: 0 });
   const navigate = useNavigate();
+
+const fetchCounts = async () => {
+    try {
+      const [pending, roleChange, reactivation] = await Promise.allSettled([
+        adminService.getPendingApprovals(),
+        adminService.getDesignationChangeRequests(),
+        adminService.getReactivationRequests(),
+      ]);
+      setCounts({
+        pending:      pending.status === 'fulfilled'      ? (pending.value?.count      ?? 0) : 0,
+        roleChange:   roleChange.status === 'fulfilled'   ? (roleChange.value?.count   ?? 0) : 0,
+        reactivation: reactivation.status === 'fulfilled' ? (reactivation.value?.count ?? 0) : 0,
+      });
+    } catch { }
+  };
+
+  useEffect(() => {
+    fetchCounts();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchCounts, 60_000);
+    // Also refresh when any resolve action fires this event
+    window.addEventListener('admin:counts:refresh', fetchCounts);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('admin:counts:refresh', fetchCounts);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -43,6 +71,14 @@ const AdminSidebar = ({ isOpen, onClose }) => {
 
   const sectionHeaderClass = `text-[11px] uppercase tracking-widest m-[24px_0_12px_12px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`;
   const dividerClass = `border-b mx-3 my-4 ${isDark ? 'border-[#262626]' : 'border-slate-200'}`;
+  const Badge = ({ n }) => n > 0 ? (
+    <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none ${
+      isDark ? 'bg-[#1a1a1a] text-[#f59e0b]' : 'bg-amber-50 text-amber-600 border border-amber-200'
+    }`}>
+      {n > 99 ? '99+' : n}
+    </span>
+  ) : null;
+
 
   return (
     <aside className={`
@@ -72,18 +108,21 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </NavLink>
         <NavLink onClick={() => onClose?.()} to="/admin/pending-users" className={getNavLinkClass}>
           <i className="fa-solid fa-users w-5 mr-3 text-base"></i> Pending Approvals
+          <Badge n={counts.pending} />
         </NavLink>
         <NavLink onClick={() => onClose?.()} to="/admin/designations" className={getNavLinkClass}>
           <i className="fa-solid fa-id-badge w-5 mr-3 text-base"></i> Manage Designations
         </NavLink>
         <NavLink onClick={() => onClose?.()} to="/admin/role-change" className={getNavLinkClass}>
           <i className="fa-solid fa-user-pen w-5 mr-3 text-base"></i> Role Change Requests
+           <Badge n={counts.roleChange} />
         </NavLink>
         <NavLink onClick={() => onClose?.()} to="/admin/blocked-users" className={getNavLinkClass}>
           <i className="fa-solid fa-user-lock w-5 mr-3 text-base"></i> Blocked Users
         </NavLink>
         <NavLink onClick={() => onClose?.()} to="/admin/reactivation-requests" className={getNavLinkClass}>
           <i className="fa-solid fa-envelope-open-text w-5 mr-3 text-base"></i> Reactivation Requests
+          <Badge n={counts.reactivation}/>
         </NavLink>
         <NavLink onClick={() => onClose?.()} to="/admin/deleted-users" className={getNavLinkClass}>
           <i className="fa-solid fa-user-minus w-5 mr-3 text-base"></i> Deleted Users

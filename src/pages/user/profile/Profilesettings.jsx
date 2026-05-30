@@ -4,12 +4,12 @@ import { profile, updateProfile, changeCurrentPassword, requestDesignationChange
 import useAuth from '../../../hooks/useAuth';
 
 const EditAccount = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [designations, setDesignations] = useState([]);
-  const { user, login } = useAuth();
+  const { user, updateUser  } = useAuth();
 
   // --- Modal States ---
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -21,7 +21,7 @@ const EditAccount = () => {
 
   // --- Theme sync ---
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -85,7 +85,7 @@ const EditAccount = () => {
 
   // --- Theme sync ---
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -96,37 +96,66 @@ const EditAccount = () => {
       clearInterval(interval);
     };
   }, [theme]);
+const validateProfileUpdate = () => {
+  const { first_name, last_name, date_of_birth } = formData;
 
-  // --- Handler: Update name only (PATCH /api/profile/) ---
-  const handleUpdateProfile = async () => {
-      if (formData.date_of_birth) {
-    const dob = new Date(formData.date_of_birth);
+  const containsMaliciousInput = (value) => {
+    const htmlTagPattern = /<[^>]*>/i;
+    const sqlInjectionPattern = /('|--|;|\/\*|\*\/|xp_|union\s+select|drop\s+table|insert\s+into|select\s+.*\s+from|or\s+1\s*=\s*1)/i;
+    return htmlTagPattern.test(value) || sqlInjectionPattern.test(value);
+  };
+
+  const trimmedFirst = first_name.trim();
+  if (!trimmedFirst) return "First name is required.";
+  if (containsMaliciousInput(trimmedFirst)) return "First name contains invalid characters.";
+  if (trimmedFirst.length < 2) return "First name must contain at least 2 characters.";
+  if (trimmedFirst.length > 50) return "First name must not exceed 50 characters.";
+  if (!/^[A-Za-z\s'\-]+$/.test(trimmedFirst)) return "First name should contain only letters, spaces, hyphens, or apostrophes.";
+  if (/\d/.test(trimmedFirst)) return "First name should not contain numbers.";
+
+  const trimmedLast = last_name.trim();
+  if (!trimmedLast) return "Last name is required.";
+  if (containsMaliciousInput(trimmedLast)) return "Last name contains invalid characters.";
+  if (trimmedLast.length < 1) return "Last name must contain at least 1 character.";
+  if (trimmedLast.length > 50) return "Last name must not exceed 50 characters.";
+  if (!/^[A-Za-z\s'\-]+$/.test(trimmedLast)) return "Last name should contain only letters, spaces, hyphens, or apostrophes.";
+  if (/\d/.test(trimmedLast)) return "Last name should not contain numbers.";
+
+  if (date_of_birth) {
+    const dob = new Date(date_of_birth);
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (dob > today) return "Date of birth cannot be a future date.";
     const age = today.getFullYear() - dob.getFullYear();
     const monthDiff = today.getMonth() - dob.getMonth();
-    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate()) ? age - 1 : age;
-    if (actualAge < 18) {
-      setShowUpdateModal(false);
-      showToast("You must be at least 18 years old.", "error");
-      return;
-    }
+    const actualAge = (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) ? age - 1 : age;
+    if (actualAge < 18) return "You must be at least 18 years old.";
+    if (actualAge > 80) return "Please enter a valid date of birth.";
   }
-    setShowUpdateModal(false);
-    setLoading(true);
-    try {
-      await updateProfile({ first_name: formData.first_name, last_name: formData.last_name, date_of_birth: formData.date_of_birth });
-      const profileRes = await profile();
-      setUserProfile(profileRes.data);
-      if (user) {
-        login({ ...user, first_name: profileRes.data.first_name, last_name: profileRes.data.last_name });
-      }
-      showToast('Profile updated successfully.', 'success');
-    } catch (err) {
-      showToast(err.response?.data?.current_password || 'Failed to update profile.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+
+  return null;
+};
+  // --- Handler: Update name only (PATCH /api/profile/) ---
+const handleUpdateProfile = async () => {
+  const validationError = validateProfileUpdate();
+  if (validationError) {
+    showToast(validationError, 'error');
+    return;
+  }
+  setShowUpdateModal(false);
+  setLoading(true);
+  try {
+    await updateProfile({ first_name: formData.first_name, last_name: formData.last_name, date_of_birth: formData.date_of_birth });
+    const profileRes = await profile();
+    setUserProfile(profileRes.data);
+    updateUser({ first_name: profileRes.data.first_name, last_name: profileRes.data.last_name });
+    showToast('Profile updated successfully.', 'success');
+  } catch (err) {
+    showToast(err.response?.data?.current_password || 'Failed to update profile.', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 const validatePasswordChange = () => {
   const {
     current_password,
@@ -184,7 +213,7 @@ const validatePasswordChange = () => {
       setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
       showToast('Password changed successfully.', 'success');
     } catch (err) {
-      showToast(err.response?.data?.new_password || 'Failed to change password.', 'error');
+      showToast(err.response?.data?.current_password || 'Failed to change password.', 'error');
     } finally {
       setLoading(false);
     }
@@ -249,7 +278,7 @@ const validatePasswordChange = () => {
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
         <div 
-          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none
+          className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none outline-none border-none
             transition-all duration-[350ms]
             ${toast.animateOut 
               ? 'opacity-0 -translate-y-6 scale-95' 
@@ -257,14 +286,15 @@ const validatePasswordChange = () => {
             }`}
           style={{
             transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none'
+            animation: !toast.animateOut ? 'slideDownProfessional 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none',
+            outline: 'none',
+            border: 'none',
           }}
         >
-          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
+            <div style={{ outline: 'none', border: 'none' }} className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] pointer-events-auto min-w-[300px] max-w-[450px]
             ${isDark 
-              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
-              : 'bg-white border-slate-100 text-slate-800'}`}>
-            
+              ? 'bg-[#0d0d0d] text-slate-200' 
+              : 'bg-white text-slate-800'}`}>
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
               ${toast.type === 'error' 
                 ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
@@ -353,15 +383,33 @@ const validatePasswordChange = () => {
                   disabled
                 />
               </div>
-              <div className="mt-8 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowUpdateModal(true)}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
-                >
-                  Save Changes
-                </button>
-              </div>
+              <div className="mt-8 flex justify-end gap-3">
+  <button
+    type="button"
+    onClick={() => setFormData({
+      first_name: userProfile?.first_name || '',
+      last_name: userProfile?.last_name || '',
+      date_of_birth: userProfile?.date_of_birth || '',
+    })}
+    className="px-6 py-2.5 bg-white hover:bg-slate-100 text-black rounded-lg font-bold text-sm transition-all border border-slate-200"
+  >
+    Discard Changes
+  </button>
+  <button
+    type="button"
+    onClick={() => {
+      const validationError = validateProfileUpdate();
+      if (validationError) {
+        showToast(validationError, 'error');
+        return;
+      }
+      setShowUpdateModal(true);
+    }}
+    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
+  >
+    Save Changes
+  </button>
+</div>
             </div>
 
             {/* ── Section 2: Designation Change Request ── */}
@@ -374,8 +422,8 @@ const validatePasswordChange = () => {
                     New Designation
                   </label>
                   <div className="relative flex items-center">
-                    <select
-                      value={requestedDesignation}
+<select
+                      value={requestedDesignation || userProfile?.designation_id || userProfile?.designation || ""}
                       onChange={(e) => setRequestedDesignation(e.target.value)}
                       className={`w-full text-[14px] font-semibold py-2.5 pl-4 pr-10 rounded-lg border outline-none transition-all appearance-none cursor-pointer ${
                         isDark
@@ -383,14 +431,11 @@ const validatePasswordChange = () => {
                           : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-blue-500 focus:bg-white'
                       }`}
                     >
-                      <option value="" disabled className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>Select new designation</option>
-                      {designations
-                        .filter((d) => d.id !== userProfile?.designation)
-                        .map((desig) => (
-                          <option key={desig.id} value={desig.id}>
-                            {desig.name}
-                          </option>
-                        ))}
+                      {designations.map((desig) => (
+                        <option key={desig.id} value={desig.id} className={isDark ? 'bg-[#0a0a0a]' : 'bg-white'}>
+                          {desig.name}{(desig.id === (userProfile?.designation_id || userProfile?.designation)) ? '' : ''}
+                        </option>
+                      ))}
                     </select>
                     <div className={`absolute right-4 pointer-events-none ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
                       <i className="fa-solid fa-chevron-down text-[10px]"></i>
@@ -402,7 +447,7 @@ const validatePasswordChange = () => {
                 <button
                   type="button"
                   onClick={() => setShowDesignationModal(true)}
-                  disabled={!requestedDesignation}
+                 disabled={!requestedDesignation || requestedDesignation === String(userProfile?.designation_id || userProfile?.designation)}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm transition-all"
                 >
                   Send Request

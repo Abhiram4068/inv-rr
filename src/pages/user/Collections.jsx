@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { getCollections, createCollection } from '../../services/collectionService';
+import { useViewMode } from '../../hooks/useViewMode';
+import ViewModeToggle from '../../components/ViewModeToggle';
 
 const Collections = () => {
   // 1. Theme State Sync Logic
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [isModalOpen, setModalOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('');
   const [collectionDesc, setCollectionDesc] = useState('');
-  const [viewMode, setViewMode] = useState(localStorage.getItem('viewMode') || 'grid'); // 'grid' or 'list'
+  const [viewMode, handleViewModeChange] = useViewMode('collection');
+  const [nameError, setNameError] = useState(false);
 
   // Toast State
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
@@ -31,7 +34,7 @@ const Collections = () => {
   }, [toast.visible]);
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -78,9 +81,10 @@ const Collections = () => {
 
   const handleCreate = async () => {
     if (!collectionName.trim()) {
-      alert("Enter the collection name!")
+      setNameError(true);
       return;
     }
+    setNameError(false);
     try {
       setLoading(true)
       const payload = {
@@ -107,15 +111,15 @@ const Collections = () => {
   };
 
   return (
-    <div className={`flex-1 min-w-0 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
-      
+    <div className={`flex-1 min-w-0 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
+
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
-        <div 
+        <div
           className={`fixed top-6 left-0 right-0 flex justify-center z-[9999] pointer-events-none
             transition-all duration-[350ms]
-            ${toast.animateOut 
-              ? 'opacity-0 -translate-y-6 scale-95' 
+            ${toast.animateOut
+              ? 'opacity-0 -translate-y-6 scale-95'
               : 'opacity-100 translate-y-0 scale-100'
             }`}
           style={{
@@ -124,18 +128,18 @@ const Collections = () => {
           }}
         >
           <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
-            ${isDark 
-              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+            ${isDark
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200'
               : 'bg-white border-slate-100 text-slate-800'}`}>
-            
+
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
-              ${toast.type === 'error' 
-                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+              ${toast.type === 'error'
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500')
                 : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
               }`}>
               <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
             </div>
-            
+
             <span className="flex-1 leading-normal tracking-wide text-[13px]">
               {toast.message}
             </span>
@@ -166,21 +170,11 @@ const Collections = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const next = viewMode === 'grid' ? 'list' : 'grid';
-                setViewMode(next);
-                localStorage.setItem('viewMode', next);
-              }}
-              className={`p-[10px] rounded-[10px]  transition-all ${isDark ? ' text-[#808080] hover:text-white' : 'text-slate-500 hover:text-blue-500'}`}
-              title={viewMode === 'grid' ? "Switch to List View" : "Switch to Grid View"}
-            >
-              <i className={`fa-solid ${viewMode === 'grid' ? 'fa-list' : 'fa-grip'}`}></i>
-            </button>
+            <ViewModeToggle viewMode={viewMode} onChange={handleViewModeChange} isDark={isDark} />
 
             <button
               onClick={() => setModalOpen(true)}
-              className="bg-[#3b82f6] text-white px-5 py-[10px] rounded-[10px] font-semibold text-sm flex items-center gap-[10px] whitespace-nowrap hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20"
+              className="bg-[#3b82f6] text-white px-5 py-[10px] rounded-[10px] font-semibold text-sm flex items-center gap-[10px] whitespace-nowrap hover:bg-blue-600 transition-all shadow-lg  "
             >
               <i className="fa fa-folder-plus"></i> New Collection
             </button>
@@ -210,10 +204,10 @@ const Collections = () => {
                 }
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${sortBy === opt.value
-                  ? 'bg-blue-500/10 border-blue-500/40 text-blue-400'
-                  : isDark
-                    ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]'
-                    : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+                ? 'bg-blue-500/10 border-blue-500/40 text-blue-400'
+                : isDark
+                  ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]'
+                  : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
                 }`}
             >
               {opt.label}
@@ -223,6 +217,7 @@ const Collections = () => {
             </button>
           ))}
         </div>
+
         {/* CONTENT AREA */}
         {loading ? (
           <div className="py-16 flex items-center justify-center">
@@ -240,7 +235,7 @@ const Collections = () => {
               No collections found.
             </div>
           </div>
-        ) : viewMode === 'grid' ? (
+        ) : viewMode === 'collection_grid' ? (
           /* GRID VIEW */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
             {collections.map((folder) => (
@@ -248,8 +243,8 @@ const Collections = () => {
                 key={folder.id}
                 to={`/viewcollection/${folder.id}`}
                 className={`border p-4 rounded-[11px] flex items-center gap-4 transition-all group ${isDark
-                    ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]'
-                    : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'
+                  ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#111] hover:border-[#333]'
+                  : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'
                   }`}
               >
                 <i className="fa-solid fa-folder text-2xl text-[#3b82f6]"></i>
@@ -266,40 +261,62 @@ const Collections = () => {
           </div>
         ) : (
           /* LIST VIEW (TABLE FORMAT) */
-          <div className="overflow-x-auto mb-10">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className={`border-b ${isDark ? 'border-[#1a1a1a] text-[#808080]' : 'border-slate-200 text-slate-500'} text-[12px] uppercase tracking-wider`}>
-                  <th className="px-4 py-3 font-semibold">Name</th>
-                  <th className="px-4 py-3 font-semibold">Size</th>
-                  <th className="px-4 py-3 font-semibold">Total Files</th>
-                  <th className="px-4 py-3 font-semibold">Created At</th>
-                </tr>
-              </thead>
-              <tbody className={`text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                {collections.map((folder) => (
-                  <tr key={folder.id} className={`group border-b last:border-0 transition-colors ${isDark ? 'border-[#1a1a1a] hover:bg-[#ffffff05]' : 'border-slate-100 hover:bg-white/50'}`}>
-                    <td className="px-4 py-4">
-                      <Link to={`/viewcollection/${folder.id}`} className="flex items-center gap-3">
-                        <i className="fa-solid fa-folder text-lg text-[#3b82f6]"></i>
-                        <span className="font-medium truncate max-w-[200px]">{folder.name}</span>
-                      </Link>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      {folder.total_size ? formatSize(folder.total_size) : "0 B"}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                       <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{folder.total_files}</span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-                        {folder.created_at ? new Date(folder.created_at).toLocaleDateString() : '—'}
-                      </span>
-                    </td>
+          <div
+            className={`rounded-lg overflow-hidden shadow-2xl mb-10 border ${isDark ? 'border-neutral-900 bg-[#050505]' : 'border-slate-200 bg-white'}`}
+            style={{
+              contain: 'paint',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+            }}
+          >
+            {/* Table top bar */}
+            <div className={`px-6 py-4 border-b flex justify-between items-center ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
+              <div>
+                <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>My Collections</h3>
+                <p className={`text-[10px] font-bold mt-0.5 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
+                  {collections.length} collection(s) on this page
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className={`w-full text-left border-collapse ${isDark ? 'bg-[#050505]' : 'bg-white'}`}>
+                <thead>
+                  <tr className={`border-b ${isDark ? 'border-neutral-900 bg-[#080808]/70 text-neutral-500' : 'border-slate-100 bg-slate-50/50 text-slate-400'} text-[10px] uppercase tracking-[0.15em]`}>
+                    <th className="px-6 py-4 font-bold">Name</th>
+                    <th className="px-6 py-4 font-bold">Size</th>
+                    <th className="px-6 py-4 font-bold">Total Files</th>
+                    <th className="px-6 py-4 font-bold">Created At</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className={`divide-y text-sm ${isDark ? 'divide-neutral-900 text-white' : 'divide-slate-100 text-slate-700'}`}>
+                  {collections.map((folder) => (
+                    <tr key={folder.id} className={`group transition-colors ${isDark ? 'hover:bg-neutral-900/40' : 'hover:bg-slate-50'}`}>
+                      <td className="px-6 py-5">
+                        <Link to={`/viewcollection/${folder.id}`} className="flex items-center gap-3 no-underline">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-neutral-900' : 'bg-slate-100'}`}>
+                            <i className="fa-solid fa-folder text-base text-[#3b82f6]"></i>
+                          </div>
+                          <span className={`font-bold truncate max-w-[200px] ${isDark ? 'text-white hover:text-blue-400' : 'text-slate-700 hover:text-blue-600'} transition-colors`}>
+                            {folder.name}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className={`px-6 py-5 text-sm font-medium whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                        {folder.total_size ? formatSize(folder.total_size) : "0 B"}
+                      </td>
+                      <td className={`px-6 py-5 text-sm whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                        {folder.total_files}
+                      </td>
+                      <td className={`px-6 py-5 text-sm whitespace-nowrap ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                        {folder.created_at ? new Date(folder.created_at).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -319,17 +336,24 @@ const Collections = () => {
             </div>
 
             <div className="mb-5">
-              <label className={`block text-[11px] mb-2 uppercase tracking-[0.5px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>Collection Name</label>
+              <label className={`block text-[11px] mb-2 uppercase tracking-[0.5px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>
+                Collection Name <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 value={collectionName}
-                onChange={(e) => setCollectionName(e.target.value)}
+                onChange={(e) => { setCollectionName(e.target.value); setNameError(false); }}
                 placeholder="e.g. Brand Guidelines"
-                className={`w-full border rounded-lg p-3 outline-none transition-colors ${isDark
-                    ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
-                    : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
+                className={`w-full border rounded-lg p-3 outline-none transition-colors ${nameError
+                    ? 'border-red-500 bg-red-500/5'
+                    : isDark
+                      ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
+                      : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
                   }`}
               />
+              {nameError && (
+                <p className="text-red-500 text-[11px] mt-1.5 font-medium">Collection name is required</p>
+              )}
             </div>
 
             <div className="mb-5">
@@ -340,24 +364,24 @@ const Collections = () => {
                 onChange={(e) => setCollectionDesc(e.target.value)}
                 placeholder="What's inside this collection?"
                 className={`w-full border rounded-lg p-3 outline-none transition-colors resize-none ${isDark
-                    ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
-                    : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
+                  ? 'bg-[#111] border-[#1a1a1a] text-white focus:border-[#3b82f6]'
+                  : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
                   }`}
               ></textarea>
             </div>
 
             <div className="mt-8 flex gap-3">
               <button
-                className={`flex-1 border py-3 rounded-lg font-semibold transition-all ${isDark
-                    ? 'bg-transparent text-[#808080] border-[#1a1a1a] hover:bg-[#111] hover:text-white'
-                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                className={`flex-1 border py-2.5 text-sm rounded-lg font-semibold transition-all ${isDark
+                  ? 'bg-transparent text-[#808080] border-[#1a1a1a] hover:bg-[#111] hover:text-white'
+                  : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                   }`}
                 onClick={() => setModalOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="flex-[2] bg-[#3b82f6] text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-opacity"
+                className="flex-[2] bg-[#3b82f6] text-white py-2.5 text-sm rounded-lg font-semibold hover:bg-blue-600 transition-opacity"
                 onClick={handleCreate}
               >
                 Create Collection

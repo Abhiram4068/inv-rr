@@ -3,7 +3,10 @@ import { getReports, toggleMonthlyReport } from '../../services/reportService';
 import { formatDateTime } from '../../utils/dateFormatter';
 
 const ManagerReports = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+
+
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 12;
 
@@ -11,14 +14,18 @@ const ManagerReports = () => {
   const [dashboard, setDashboard] = useState({});
   const [totalCount, setTotalCount] = useState(0);
   const [monthlyReportEnabled, setMonthlyReportEnabled] = useState(false);
-
+  const [hasReports, setHasReports] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const searchDebounceRef = useRef(null);
 
+  const today = new Date();
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const daysUntilReport = Math.ceil((lastDayOfMonth - today) / (1000 * 60 * 60 * 24));
+
   // Theme sync
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -48,10 +55,19 @@ const ManagerReports = () => {
   const fetchReports = async () => {
     try {
       const res = await getReports(currentPage, rowsPerPage, false, 'monthly', search);
+      if (res.data.detail) {
+        setReports([]);
+        setDashboard({});
+        setTotalCount(0);
+        setMonthlyReportEnabled(res.data.is_toggle ?? false);
+        setHasReports(false);  
+        return;
+      }
       setReports(res.data.results);
       setDashboard(res.data.dashboard);
       setTotalCount(res.data.count);
       setMonthlyReportEnabled(res.data.is_toggle);
+      setHasReports(true);
     } catch (err) {
       console.error(err);
     }
@@ -86,8 +102,9 @@ const ManagerReports = () => {
   const isDark = theme === 'dark';
 
   const currentData = {
-    totalShared: dashboard.total_shares || 0,
-    activeLinks: dashboard.active_links || 0,
+    totalShared: dashboard?.total_shares || 0,
+    activeLinks: dashboard?.active_links || 0,
+    hasReports: dashboard?.has_reports || false,
   };
 
   const totalPages = Math.ceil(totalCount / rowsPerPage);
@@ -108,7 +125,7 @@ const ManagerReports = () => {
   };
 
   return (
-    <div className={`flex-1 overflow-y-auto no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'} p-6 lg:p-10`}>
+    <div className={`flex-1 overflow-y-auto no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'} p-6 lg:p-10`}>
 
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
@@ -129,7 +146,7 @@ const ManagerReports = () => {
           {/* Monthly Reports Toggle */}
           <button
             onClick={handleToggleMonthlyReport}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold border transition-all shadow-sm ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold border transition-all shadow-sm cursor-pointer ${
               monthlyReportEnabled
                 ? isDark
                   ? 'bg-blue-600 border-blue-500 text-white'
@@ -154,8 +171,9 @@ const ManagerReports = () => {
           {/* Export CSV */}
           <button
             onClick={handleExportCSV}
-            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-emerald-900/20"
-          >
+            disabled={!hasReports}
+            className={`px-6 py-2.5 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-emerald-900/20 ${!hasReports ? 'bg-emerald-600 opacity-40 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 cursor-pointer'}`}
+            >
             <i className="fa-solid fa-file-excel"></i> Export CSV
           </button>
         </div>
@@ -186,7 +204,12 @@ const ManagerReports = () => {
         {[
           { label: 'Total Shares', val: currentData.totalShared },
           { label: 'Active Links', val: currentData.activeLinks },
-          { label: 'Next Report', val: 'In 30 Days', isHighlight: true },
+         {
+          label: 'Next Report',
+          val:
+            daysUntilReport === 0? 'Today': daysUntilReport === 1? 'Tomorrow': `In ${daysUntilReport} Days`,
+          isHighlight: true
+        }
         ].map((kpi, i) => (
           <div
             key={i}
@@ -212,7 +235,7 @@ const ManagerReports = () => {
               Recipient Engagement Log
             </h3>
             <p className={`text-[10px] font-bold mt-1 uppercase ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>
-              Showing {totalCount === 0 ? 0 : indexOfFirstRow + 1}–{indexOfFirstRow + reports.length} of {totalCount}
+              Showing {totalCount === 0 ? 0 : indexOfFirstRow + 1}–{indexOfFirstRow + reports?.length || 0} of {totalCount}
             </p>
           </div>
 
@@ -251,7 +274,7 @@ const ManagerReports = () => {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-[#0a0a0a]' : 'divide-slate-50'}`}>
-              {reports.map((log, i) => (
+              {reports?.map((log, i) => (
                 <tr key={i} className={`transition-colors group ${isDark ? 'hover:bg-[#080808]' : 'hover:bg-slate-50/50'}`}>
                   <td className="py-7 px-4 text-sm text-center align-middle">
                     <p className={`font-medium ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>

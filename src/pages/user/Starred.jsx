@@ -7,7 +7,7 @@ import FileCard from '../../components/FileCard';
 
 const StarredItems = () => {
   // --- THEME STATE SYNC ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   
   // --- STATE FOR STARRED ITEMS ---
   const [starredFiles, setStarredFiles] = useState([]);
@@ -69,7 +69,7 @@ const StarredItems = () => {
 
   // --- THEME SYNC EFFECT ---
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -116,7 +116,7 @@ const StarredItems = () => {
     }
   };
   return (
-    <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#E6EBF2]'}`}>
+    <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#EFEFEF]'}`}>
       
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
@@ -283,7 +283,7 @@ className="inline-flex items-center gap-2 text-blue-400 px-5 py-2.5 text-sm font
 ):(
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {starredCollections.map((collection) => (
-              <Link key={collection.id} to="/viewcollection">
+              <Link key={collection.id} to={`/viewcollection/${collection.id}/`}>
                 <div className={`rounded-lg p-4 flex items-center justify-between transition-all cursor-pointer group border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-200 hover:shadow-sm'}`}>
                   <div className="flex items-center gap-3">
                     <i className="fa-solid fa-folder text-2xl text-[#3b82f6]"></i>
@@ -304,7 +304,7 @@ className="inline-flex items-center gap-2 text-blue-400 px-5 py-2.5 text-sm font
 {/* VIEW ALL STARRED FOLDERS LINK */}
 {starredCollections.length > 0 && (
   <div className="mt-4">
-    <Link to="/starred-folders" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+    <Link to="/starred-collections" className={`text-sm font-medium hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
       View all starred Collections
     </Link>
   </div>

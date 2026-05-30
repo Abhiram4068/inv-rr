@@ -4,33 +4,17 @@ import {
   getChunkUploadStatus,
   controlChunkUpload,
 } from '../../services/fileService';
-import { getFileMeta } from '../../utils/fileIcons'; 
-const CHUNK_SIZE = 10 * 1024 * 1024;
-const MAX_FILE_BYTES = 100 * 1024 * 1024;
+import { getFileMeta } from '../../utils/fileIcons';
+import {
+  CHUNK_SIZE,
+  validateFileForUpload,
+  isNonRetryableUploadError,
+  getUploadErrorMessage,
+} from '../../utils/uploadValidation';
+
 const MAX_CHUNK_RETRIES = 3;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-// ─── Allowed types (mirrors backend) ─────────────────────────────────────────
-const ALLOWED_CONTENT_TYPES = new Set([
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/plain',
-  'text/csv',
-  'image/jpeg',
-  'image/png',
-  'application/pdf',
-  'image/webp',
-  'application/zip',
-  'application/x-zip-compressed',
-  'application/json',
-  'application/xml',
-  'text/xml',
-]);
 
 
 
@@ -200,7 +184,7 @@ const STATUS_BADGE = {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 const UploadFilesMain = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -212,7 +196,7 @@ const UploadFilesMain = () => {
   const isDark = theme === 'dark';
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -334,6 +318,7 @@ const UploadFilesMain = () => {
           }
         } catch (error) {
           if (isDuplicateError(error)) throw error;
+          if (isNonRetryableUploadError(error)) throw error;
           chunkRetries += 1;
           if (chunkRetries >= MAX_CHUNK_RETRIES) {
             patchFile(file.id, { status: 'paused', uploadId, nextChunkIndex: chunkIndex });
@@ -370,14 +355,17 @@ const UploadFilesMain = () => {
           patchFile(file.id, { status: 'completed', progress: 100 });
           showToast(`"${file.name}" uploaded`, 'success');
         } catch (retryErr) {
-          patchFile(file.id, { status: 'error' });
-          showToast(retryErr?.response?.data?.error || `Failed to upload "${file.name}"`, 'error');
+          patchFile(file.id, { status: isNonRetryableUploadError(retryErr) ? 'error' : 'paused' });
+          showToast(getUploadErrorMessage(retryErr, file.name), 'error');
         }
         return;
       }
-      if (file.status !== 'paused') patchFile(file.id, { status: 'error' });
-      const errData = err?.response?.data;
-      showToast(errData?.error || errData?.content_type?.[0] || `Upload failed for "${file.name}"`, 'error');
+      if (isNonRetryableUploadError(err)) {
+        patchFile(file.id, { status: 'error' });
+      } else if (file.status !== 'paused') {
+        patchFile(file.id, { status: 'paused' });
+      }
+      showToast(getUploadErrorMessage(err, file.name), 'error');
     }
   };
 
@@ -392,6 +380,7 @@ const UploadFilesMain = () => {
       const result = await uploadSingleFile(file, null);
       if (result?.cancelled) return false;
       patchFile(file.id, { status: 'completed', progress: 100 });
+      window.dispatchEvent(new Event('storage:refresh'));
       return true;
     } catch (err) {
       if (isDuplicateError(err)) {
@@ -405,17 +394,26 @@ const UploadFilesMain = () => {
         try {
           await uploadSingleFile({ ...file, duplicateAction: action }, action);
           patchFile(file.id, { status: 'completed', progress: 100 });
+           window.dispatchEvent(new Event('storage:refresh'));
           return true;
         } catch (retryErr) {
-          patchFile(file.id, { status: retryErr?.response ? 'paused' : 'error' });
-          showToast(retryErr?.response?.data?.message || `Failed to upload "${file.name}"`, 'error');
+          if (isNonRetryableUploadError(retryErr)) {
+            patchFile(file.id, { status: 'error' });
+          } else {
+            patchFile(file.id, { status: 'paused' });
+          }
+          showToast(getUploadErrorMessage(retryErr, file.name), 'error');
           return false;
         }
       }
+      if (isNonRetryableUploadError(err)) {
+        patchFile(file.id, { status: 'error' });
+        showToast(getUploadErrorMessage(err, file.name), 'error');
+        return false;
+      }
       if (file.status !== 'paused') patchFile(file.id, { status: 'paused' });
-      const errData = err?.response?.data;
       showToast(
-        errData?.error || errData?.content_type?.[0] || errData?.file?.[0] || errData?.file_size?.[0] ||
+        getUploadErrorMessage(err, file.name) ||
         `Upload interrupted for "${file.name}". Press Resume to continue.`,
         'error'
       );
@@ -426,13 +424,15 @@ const UploadFilesMain = () => {
   const handleFiles = (files) => {
     const newFiles = Array.from(files)
       .filter(file => {
-        if (!file.type && file.size % 4096 === 0) { showToast('Folders are not supported', 'error'); return false; }
-        // Frontend MIME pre-check — backend magic is the source of truth
-        if (file.type && !ALLOWED_CONTENT_TYPES.has(file.type)) {
-          showToast(`"${file.name}" — file type not allowed`, 'error');
+        if (!file.type && file.size % 4096 === 0) {
+          showToast('Folders are not supported', 'error');
           return false;
         }
-        if (file.size > MAX_FILE_BYTES) { showToast(`"${file.name}" exceeds the 100 MB limit`, 'error'); return false; }
+        const check = validateFileForUpload(file);
+        if (!check.ok) {
+          showToast(check.message, 'error');
+          return false;
+        }
         return true;
       })
       .map(file => ({
@@ -473,7 +473,7 @@ const UploadFilesMain = () => {
   return (
     <main style={{
       flex: 1, overflowY: 'visible', padding: 40,
-      background: isDark ? '#000' : '#E6EBF2',
+      background: isDark ? '#000' : '#EFEFEF',
       position: 'relative', transition: 'background 0.3s',
     }}>
       {duplicateModal && (

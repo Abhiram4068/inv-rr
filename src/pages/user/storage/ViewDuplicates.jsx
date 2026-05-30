@@ -5,7 +5,7 @@ import { sizeFormatter } from '../../../utils/sizeFormatter';
 
 const DuplicateManager = () => {
   // --- THEME STATE SYNC ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -16,7 +16,7 @@ const DuplicateManager = () => {
   const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -89,7 +89,7 @@ const DuplicateManager = () => {
   };
 
   return (
-    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar min-h-screen transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar min-h-screen transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       
       {/* Breadcrumb & Navigation */}
       <div className="flex items-center gap-4 mb-6">
@@ -102,7 +102,7 @@ const DuplicateManager = () => {
         <nav className="flex items-center gap-2 text-sm font-bold">
           <Link to="/dashboard" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Home</Link>
           <i className={`fa-solid fa-chevron-right text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
-          <Link to="/storage-management" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Storage Management</Link>
+          <Link to="/storage" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Storage Management</Link>
           <i className={`fa-solid fa-chevron-right text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
           <span className={isDark ? 'text-white' : 'text-slate-800'}>Duplicate Files</span>
         </nav>
@@ -131,7 +131,7 @@ const DuplicateManager = () => {
       </div>
 
       {/* Content Area - Data Table */}
-      <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
+      <div className={`rounded-lg border overflow-hidden ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

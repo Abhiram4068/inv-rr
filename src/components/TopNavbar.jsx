@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../services/authService";
 
@@ -23,7 +23,7 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
       document.documentElement.classList.remove('dark');
       // Optional: if you aren't using Tailwind dark mode yet, 
       // this ensures the body background matches your new white theme
-      document.body.style.backgroundColor = '#F8FAFC'; 
+      document.body.style.backgroundColor = '#E6EBF2'; 
     } else {
       document.documentElement.classList.add('dark');
       document.body.style.backgroundColor = 'black';
@@ -33,6 +33,18 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
+const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleLogout = async () => {
     try {
       await logout();          // tells the server to blacklist / clear the refresh cookie
@@ -45,16 +57,27 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
   };
   return (
     <nav className={`h-[60px] flex items-center justify-between px-4 md:px-6 border-b shrink-0 z-50 transition-colors duration-300 
-      ${theme === 'dark' ? 'bg-black border-[#333]' : 'bg-white border-slate-200 shadow-sm'}`}>
+      ${theme === 'dark' ? 'bg-black border-[#333]' : 'bg-slate-200 border-slate-300 shadow-sm'}`}>
       
       <div className="flex items-center gap-4">
         <button onClick={toggleSidebar} className="lg:hidden text-[#808080] hover:text-blue-500">
           <i className="fa-solid fa-bars text-xl"></i>
         </button>
-        <div className={`text-[18px] md:text-[20px] font-bold tracking-tight transition-colors 
-          ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-          HiveDrive
-        </div>
+        <div
+  className={`text-[18px] md:text-[20px] font-bold tracking-tight transition-colors ${
+    theme === 'dark' ? 'text-white' : 'text-slate-800'
+  }`}
+>
+  <span className="mr-2">
+    <i
+      className={`fa-solid fa-users text-lg ${
+        theme === 'dark' ? 'text-white' : 'text-slate-800'
+      }`}
+    ></i>
+  </span>
+
+  HiveDrive<span className="text-blue-500">.</span>
+</div>
       </div>
 
       <div className="flex items-center gap-3 md:gap-5">
@@ -82,9 +105,8 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
         </button>
 
        
-
-        {/* User Profile Dropdown */}
-        <div className={`relative flex items-center p-1 rounded-lg cursor-pointer transition-colors group
+      {/* User Profile Dropdown */}
+      <div ref={dropdownRef} className={`relative flex items-center p-1 rounded-lg cursor-pointer transition-colors group
              ${theme === 'dark' ? 'hover:bg-[#111]' : 'hover:bg-slate-100'}`} 
              onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
           
@@ -103,7 +125,7 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
               
               <Link to="/myprofile" className={`flex items-center gap-[10px] p-[10px_12px] no-underline text-[13px] rounded-md transition-all 
                 ${theme === 'dark' ? 'text-[#808080] hover:bg-[#222] hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}>
-                <i className="fa-solid fa-user"></i> Account
+                <i className="fa-solid fa-user"></i> My Profile
               </Link>
               
               <hr className={`my-2 border-0 border-t ${theme === 'dark' ? 'border-[#333]' : 'border-slate-100'}`} />

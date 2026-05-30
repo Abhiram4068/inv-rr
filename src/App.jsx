@@ -18,6 +18,7 @@ import FileDetails from "./pages/user/FileDetails";
 import RecentFiles from "./pages/user/RecentFiles";
 import Starred from "./pages/user/Starred";
 import StarredFiles from "./pages/user/StarredFiles";
+import StarredCollections from "./pages/user/StarredCollections";
 import ArchivesList from "./pages/user/Archives";
 import Collections from "./pages/user/Collections";
 import CollectionDetails from "./pages/user/CollectionDetails";
@@ -90,6 +91,7 @@ function App() {
             <Route path="/threads"     element={<Threads />} />
             <Route path="/storage/trash"           element={<TrashManagement />} />
             <Route path="/recent" element={<RecentFiles />} />
+            <Route path="/starred-collections" element={<StarredCollections />} />
           </Route>
 </Route>
          <Route element={<ThreadLayout />}>

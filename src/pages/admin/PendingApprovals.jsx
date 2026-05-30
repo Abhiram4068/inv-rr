@@ -78,6 +78,7 @@ const PendingApprovals = () => {
             // Filter local state layout on success status
             setRequests(prev => prev.filter(req => req.id !== targetUser.id));
             closeConfirmationModal();
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error(`Operation runtime failure during request evaluation:`, error);
         } finally {

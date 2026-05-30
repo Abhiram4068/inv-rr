@@ -38,6 +38,7 @@ const UserDetails = () => {
             await userService.blockUser(id);
             setUser(prev => ({ ...prev, account_status: "blocked" }));
             setIsBlockModalOpen(false);
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error("Failed to update user privilege state:", error);
         } finally {
@@ -50,6 +51,7 @@ const UserDetails = () => {
         try {
             await userService.deleteUser(id);
             setIsDeleteModalOpen(false);
+            window.dispatchEvent(new Event('admin:counts:refresh'));
             navigate('/admin/users');
         } catch (error) {
             console.error("Failed to delete user:", error);

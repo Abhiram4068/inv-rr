@@ -13,9 +13,9 @@ const AdminLayout = () => {
       <div className="flex flex-grow overflow-hidden relative">
         <AdminSidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
         
-       <main className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+        <main className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-[#f0f2f7]">
           <Outlet />
-       </main>
+        </main>
 
         {isSidebarOpen && (
           <div 

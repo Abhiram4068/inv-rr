@@ -59,6 +59,7 @@ const RoleChangeRequests = () => {
             // Splice tracking record locally out of stack queue
             setRequests(prev => prev.filter(req => req.id !== targetRequest.id));
             closeModal();
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error(`Failed to handle role migration clearance context:`, error);
         } finally {
@@ -225,11 +226,11 @@ const RoleChangeRequests = () => {
                                     </h3>
                                     <div className="text-xs text-slate-400 leading-relaxed mt-2 space-y-1">
                                         <p>
-                                            Confirm operational assessment updates regarding <strong>{modalConfig.targetRequest?.name}</strong>.
+                                            Confirm role change request for <strong>{modalConfig.targetRequest?.user_full_name}</strong>.
                                         </p>
                                         <div className="bg-slate-50 p-2.5 rounded-sm mt-2 border border-slate-100 space-y-1 text-[11px]">
-                                            <div>Old: <span className="line-through text-slate-400">{modalConfig.targetRequest?.old_designation}</span></div>
-                                            <div>New: <span className="text-slate-700 font-semibold">{modalConfig.targetRequest?.new_designation}</span></div>
+                                            <div>Old: <span className="line-through text-slate-400">{modalConfig.targetRequest?.current_designation_display}</span></div>
+                                            <div>New: <span className="text-slate-700 font-semibold">{modalConfig.targetRequest?.requested_designation_display}</span></div>
                                         </div>
                                     </div>
                                 </div>
