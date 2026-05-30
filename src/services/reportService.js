@@ -11,12 +11,12 @@ export const getReports = (
   if (timeline) params.timeline = timeline;
   if (search) params.search = search;
 
-  return api.get("/report-downloads/", {
+  return api.get("/api/report-downloads/", {
     params,
     responseType: download ? "blob" : "json",
   });
 };
 
 export const toggleMonthlyReport = () => {
-    return api.patch("/toggle-monthly-report/");
+  return api.patch("/api/toggle-monthly-report/");
 };

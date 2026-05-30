@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+const API = `${import.meta.env.VITE_API_URL}/api`;
 
 const getFileIcon = (contentType, shareType) => {
   if (shareType === 'zip_bundle') return { icon: 'fa-file-zipper', color: '#f59e0b' };
