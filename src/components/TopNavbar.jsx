@@ -63,10 +63,21 @@ const dropdownRef = useRef(null);
         <button onClick={toggleSidebar} className="lg:hidden text-[#808080] hover:text-blue-500">
           <i className="fa-solid fa-bars text-xl"></i>
         </button>
-        <div className={`text-[18px] md:text-[20px] font-bold tracking-tight transition-colors 
-          ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-          HiveDrive
-        </div>
+        <div
+  className={`text-[18px] md:text-[20px] font-bold tracking-tight transition-colors ${
+    theme === 'dark' ? 'text-white' : 'text-slate-800'
+  }`}
+>
+  <span className="mr-2">
+    <i
+      className={`fa-solid fa-users text-lg ${
+        theme === 'dark' ? 'text-white' : 'text-slate-800'
+      }`}
+    ></i>
+  </span>
+
+  HiveDrive<span className="text-blue-500">.</span>
+</div>
       </div>
 
       <div className="flex items-center gap-3 md:gap-5">

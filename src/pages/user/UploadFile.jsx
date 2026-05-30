@@ -392,6 +392,7 @@ const UploadFilesMain = () => {
       const result = await uploadSingleFile(file, null);
       if (result?.cancelled) return false;
       patchFile(file.id, { status: 'completed', progress: 100 });
+      window.dispatchEvent(new Event('storage:refresh'));
       return true;
     } catch (err) {
       if (isDuplicateError(err)) {
@@ -405,6 +406,7 @@ const UploadFilesMain = () => {
         try {
           await uploadSingleFile({ ...file, duplicateAction: action }, action);
           patchFile(file.id, { status: 'completed', progress: 100 });
+           window.dispatchEvent(new Event('storage:refresh'));
           return true;
         } catch (retryErr) {
           patchFile(file.id, { status: retryErr?.response ? 'paused' : 'error' });

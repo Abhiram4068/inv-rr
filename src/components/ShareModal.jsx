@@ -1,5 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { shareFile, bulkShareFiles } from '../services/shareService';
+import useAuth from '../hooks/useAuth';
+
+const SELF_SHARE_MSG = 'You cannot share files with yourself.';
+
+const normalizeEmail = (email) => email.trim().toLowerCase();
+
+const parseShareApiError = (err) => {
+  const data = err.response?.data;
+  if (!data) return 'Failed to share files';
+  if (typeof data.error === 'string') return data.error;
+  if (typeof data.detail === 'string') return data.detail;
+  if (data.recipient_emails) {
+    const field = data.recipient_emails;
+    if (Array.isArray(field)) return field.join(' ');
+    if (typeof field === 'string') return field;
+  }
+  const firstKey = Object.keys(data)[0];
+  if (firstKey) {
+    const val = data[firstKey];
+    if (Array.isArray(val)) return val.join(' ');
+    if (typeof val === 'string') return val;
+  }
+  return 'Failed to share files';
+};
+
+const validateRecipientEmails = (emails, ownerEmail) => {
+  if (!emails.length) {
+    return { ok: false, message: 'Please add at least one recipient email' };
+  }
+  const seen = new Set();
+  for (const raw of emails) {
+    const email = normalizeEmail(raw);
+    if (!email) continue;
+    if (ownerEmail && email === normalizeEmail(ownerEmail)) {
+      return { ok: false, message: SELF_SHARE_MSG };
+    }
+    if (seen.has(email)) {
+      return { ok: false, message: 'Duplicate recipient emails are not allowed.' };
+    }
+    seen.add(email);
+  }
+  return { ok: true, emails: [...seen] };
+};
 
 const FILE_ICON_MAP = (fileName = '', contentType = '') => {
   const lower = fileName.toLowerCase();
@@ -32,6 +75,9 @@ const ShareModal = ({
   onShareSuccess,
   isDark = true,
 }) => {
+  const { user } = useAuth();
+  const ownerEmail = user?.email || '';
+
   const [recipients, setRecipients] = useState(['']);
   const [isSharing, setIsSharing] = useState(false);
   const [shareData, setShareData] = useState({
@@ -71,13 +117,25 @@ const ShareModal = ({
     setRecipients(updated);
   };
 
+  const isSelfRecipient = (email) => {
+    if (!ownerEmail || !email.trim()) return false;
+    return normalizeEmail(email) === normalizeEmail(ownerEmail);
+  };
+
   const handleShare = async () => {
-    const validEmails = recipients.filter(r => r.trim() !== '');
-    if (!validEmails.length) { showToast('Please add at least one recipient email', 'error'); return; }
-    if (!shareData.title?.trim()) { showToast('Title is required', 'error'); return; }
+    const trimmed = recipients.map((r) => r.trim()).filter(Boolean);
+    const recipientCheck = validateRecipientEmails(trimmed, ownerEmail);
+    if (!recipientCheck.ok) {
+      showToast(recipientCheck.message, 'error');
+      return;
+    }
+    if (!shareData.title?.trim()) {
+      showToast('Title is required', 'error');
+      return;
+    }
 
     const payload = {
-      recipient_emails: validEmails,
+      recipient_emails: recipientCheck.emails,
       expiration_datetime: isCustomExpiry ? Number(customExpiry) : Number(shareData.expiration_datetime),
       title: shareData.title,
       message: shareData.message,
@@ -105,8 +163,7 @@ const ShareModal = ({
         onClose();
       }, 300);
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to share files';
-      showToast(msg, 'error');
+      showToast(parseShareApiError(err), 'error');
     } finally {
       setIsSharing(false);
     }
@@ -180,28 +237,50 @@ const ShareModal = ({
             <div>
               <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${s ? 'text-[#808080]' : 'text-slate-400'}`}>Recipient Emails</label>
               <div className="space-y-3">
-                {recipients.map((email, i) => (
-                  <div key={i} className="flex gap-3">
-                    <input
-                      value={email}
-                      onChange={e => handleEmailChange(i, e.target.value)}
-                      placeholder="Enter email address..."
-                      type="email"
-                      className={`flex-1 border rounded-xl p-4 text-sm outline-none transition-all
-                        ${s ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]'
-                          : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
-                    />
-                    {i === recipients.length - 1 ? (
-                      <button onClick={addRecipient} className="bg-blue-600/10 border border-blue-500/30 w-[54px] h-[54px] rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all flex-shrink-0">
-                        <i className="fa-solid fa-plus" />
-                      </button>
-                    ) : (
-                      <button onClick={() => removeRecipient(i)} className={`border w-[54px] h-[54px] rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${s ? 'bg-[#111] border-[#1a1a1a] text-[#444] hover:text-red-500' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-red-500'}`}>
-                        <i className="fa-solid fa-trash-can text-sm" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                {recipients.map((email, i) => {
+                  const selfEmail = isSelfRecipient(email);
+                  return (
+                    <div key={i} className="space-y-1">
+                      <div className="flex gap-2">
+                        <input
+                          value={email}
+                          onChange={(e) => handleEmailChange(i, e.target.value)}
+                          placeholder="Enter email address..."
+                          type="email"
+                          className={`flex-1 border rounded-xl p-4 text-sm outline-none transition-all
+                            ${selfEmail
+                              ? 'border-red-500/70 focus:border-red-500'
+                              : s
+                                ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]'
+                                : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
+                        />
+                        {recipients.length > 1 && (
+                          <button
+                            type="button"
+                            aria-label="Remove recipient"
+                            onClick={() => removeRecipient(i)}
+                            className={`border w-[54px] h-[54px] rounded-xl flex items-center justify-center transition-all flex-shrink-0
+                              ${s ? 'bg-[#111] border-[#1a1a1a] text-[#888] hover:text-red-400 hover:border-red-500/40' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-red-500'}`}
+                          >
+                            <i className="fa-solid fa-xmark text-sm" />
+                          </button>
+                        )}
+                      </div>
+                      {selfEmail && (
+                        <p className="text-[11px] text-red-400 pl-1">{SELF_SHARE_MSG}</p>
+                      )}
+                    </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={addRecipient}
+                  className={`mt-1 flex items-center gap-2 text-xs font-semibold transition-colors
+                    ${s ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                >
+                  <i className="fa-solid fa-plus text-[10px]" />
+                  Add recipient
+                </button>
               </div>
             </div>
 

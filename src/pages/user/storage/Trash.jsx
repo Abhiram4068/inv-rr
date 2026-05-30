@@ -127,6 +127,7 @@ const TrashManagement = () => {
       setDeleteModalOpen(false);
       setSelectedFile(null);
       showToast("File permanently deleted");
+      window.dispatchEvent(new Event('storage:refresh'));
       await fetchTrashFiles();
     } catch (err) {
       showToast(
@@ -175,6 +176,7 @@ const TrashManagement = () => {
       await emptyTrash();
       setEmptyTrashModalOpen(false);
       showToast("Trash emptied successfully");
+      window.dispatchEvent(new Event('storage:refresh'));
       await fetchTrashFiles();
     } catch (err) {
       showToast("Failed to empty trash", 'error');

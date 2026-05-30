@@ -34,6 +34,9 @@ const RightSidebar = ({ isOpen, onClose }) => {
       }
     };
     fetchStorage();
+     // Re-fetch whenever storage changes
+  window.addEventListener('storage:refresh', fetchStorage);
+  return () => window.removeEventListener('storage:refresh', fetchStorage);
   }, []);
 
   return (

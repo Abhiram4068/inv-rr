@@ -201,7 +201,7 @@ const ViewAllShares = () => {
                 {filteredFiles.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="py-20 text-center">
-                      <i className={`fa-solid fa-share-nodes text-3xl mb-3 block ${isDark ? 'text-neutral-700' : 'text-slate-300'}`} />
+                     
                       <p className={`text-sm font-semibold ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>No shared files found</p>
                       <p className={`text-xs mt-1 ${isDark ? 'text-neutral-700' : 'text-slate-300'}`}>Files you share will appear here</p>
                     </td>

@@ -360,7 +360,7 @@ const PaginatedFiles = () => {
 
           {/* View Mode Toggle */}
           <div className={`flex items-center rounded-xl border overflow-hidden flex-shrink-0 ${isDark ? 'border-[#1a1a1a] bg-[#0a0a0a]' : 'border-slate-200 bg-white'}`}>
-        <ViewModeToggle viewMode={viewMode} onChange={handleViewModeChange} isDark={isDark} />
+            <ViewModeToggle viewMode={viewMode} onChange={handleViewModeChange} isDark={isDark} />
           </div>
 
           {/* Select Button */}
@@ -451,7 +451,7 @@ const PaginatedFiles = () => {
         <div className="py-16 text-center">
           <div className={`text-sm font-bold ${isDark ? "text-[#ff6b6b]" : "text-red-600"}`}>{error}</div>
         </div>
-) : files.length === 0 ? (
+      ) : files.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
           <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'}`}>
             <i className={`fa-solid text-3xl opacity-50 ${search ? 'fa-magnifying-glass text-blue-400' : 'fa-folder-open text-gray-400'}`}></i>
@@ -537,7 +537,7 @@ const PaginatedFiles = () => {
             )}
           </div>
 
-         <div className="overflow-x-auto" style={{
+          <div className="overflow-x-auto" style={{
             scrollbarWidth: 'thin',
             scrollbarColor: isDark ? '#1a1a1a transparent' : '#e2e8f0 transparent',
           }}>
@@ -804,7 +804,7 @@ const PaginatedFiles = () => {
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         fileIds={selectedFileIds}
-        isBulk={true}
+        isBulk={selectedFileIds.length > 1}
         isDark={isDark}
         onShareSuccess={(message) => {
           setSelectedFileIds([]);

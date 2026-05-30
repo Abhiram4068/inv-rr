@@ -288,7 +288,7 @@ const [titleError, setTitleError] = useState(false);
           </div>
         ) : threads.length === 0 ? (
           <div className="py-20 text-center">
-             <div className={`text-sm ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No threads created yet.</div>
+             <div className={`text-sm ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No threads found.</div>
           </div>
         ) : viewMode === 'thread_grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
