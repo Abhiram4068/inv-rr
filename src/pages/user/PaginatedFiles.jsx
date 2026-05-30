@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import FileCard from '../../components/FileCard';
 import ShareModal from '../../components/ShareModal';
@@ -34,8 +34,10 @@ const PaginatedFiles = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const PAGE_SIZE = 12;
   const [page, setPage] = useState(1);
   const [count, setCount] = useState(null);
+  const totalPages = count !== null ? Math.ceil(count / PAGE_SIZE) : null;
   const [hasNext, setHasNext] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");
@@ -175,53 +177,61 @@ const PaginatedFiles = () => {
   };
 
   const pageNumbers = useMemo(() => {
-    if (count === null) return [page - 1, page, page + 1].filter((p) => p >= 1);
-    const pageSizeFallback = 12;
-    const totalPages = Math.max(1, Math.ceil(count / pageSizeFallback));
+    const total = totalPages ?? page + 1;
     const start = Math.max(1, page - 1);
-    const end = Math.min(totalPages, page + 1);
+    const end = Math.min(total, page + 1);
     const arr = [];
     for (let p = start; p <= end; p++) arr.push(p);
     return arr;
-  }, [count, page]);
+  }, [page, totalPages]);
+
+  const loadFiles = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await getFiles(page, search);
+      const data = res.data;
+      const results = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+          ? data.results
+          : Array.isArray(data?.items)
+            ? data.items
+            : [];
+
+      setFiles(results);
+      setCount(data?.count ?? null);
+      setHasNext(Boolean(data?.next));
+    } catch (err) {
+      setError(err?.response?.data?.detail || "Failed to load files.");
+      setFiles([]);
+      setCount(null);
+      setHasNext(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search]);
 
   useEffect(() => {
-    let isCancelled = false;
+    loadFiles();
+  }, [loadFiles]);
 
-    const load = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await getFiles(page, search);
-        const data = res.data;
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : Array.isArray(data?.items)
-              ? data.items
-              : [];
+  /** After deletes, refetch or move to the last valid page so the list stays filled. */
+  const refreshAfterRemoval = useCallback(
+    async (removedCount) => {
+      const newCount = count !== null ? Math.max(0, count - removedCount) : null;
+      const newTotalPages =
+        newCount !== null ? Math.max(1, Math.ceil(newCount / PAGE_SIZE)) : null;
 
-        if (isCancelled) return;
-        setFiles(results);
-        setCount(data?.count ?? null);
-        setHasNext(Boolean(data?.next));
-      } catch (err) {
-        if (isCancelled) return;
-        setError(err?.response?.data?.detail || "Failed to load files.");
-        setFiles([]);
-        setCount(null);
-        setHasNext(false);
-      } finally {
-        if (!isCancelled) setLoading(false);
+      if (newTotalPages !== null && page > newTotalPages) {
+        setPage(newTotalPages);
+        return;
       }
-    };
 
-    load();
-    return () => {
-      isCancelled = true;
-    };
-  }, [page, search]);
+      await loadFiles();
+    },
+    [count, page, loadFiles, PAGE_SIZE],
+  );
 
   const handleToggleStar = async (fileId, newState) => {
     // Optimistic update
@@ -239,10 +249,10 @@ const PaginatedFiles = () => {
       showToast('Failed to update starred status', 'error');
     }
   };
-  const handleFileDeleted = (fileId) => {
-    setFiles(prev => prev.filter(f => f.id !== fileId));
-    setSelectedFileIds(prev => prev.filter(id => id !== fileId));
+  const handleFileDeleted = async (fileId) => {
+    setSelectedFileIds((prev) => prev.filter((id) => id !== fileId));
     showToast("File moved to trash");
+    await refreshAfterRemoval(1);
   };
 
   // ── Handlers for Selection Changes ───────────────────────────
@@ -299,11 +309,12 @@ const PaginatedFiles = () => {
         showToast(`${count} item(s) archived successfully`);
       }
 
-      setFiles(prev => prev.filter(f => !idsToAction.includes(f.id)));
       if (!singleFileId) {
         setSelectedFileIds([]);
         setIsSelectMode(false);
       }
+
+      await refreshAfterRemoval(idsToAction.length);
     } catch (err) {
       showToast(err?.response?.data?.error || `Failed to ${type} files`, "error");
     }
@@ -437,10 +448,57 @@ const PaginatedFiles = () => {
       )}
 
       {/* Header Info */}
-      <div className="flex justify-between items-center mb-6">
-        <div className={`text-[18px] md:text-[20px] font-semibold transition-colors ${isDark ? 'text-white' : 'text-slate-800'}`}>My Files</div>
-        <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>{files.length} item(s)</div>
-      </div>
+{/* Header Info */}
+<div className="flex justify-between items-center mb-6">
+  <div>
+    <div className={`text-[18px] md:text-[20px] font-semibold transition-colors ${isDark ? 'text-white' : 'text-slate-800'}`}>My Files</div>
+    <div className={`text-xs font-medium mt-0.5 ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
+      {totalPages !== null
+        ? `Page ${page} of ${totalPages} · ${count} total item(s)`
+        : `${files.length} item(s)`}
+    </div>
+  </div>
+  {totalPages !== null && totalPages > 1 && (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => setPage(p => Math.max(1, p - 1))}
+        disabled={page === 1 || loading}
+        className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all
+          ${page === 1 || loading
+            ? isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed' : 'bg-white border-slate-200 text-slate-300 cursor-not-allowed'
+            : isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+      >
+        <i className="fa fa-chevron-left text-xs" />
+      </button>
+      {pageNumbers.map(p => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => setPage(p)}
+          disabled={loading}
+          className={`w-8 h-8 rounded-lg font-semibold text-xs border transition-all
+            ${p === page
+              ? isDark ? 'bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]' : 'bg-blue-600 border-blue-600 text-white'
+              : isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => setPage(p => p + 1)}
+        disabled={!hasNext || loading}
+        className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all
+          ${!hasNext || loading
+            ? isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed' : 'bg-white border-slate-200 text-slate-300 cursor-not-allowed'
+            : isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+      >
+        <i className="fa fa-chevron-right text-xs" />
+      </button>
+    </div>
+  )}
+</div>
 
       {/* File Grid / List */}
       {loading ? (
@@ -521,21 +579,24 @@ const PaginatedFiles = () => {
             transform: 'translateZ(0)',
           }}
         >
-
-          {/* Table top bar */}
-          <div className={`px-6 py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
-            <div>
-              <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>My Files</h3>
-              <p className={`text-[10px] font-bold mt-0.5 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
-                {files.length} item(s) on this page
-              </p>
-            </div>
-            {(isSelectMode || selectedFileIds.length > 0) && (
-              <div className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-full ${isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
-                {selectedFileIds.length} selected
-              </div>
-            )}
-          </div>
+        
+{/* Table top bar */}
+<div className={`px-6 py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
+  <div>
+    <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>My Files</h3>
+    <p className={`text-[10px] font-bold mt-0.5 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
+      {totalPages !== null
+        ? `Page ${page} of ${totalPages} · ${count} total item(s)`
+        : `${files.length} item(s) on this page`}
+    </p>
+  </div>
+  {(isSelectMode || selectedFileIds.length > 0) && (
+    <div className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-full ${isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+      {selectedFileIds.length} selected
+    </div>
+  )}
+</div>
+{/* Header Info */}
 
           <div className="overflow-x-auto" style={{
             scrollbarWidth: 'thin',
@@ -689,62 +750,6 @@ const PaginatedFiles = () => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* Pagination component */}
-      {files.length > 0 && (
-        <div className="flex flex-wrap justify-center items-center gap-2 py-6">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1 || loading}
-            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${page === 1 || loading
-              ? isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
-                : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
-              : isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
-          >
-            <i className="fa fa-chevron-left text-xs" />
-          </button>
-
-          {pageNumbers.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPage(p)}
-              disabled={loading}
-              className={`w-10 h-10 rounded-lg font-semibold border transition-all ${p === page
-                ? isDark
-                  ? "bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]"
-                  : "bg-blue-600 border-blue-600 text-white"
-                : isDark
-                  ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
-                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-            >
-              {p}
-            </button>
-          ))}
-
-          <button
-            type="button"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={!hasNext || loading}
-            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${!hasNext || loading
-              ? isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
-                : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
-              : isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
-          >
-            <i className="fa fa-chevron-right text-xs" />
-          </button>
         </div>
       )}
 

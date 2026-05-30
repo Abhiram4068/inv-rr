@@ -7,6 +7,56 @@ import { sizeFormatter } from '../../utils/sizeFormatter';
 import { getFiles, getFileById } from '../../services/fileService';
 import FileCard from '../../components/FileCard';
 
+
+function FileThumb({ file, size = 40 }) {
+  const name = file?.original_name || file?.file_name || "";
+  const ct = file?.content_type || "";
+  const lower = String(name).toLowerCase();
+  
+  const isImage = ct.includes("image") || /\.(png|jpe?g|gif|webp)$/.test(lower);
+  
+  const getIconMeta = () => {
+    if (lower.endsWith(".pdf") || ct.includes("pdf"))         return { icon: "fa-file-pdf",        color: "#ef4444" };
+    if (/\.(doc|docx)$/.test(lower) || ct.includes("word"))  return { icon: "fa-file-word",       color: "#3b82f6" };
+    if (/\.(xls|xlsx)$/.test(lower) || ct.includes("excel")) return { icon: "fa-file-excel",      color: "#22c55e" };
+    if (/\.(ppt|pptx)$/.test(lower) || ct.includes("powerpoint")) return { icon: "fa-file-powerpoint", color: "#f97316" };
+    if (/\.(zip|rar)$/.test(lower)  || ct.includes("zip"))   return { icon: "fa-file-zipper",     color: "#a855f7" };
+    if (/\.(mp4|mov|mkv|webm)$/.test(lower) || ct.includes("video")) return { icon: "fa-file-video", color: "#ec4899" };
+    if (lower.endsWith(".txt") || ct.includes("text"))        return { icon: "fa-file-lines",      color: "#64748b" };
+    return { icon: "fa-file", color: "#94a3b8" };
+  };
+
+  const meta = getIconMeta();
+
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 7, flexShrink: 0,
+      overflow: "hidden", border: "1px solid #e2e8f0",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "#f8fafc",
+    }}>
+      {isImage && file.file_url ? (
+        <img
+          src={file.file_url}
+          alt={name}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          onError={e => {
+            e.target.style.display = "none";
+            e.target.nextSibling.style.display = "flex";
+          }}
+        />
+      ) : null}
+      <div style={{
+        display: isImage && file.file_url ? "none" : "flex",
+        width: "100%", height: "100%",
+        alignItems: "center", justifyContent: "center",
+      }}>
+        <i className={`fa-solid ${meta.icon}`} style={{ fontSize: size * 0.45, color: meta.color }} />
+      </div>
+    </div>
+  );
+}
+
 const CollectionDetails = () => {
   const { 
     isManageOpen, 
@@ -454,17 +504,20 @@ const showToast = (msg, type = 'success') => {
                   ) : allFiles.length > 0 ? (
                     allFiles.map((file) => (
                       <tr key={file.id} className={`group border-b last:border-0 transition-colors ${isDark ? 'border-[#1a1a1a] hover:bg-[#ffffff05]' : 'border-slate-50 hover:bg-slate-50/50'}`}>
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <i className={`fa-solid ${iconClassForFile(file)} text-lg text-[#3b82f6]`}></i>
-                            <span className="font-medium truncate max-w-[200px]">{file.original_name || file.file_name}</span>
+                            {/* ── Preview thumbnail ── */}
+                            <FileThumb file={file} size={38} />
+                            <span className="font-medium truncate max-w-[200px] text-sm">
+                              {file.original_name || file.file_name}
+                            </span>
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-[#808080]">
-                         {sizeFormatter(file.file_size)}
+                          {sizeFormatter(file.file_size)}
                         </td>
                         <td className="px-4 py-4 text-right">
-                          <button 
+                          <button
                             onClick={() => handleAddFile(file.id)}
                             className="bg-[#3b82f6] hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md"
                           >
