@@ -7,6 +7,7 @@
 export const CHUNK_SIZE = 10 * 1024 * 1024;
 export const MAX_FILE_BYTES = 100 * 1024 * 1024; // 100 MB per file
 
+
 export const ALLOWED_CONTENT_TYPES = new Set([
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

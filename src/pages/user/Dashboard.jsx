@@ -9,32 +9,16 @@ import {
 } from '../../services/fileService';
 import { getSharedFiles } from '../../services/shareService';
 import { formatDateTime } from '../../utils/dateFormatter';
+import {
+  CHUNK_SIZE,
+  validateFileForUpload,
+  isNonRetryableUploadError,
+  getUploadErrorMessage,
+} from '../../utils/uploadValidation';
 
-const CHUNK_SIZE = 10 * 1024 * 1024;
-const MAX_FILE_BYTES = 100 * 1024 * 1024;
 const MAX_CHUNK_RETRIES = 3;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-const ALLOWED_CONTENT_TYPES = new Set([
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/plain',
-  'text/csv',
-  'image/jpeg',
-  'image/png',
-  'application/pdf',
-  'image/webp',
-  'application/zip',
-  'application/x-zip-compressed',
-  'application/json',
-  'application/xml',
-  'text/xml',
-]);
 
 const getFileCategory = (rawFile) => {
   const t = rawFile.type || '';
@@ -197,32 +181,54 @@ const Dashboard = () => {
   const [loadingLinks, setLoadingLinks] = useState(true);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    let cancelled = false;
+
+    const loadDashboardPage = async () => {
+      setIsLoading(true);
+      setLoadingLinks(true);
+
+      const [dashboardResult, sharesResult] = await Promise.allSettled([
+        dashboardService.getDashboardData(),
+        getSharedFiles(1, 5),
+      ]);
+
+      if (cancelled) return;
+
+      if (dashboardResult.status === 'fulfilled') {
+        setDashboardData(dashboardResult.value);
+      } else {
+        const err = dashboardResult.reason;
+        const detail = err?.response?.data?.detail || err?.response?.data?.error;
+        showToast(detail || 'Failed to fetch dashboard data', 'error');
+      }
+
+      if (sharesResult.status === 'fulfilled') {
+        setSharedLinks(sharesResult.value.data?.data || []);
+      } else {
+        showToast('Failed to fetch shared links', 'error');
+      }
+
+      setIsLoading(false);
+      setLoadingLinks(false);
+    };
+
+    loadDashboardPage();
+
+    const refreshDashboardStats = async () => {
       try {
         const data = await dashboardService.getDashboardData();
-        setDashboardData(data);
-      } catch (error) {
-        showToast("Failed to fetch dashboard data", "error");
-      } finally {
-        setIsLoading(false);
+        if (!cancelled) setDashboardData(data);
+      } catch {
+        /* keep existing data; sidebar already refreshed storage */
       }
     };
-    fetchDashboardData();
-  }, []);
+    window.addEventListener('storage:refresh', refreshDashboardStats);
 
-  useEffect(() => {
-  const fetchSharedLinks = async () => {
-    try {
-      const res = await getSharedFiles(1, 5);
-      setSharedLinks(res.data?.data || []);
-    } catch {
-      showToast("Failed to fetch shared links", "error");
-    } finally {
-      setLoadingLinks(false);
-    }
-  };
-  fetchSharedLinks();
-}, []);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('storage:refresh', refreshDashboardStats);
+    };
+  }, []);
 
   // Theme Sync Logic
   useEffect(() => {
@@ -359,6 +365,7 @@ const Dashboard = () => {
           }
         } catch (error) {
           if (isDuplicateError(error)) throw error;
+          if (isNonRetryableUploadError(error)) throw error;
           chunkRetries += 1;
           if (chunkRetries >= MAX_CHUNK_RETRIES) {
             patchFile(file.id, { status: 'paused', uploadId, nextChunkIndex: chunkIndex });
@@ -395,14 +402,17 @@ const Dashboard = () => {
           patchFile(file.id, { status: 'completed', progress: 100 });
           showToast(`"${file.name}" uploaded`, 'success');
         } catch (retryErr) {
-          patchFile(file.id, { status: 'error' });
-          showToast(retryErr?.response?.data?.error || `Failed to upload "${file.name}"`, 'error');
+          patchFile(file.id, { status: isNonRetryableUploadError(retryErr) ? 'error' : 'paused' });
+          showToast(getUploadErrorMessage(retryErr, file.name), 'error');
         }
         return;
       }
-      if (file.status !== 'paused') patchFile(file.id, { status: 'error' });
-      const errData = err?.response?.data;
-      showToast(errData?.error || errData?.content_type?.[0] || `Upload failed for "${file.name}"`, 'error');
+      if (isNonRetryableUploadError(err)) {
+        patchFile(file.id, { status: 'error' });
+      } else if (file.status !== 'paused') {
+        patchFile(file.id, { status: 'paused' });
+      }
+      showToast(getUploadErrorMessage(err, file.name), 'error');
     }
   };
 
@@ -433,15 +443,23 @@ const Dashboard = () => {
           patchFile(file.id, { status: 'completed', progress: 100 });
           return true;
         } catch (retryErr) {
-          patchFile(file.id, { status: retryErr?.response ? 'paused' : 'error' });
-          showToast(retryErr?.response?.data?.message || `Failed to upload "${file.name}"`, 'error');
+          if (isNonRetryableUploadError(retryErr)) {
+            patchFile(file.id, { status: 'error' });
+          } else {
+            patchFile(file.id, { status: 'paused' });
+          }
+          showToast(getUploadErrorMessage(retryErr, file.name), 'error');
           return false;
         }
       }
+      if (isNonRetryableUploadError(err)) {
+        patchFile(file.id, { status: 'error' });
+        showToast(getUploadErrorMessage(err, file.name), 'error');
+        return false;
+      }
       if (file.status !== 'paused') patchFile(file.id, { status: 'paused' });
-      const errData = err?.response?.data;
       showToast(
-        errData?.error || errData?.content_type?.[0] || errData?.file?.[0] || errData?.file_size?.[0] ||
+        getUploadErrorMessage(err, file.name) ||
         `Upload interrupted for "${file.name}". Press Resume to continue.`,
         'error'
       );
@@ -457,12 +475,15 @@ const Dashboard = () => {
   const handleFiles = (files) => {
     const newFiles = Array.from(files)
       .filter(file => {
-        if (!file.type && file.size % 4096 === 0) { showToast('Folders are not supported', 'error'); return false; }
-        if (file.type && !ALLOWED_CONTENT_TYPES.has(file.type)) {
-          showToast(`"${file.name}" — type not allowed`, 'error');
+        if (!file.type && file.size % 4096 === 0) {
+          showToast('Folders are not supported', 'error');
           return false;
         }
-        if (file.size > MAX_FILE_BYTES) { showToast(`"${file.name}" exceeds 100MB`, 'error'); return false; }
+        const check = validateFileForUpload(file);
+        if (!check.ok) {
+          showToast(check.message, 'error');
+          return false;
+        }
         return true;
       })
       .map(file => ({
