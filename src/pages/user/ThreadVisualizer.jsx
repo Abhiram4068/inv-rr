@@ -633,17 +633,6 @@ function PromptModal({ open, onClose, onSubmit, title, label, initialValue = "",
   );
 }
 
-function AlertModal({ open, onClose, title, message }) {
-  return (
-    <Modal open={open} onClose={onClose} title={title} width={380}>
-      <div style={{ fontSize: 13, color: T.text, marginBottom: 20, lineHeight: 1.5 }}>{message}</div>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <Btn onClick={onClose}>OK</Btn>
-      </div>
-    </Modal>
-  );
-}
-
 // ── Right Detail Panel ─────────────────────────────────────────────────────────
 function NodePanel({ node, onClose, onEdit, onFiles, onDelete, onRefresh, showConfirm, showToast }) {
   const [activity, setActivity] = useState([]);

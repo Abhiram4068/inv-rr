@@ -167,9 +167,9 @@ const SchedulesList = () => {
 
   const getShareStyle = (share) => {
     switch (share) {
-      case 'active': return isDark ? 'text-emerald-500 ' : 'text-emerald-600';
+      case 'Active': return isDark ? 'text-emerald-500 ' : 'text-emerald-600';
       case 'Accessed': return isDark ? 'text-blue-500 ' : 'text-blue-600';
-      case 'revoked': return isDark ? 'text-red-500 ' : 'text-red-600';
+      case 'Revoked': return isDark ? 'text-red-400 ' : 'text-red-500';
       default: return isDark ? 'text-[#808080] ' : 'text-slate-500';
     }
   };
@@ -177,7 +177,6 @@ const SchedulesList = () => {
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Sent': return isDark ? ' text-emerald-500 ' : ' text-emerald-600 ';
-      case 'Failed': return isDark ? ' text-red-500 ' : ' text-red-600 ';
       case 'Pending': return isDark ? ' text-yellow-400 ' : ' text-yellow-600 ';
       case 'Revoked': return isDark ? ' text-orange-500 ' : ' text-orange-600 ';
       default: return isDark ? 'text-[#808080] ' : ' text-slate-500 ';
@@ -210,35 +209,35 @@ const SchedulesList = () => {
   const getStatusStyles = (status) => {
     switch ((status || "").toLowerCase()) {
 
-      case "active":
+      case "sent":
         return isDark
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-          : "bg-emerald-50 text-emerald-600 border border-emerald-100";
+          ? "text-emerald-400  border-emerald-500/20"
+          : "text-emerald-600  border-emerald-100";
 
       case "expired":
         return isDark
-          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-          : "bg-amber-50 text-amber-600 border border-amber-100";
+          ? "text-amber-400  border-amber-500/20"
+          : "text-amber-600  border-amber-100";
 
       case "revoked":
         return isDark
-          ? "bg-red-500/10 text-red-400 border border-red-500/20"
-          : "bg-red-50 text-red-600 border border-red-100";
+          ? "text-red-400  border-red-500/20"
+          : "text-red-600  border-red-100";
 
       case "accessed":
         return isDark
-          ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-          : "bg-blue-50 text-blue-600 border border-blue-100";
+          ? "text-blue-400  border-blue-500/20"
+          : "text-blue-600  border-blue-100";
 
-      case "scheduled":
+      case "pending":
         return isDark
-          ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-          : "bg-purple-50 text-purple-600 border border-purple-100";
+          ? "text-yellow-400  border-yellow-500/20"
+          : "text-yellow-600  border-yellow-100";
 
       default:
         return isDark
-          ? "bg-neutral-800 text-neutral-300 border border-neutral-700"
-          : "bg-slate-100 text-slate-600 border border-slate-200";
+          ? "text-neutral-300  border-neutral-700"
+          : "text-slate-600  border-slate-200";
     }
   };
   return (
@@ -439,7 +438,7 @@ const SchedulesList = () => {
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-              {['All', 'Pending', 'Sent', 'Failed', 'Revoked'].map((status) => (
+              {['All', 'Pending', 'Sent',  'Revoked'].map((status) => (
                 <button
                   key={status}
                   onClick={() => { setStatusFilter(status); setCurrentPage(1); }}

@@ -107,7 +107,7 @@ const handleUnarchive = async () => {
 
   } catch (err) {
     console.error("Unarchive failed", err);
-    alert("Failed to restore file. Try again.");
+    setToast({ visible: true, message: "Failed to restore file. Try again.", type: 'error', animateOut: false });
   }finally{
      setActionLoading(false);
   }

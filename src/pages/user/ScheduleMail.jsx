@@ -4,8 +4,15 @@ import { scheduleShareFile } from '../../services/shareService';
 import { Link } from 'react-router-dom';
 import { sizeFormatter } from '../../utils/sizeFormatter';
 import { getFileMeta } from '../../utils/fileIcons';
+import useAuth from '../../hooks/useAuth';
+
+const SELF_EMAIL_MSG = 'You cannot send mail to yourself.';
+const normalizeEmail = (email) => email.trim().toLowerCase();
 
 const ScheduleMail = () => {
+  const { user } = useAuth();
+  const ownerEmail = user?.email || '';
+
   // 1. Theme State Sync Logic
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [activeModal, setActiveModal] = useState(null);
@@ -138,6 +145,12 @@ const ScheduleMail = () => {
     showToast(`File updated`);
   };
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const isSelfRecipient = (email) => {
+    if (!ownerEmail || !email.trim()) return false;
+    return normalizeEmail(email) === normalizeEmail(ownerEmail);
+  };
+
   const handleScheduleSubmit = async () => {
     if (!attachedFile) {
       setActiveModal(null);
@@ -153,6 +166,11 @@ const ScheduleMail = () => {
     if (validRecipients.some(email => !isValidEmail(email))) {
       setActiveModal(null);
       showToast("Enter valid email addresses", "error");
+      return;
+    }
+    if (validRecipients.some(email => isSelfRecipient(email))) {
+      setActiveModal(null);
+      showToast(SELF_EMAIL_MSG, "error");
       return;
     }
     const selectedDateTime = new Date(`${scheduleDate}T${scheduleTime}:00`);
@@ -324,33 +342,53 @@ const ScheduleMail = () => {
             <div>
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-4 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Deliver To</div>
               <div className="flex flex-col gap-3">
-                {recipients.map((email, i) => (
-                  <div key={i} className={`border px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs group transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                    <div className="w-5 h-5 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center text-[8px] font-bold shrink-0">
-                      {email ? email[0].toUpperCase() : '?'}
-                    </div>
-                    <input
-                      value={email}
-                      onChange={(e) => handleEmailChange(i, e.target.value)}
-                      placeholder="Recipient email"
-                      className={`bg-transparent outline-none flex-1 min-w-0 ${email === "" || isValidEmail(email)
-                        ? (isDark ? 'text-[#808080]' : 'text-slate-600')
-                        : 'text-red-500'
+                {recipients.map((email, i) => {
+                  const selfEmail = isSelfRecipient(email);
+                  const invalidEmail = email.trim() !== '' && !isValidEmail(email);
+                  return (
+                  <div key={i} className="space-y-1">
+                    <div className={`border px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs group transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'} ${selfEmail || invalidEmail ? (isDark ? 'border-red-500/40' : 'border-red-300') : ''}`}>
+                      <div className="w-5 h-5 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center text-[8px] font-bold shrink-0">
+                        {email ? email[0].toUpperCase() : '?'}
+                      </div>
+                      <input
+                        value={email}
+                        onChange={(e) => handleEmailChange(i, e.target.value)}
+                        onBlur={(e) => {
+                          const val = e.target.value.trim();
+                          if (val && isValidEmail(val) && isSelfRecipient(val)) {
+                            showToast(SELF_EMAIL_MSG, 'error');
+                          }
+                        }}
+                        placeholder="Recipient email"
+                        type="email"
+                        autoComplete="email"
+                        className={`bg-transparent outline-none flex-1 min-w-0 ${
+                          selfEmail || invalidEmail
+                            ? 'text-red-500'
+                            : (isDark ? 'text-[#808080]' : 'text-slate-600')
                         }`}
-                    />
-                    {email && !isValidEmail(email) && (
-                      <p className="text-[10px] text-red-500 mt-1">
-                        Invalid email
+                      />
+                      {email.trim() !== "" && (
+                        <i
+                          onClick={() => removeRecipient(i)}
+                          className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors ml-auto"
+                        />
+                      )}
+                    </div>
+                    {selfEmail && (
+                      <p className={`text-[11px] pl-1 font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                        {SELF_EMAIL_MSG}
                       </p>
                     )}
-
-                    {email.trim() !== "" && (<i
-                      onClick={() => removeRecipient(i)}
-                      className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors ml-auto"
-                    ></i>)}
-
+                    {!selfEmail && invalidEmail && (
+                      <p className={`text-[11px] pl-1 font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                        Enter a valid email address.
+                      </p>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
                 <button onClick={addRecipient} className={`border border-dashed p-2.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-slate-600 hover:border-slate-600'}`}>
                   <i className="fa-solid fa-plus"></i> Add Recipient
                 </button>
