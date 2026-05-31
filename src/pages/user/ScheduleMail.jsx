@@ -3,6 +3,7 @@ import { getFiles } from '../../services/fileService';
 import { scheduleShareFile } from '../../services/shareService';
 import { Link } from 'react-router-dom';
 import { sizeFormatter } from '../../utils/sizeFormatter';
+import { getFileMeta } from '../../utils/fileIcons';
 
 const ScheduleMail = () => {
   // 1. Theme State Sync Logic
@@ -36,15 +37,6 @@ const ScheduleMail = () => {
 
 
 
-  const iconClassForFile = (file) => {
-    const name = String(file?.original_name || "").toLowerCase();
-    if (name.endsWith(".pdf")) return "fa-file-pdf text-red-500";
-    if (name.endsWith(".doc") || name.endsWith(".docx")) return "fa-file-word text-blue-500";
-    if (name.endsWith(".xls") || name.endsWith(".xlsx")) return "fa-file-excel text-emerald-500";
-    if (name.endsWith(".zip") || name.endsWith(".rar")) return "fa-file-zipper text-yellow-500";
-    if (/\.(mp4|mov|mkv|webm)$/.test(name)) return "fa-file-video text-purple-500";
-    return "fa-file text-blue-500";
-  };
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -55,14 +47,14 @@ const ScheduleMail = () => {
         const results = Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : data?.items || []);
 
         const mapped = results.map(f => {
-          const iconColorClass = iconClassForFile(f);
-          const parts = iconColorClass.split(' ');
+          const meta = getFileMeta(f.content_type || "");
           return {
             id: f.id,
             name: f.original_name || "Untitled",
+            display_name: f.display_name || null,
             size: sizeFormatter(f.file_size),
-            icon: parts[0],
-            color: parts[1] || "text-blue-500",
+            icon: meta.icon,
+            color: meta.color,
             rawFile: f
           };
         });
@@ -304,9 +296,9 @@ const ScheduleMail = () => {
                 <div className="grid grid-cols-1 gap-4">
                   <div className={`group border p-5 rounded-lg flex items-center justify-between transition-all ${isDark ? 'bg-[#0a0a0a] border-blue-500/30 hover:border-blue-500' : 'bg-blue-50/30 border-blue-100 hover:border-blue-400'}`}>
                     <div className="flex items-center gap-4 overflow-hidden">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'} ${attachedFile.color}`}>
-                        <i className={`fa-solid ${attachedFile.icon}`}></i>
-                      </div>
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl `}>
+                      <i className={`fa-solid ${attachedFile.icon}`} style={{ color: attachedFile.color }}></i>
+                    </div>
                       <div className="overflow-hidden">
                         <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{attachedFile.name}</p>
                         <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{attachedFile.size}</p>
@@ -431,24 +423,27 @@ const ScheduleMail = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 no-scrollbar auto-rows-min content-start">
               {filteredFiles.map((file) => {
 
                 const isSelected = selectedInPicker?.id === file.id;
                 return (
                   <div key={file.id} onClick={() => setSelectedInPicker(file)} className={`p-4 rounded-xl border transition-all cursor-pointer group flex flex-col gap-3 ${isSelected ? 'bg-blue-600/10 border-blue-500 shadow-sm' : (isDark ? 'bg-[#050505] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-100 hover:border-blue-300 shadow-sm')}`}>
                     <div className="flex justify-between items-start">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${isDark ? 'bg-[#111]' : 'bg-slate-50'} ${file.color}`}>
-                        <i className={`fa-solid ${file.icon}`}></i>
-                      </div>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg `}>
+                      <i className={`fa-solid ${file.icon}`} style={{ color: file.color }}></i>
+                    </div>
                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'bg-blue-600 border-blue-600' : (isDark ? 'border-[#333]' : 'border-slate-200')}`}>
                         {isSelected && <i className="fa-solid fa-check text-[10px] text-white"></i>}
                       </div>
                     </div>
-                    <div>
-                      <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.name}</p>
-                      <p className={`text-[10px] font-bold ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{file.size}</p>
-                    </div>
+<div>
+  <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.name}</p>
+  {file.display_name && (
+    <p className={`text-[11px] font-medium truncate mt-0.5 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>{file.display_name}</p>
+  )}
+  <p className={`text-[10px] font-bold ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{file.size}</p>
+</div>
                   </div>
                 );
               })}

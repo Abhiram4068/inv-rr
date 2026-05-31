@@ -7,6 +7,8 @@ import {
   getChunkUploadStatus,
   controlChunkUpload,
 } from '../../services/fileService';
+import { getSharedFiles } from '../../services/shareService';
+import { formatDateTime } from '../../utils/dateFormatter';
 
 const CHUNK_SIZE = 10 * 1024 * 1024;
 const MAX_FILE_BYTES = 100 * 1024 * 1024;
@@ -191,6 +193,8 @@ const Dashboard = () => {
 
   const [dashboardData, setDashboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sharedLinks, setSharedLinks] = useState([]);
+  const [loadingLinks, setLoadingLinks] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -205,6 +209,20 @@ const Dashboard = () => {
     };
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+  const fetchSharedLinks = async () => {
+    try {
+      const res = await getSharedFiles(1, 5);
+      setSharedLinks(res.data?.data || []);
+    } catch {
+      showToast("Failed to fetch shared links", "error");
+    } finally {
+      setLoadingLinks(false);
+    }
+  };
+  fetchSharedLinks();
+}, []);
 
   // Theme Sync Logic
   useEffect(() => {
@@ -712,7 +730,7 @@ const Dashboard = () => {
 
       {/* 3. KPI ROW (Moved down as requested) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Files in System" value={dashboardData?.kpi?.total_files || 0} sub="Total Files in System" isDark={isDark} />
+          <StatCard label="Total Files in System" value={dashboardData?.kpi?.total_files || 0} sub="Total Files Managed" isDark={isDark} />
           <StatCard label="Total Sent" value={dashboardData?.kpi?.total_sent || 0} sub="Files delivered" isDark={isDark} />
           <StatCard label="Shared Contacts" value={dashboardData?.kpi?.shared_contacts || 0} sub="Active recipients" isDark={isDark} />
           <div className={`border p-5 rounded-2xl flex flex-col justify-center transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -744,16 +762,31 @@ const Dashboard = () => {
         </div>
 
         <div className={`border rounded-xl p-6 transition-colors ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <div className="flex justify-between items-center mb-6">
-            <div className={`font-bold text-sm uppercase tracking-tighter ${isDark ? 'text-white' : 'text-slate-800'}`}>Active Shared Links</div>
-            <div className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline">Manage links</div>
+<div className="flex justify-between items-center mb-6">
+            <div className={`font-bold text-sm uppercase tracking-tighter ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared Links</div>
+            <div onClick={() => navigate("/viewallshares")} className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline">View all links</div>
           </div>
           <div className="space-y-3">
-            {dashboardData?.active_links?.map((link, index) => (
-                <SharedLinkItem key={index} title={link.title} expiry={link.expiry} clicks={link.clicks} active={link.active} isDark={isDark} />
-            ))}
-            {(!dashboardData?.active_links || dashboardData.active_links.length === 0) && (
-                <div className={`text-sm font-medium ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>No active links</div>
+            {loadingLinks ? (
+              <div className="py-4 flex justify-center">
+                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : sharedLinks.length === 0 ? (
+              <div className={`text-sm font-medium ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>No active links</div>
+            ) : (
+              sharedLinks.map((link) => (
+                <SharedLinkItem
+                  key={link.id}
+                  title={link.file_name}
+                  recipient={link.recipient_email}
+                  expiry={link.expiration_datetime}
+                  status={link.status}
+                  isBundle={link.is_bundle}
+                  shareUrl={link.share_url}
+                  active={link.is_active}
+                  isDark={isDark}
+                />
+              ))
             )}
           </div>
         </div>
@@ -785,15 +818,15 @@ const ActivityItem = ({ icon, title, sub, time, isDark }) => (
 );
 
 const SharedLinkItem = ({ title, expiry, clicks, active, isDark }) => (
-  <div className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#0f0f0f]' : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-blue-200'}`}>
+  <div className={`flex items-center justify-between p-3  transition-all cursor-pointer`}>
     <div className="flex items-center min-w-0">
       <div className={`w-2 h-2 rounded-full mr-4 ${active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : (isDark ? 'bg-[#222]' : 'bg-slate-300')}`}></div>
       <div className="min-w-0">
         <p className={`text-sm font-bold truncate ${isDark ? 'text-[#ccc]' : 'text-slate-700'}`}>{title}</p>
-        <p className={`text-[10px] font-black uppercase tracking-tighter ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{clicks} views • {expiry}</p>
+        <p className={`text-[10px] font-black  ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{clicks} Expires • {formatDateTime(expiry)}</p>
       </div>
     </div>
-    <i className={`fa-solid fa-arrow-up-right-from-square text-[10px] ${isDark ? 'text-[#222]' : 'text-slate-300'}`}></i>
+    
   </div>
 );
 

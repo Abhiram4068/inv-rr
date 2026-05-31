@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import adminService from '../services/adminservice/userservice';
 const AdminSidebar = ({ isOpen, onClose }) => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
   const { logout, logout: clearUser } = useAuth();
    const [counts, setCounts] = useState({ pending: 0, roleChange: 0, reactivation: 0 });
   const navigate = useNavigate();
@@ -46,20 +46,7 @@ const fetchCounts = async () => {
     }
   };
 
-  useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
-    window.addEventListener('storage', handleStorageChange);
-    const interval = setInterval(() => {
-      const current = localStorage.getItem('theme');
-      if (current !== theme) setTheme(current);
-    }, 100);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, [theme]);
-
-  const isDark = theme === 'dark';
+const isDark = true;  
 
   const getNavLinkClass = ({ isActive }) => {
     const base = "flex items-center p-[10px_12px] rounded-lg no-underline text-sm transition-all duration-200 font-medium mb-1 ";
