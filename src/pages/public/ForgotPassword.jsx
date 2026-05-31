@@ -6,17 +6,40 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
     try {
       await forgotPassword({ email });
-    } catch (_) {
-      // Always show success to prevent email enumeration
+      setSubmitted(true);
+    } catch (err) {
+      const data = err.response?.data;
+      let errorMsg = "An error occurred. Please try again.";
+      if (data) {
+        if (typeof data === "string") {
+          errorMsg = data;
+        } else if (data.detail) {
+          errorMsg = data.detail;
+        } else if (data.error) {
+          errorMsg = data.error;
+        } else {
+          const firstKey = Object.keys(data)[0];
+          if (firstKey) {
+            const fieldError = data[firstKey];
+            if (Array.isArray(fieldError)) {
+              errorMsg = fieldError[0];
+            } else if (typeof fieldError === "string") {
+              errorMsg = fieldError;
+            }
+          }
+        }
+      }
+      setError(errorMsg);
     } finally {
       setLoading(false);
-      setSubmitted(true);
     }
   };
 
@@ -53,6 +76,12 @@ const ForgotPassword = () => {
                 <h2 className="text-2xl font-bold text-white mb-2">Forgot password?</h2>
                 <p className="text-[#808080] text-sm">Enter your email and we'll send you a reset link.</p>
               </div>
+
+              {error && (
+                <div className="p-2 mb-2 rounded-md text-red-400 text-xs tracking-wide text-center">
+                  {error}
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="flex flex-col">

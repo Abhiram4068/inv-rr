@@ -46,7 +46,28 @@ const uid = searchParams.get("uid"); // Get token from URL: /reset-password?toke
       setSuccess(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to reset password. Link may be expired.");
+      const data = err.response?.data;
+      let errorMsg = "Failed to reset password. Link may be expired.";
+      if (data) {
+        if (typeof data === "string") {
+          errorMsg = data;
+        } else if (data.detail) {
+          errorMsg = data.detail;
+        } else if (data.error) {
+          errorMsg = data.error;
+        } else {
+          const firstKey = Object.keys(data)[0];
+          if (firstKey) {
+            const fieldError = data[firstKey];
+            if (Array.isArray(fieldError)) {
+              errorMsg = fieldError[0];
+            } else if (typeof fieldError === "string") {
+              errorMsg = fieldError;
+            }
+          }
+        }
+      }
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -85,7 +106,7 @@ const uid = searchParams.get("uid"); // Get token from URL: /reset-password?toke
           </div>
 
           {error && (
-            <div className="mb-5 px-4 py-3 rounded-[10px] bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+            <div className="p-2 mb-2 rounded-md text-red-400 text-xs tracking-wide text-center">
               {error}
             </div>
           )}
