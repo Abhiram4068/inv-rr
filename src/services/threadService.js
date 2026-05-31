@@ -25,55 +25,55 @@ export const getApiErrorMessage = (error, fallback = "API error") => {
 // ─── Threads ─────────────────────────────────────────────────────────────────
 
 export const getThreads = () =>
-  api.get("/api/threads/").then((res) => res.data);
+  api.get("/threads/").then((res) => res.data);
 
 export const createThread = (body) =>
-  api.post("/api/threads/", body).then((res) => res.data);
+  api.post("/threads/", body).then((res) => res.data);
 
 export const updateThread = (id, body) =>
-  api.put(`/api/threads/${id}/`, body).then((res) => res.data);
+  api.put(`/threads/${id}/`, body).then((res) => res.data);
 
 export const deleteThread = (id) =>
-  api.delete(`/api/threads/${id}/`).then((res) => res.data ?? null);
+  api.delete(`/threads/${id}/`).then((res) => res.data ?? null);
 
 // ─── Graph ───────────────────────────────────────────────────────────────────
 
 export const getThreadGraph = (threadId) =>
-  api.get(`/api/threads/${threadId}/graph/`).then((res) => res.data);
+  api.get(`/threads/${threadId}/graph/`).then((res) => res.data);
 
 // ─── Nodes ───────────────────────────────────────────────────────────────────
 
 export const createNode = (threadId, body) =>
-  api.post(`/api/threads/${threadId}/nodes/`, body).then((res) => res.data);
+  api.post(`/threads/${threadId}/nodes/`, body).then((res) => res.data);
 
 export const updateNode = (nodeId, body) =>
-  api.put(`/api/nodes/${nodeId}/`, body).then((res) => res.data);
+  api.put(`/nodes/${nodeId}/`, body).then((res) => res.data);
 
 export const deleteNode = (nodeId) =>
-  api.delete(`/api/nodes/${nodeId}/`).then((res) => res.data ?? null);
+  api.delete(`/nodes/${nodeId}/`).then((res) => res.data ?? null);
 
 export const updateNodePosition = (nodeId, body) =>
-  api.patch(`/api/nodes/${nodeId}/position/`, body).then((res) => res.data);
+  api.patch(`/nodes/${nodeId}/position/`, body).then((res) => res.data);
 
 // ─── Stages ──────────────────────────────────────────────────────────────────
 
 export const getStages = (threadId) =>
-  api.get(`/api/threads/${threadId}/stages/`).then((res) => res.data);
+  api.get(`/threads/${threadId}/stages/`).then((res) => res.data);
 
 export const createStage = (threadId, name) =>
-  api.post(`/api/threads/${threadId}/stages/`, { name }).then((res) => res.data);
+  api.post(`/threads/${threadId}/stages/`, { name }).then((res) => res.data);
 
 export const updateStage = (stageId, name) =>
-  api.put(`/api/stages/${stageId}/`, { name }).then((res) => res.data);
+  api.put(`/stages/${stageId}/`, { name }).then((res) => res.data);
 
 export const deleteStage = (stageId) =>
-  api.delete(`/api/stages/${stageId}/`).then((res) => res.data ?? null);
+  api.delete(`/stages/${stageId}/`).then((res) => res.data ?? null);
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
 
 export const addDependency = (sourceNodeId, targetNodeId, dependencyType = "DEPENDS_ON") =>
   api
-    .post(`/api/nodes/${sourceNodeId}/dependencies/`, {
+    .post(`/nodes/${sourceNodeId}/dependencies/`, {
       source_node: sourceNodeId,
       target_node: targetNodeId,
       dependency_type: dependencyType,
@@ -81,23 +81,23 @@ export const addDependency = (sourceNodeId, targetNodeId, dependencyType = "DEPE
     .then((res) => res.data);
 
 export const removeDependency = (dependencyId) =>
-  api.delete(`/api/dependencies/${dependencyId}/`).then((res) => res.data ?? null);
+  api.delete(`/dependencies/${dependencyId}/`).then((res) => res.data ?? null);
 
 export const updateDependency = (dependencyId, dependencyType) =>
   api
-    .patch(`/api/dependencies/${dependencyId}/`, { dependency_type: dependencyType })
+    .patch(`/dependencies/${dependencyId}/`, { dependency_type: dependencyType })
     .then((res) => res.data);
 
 // ─── Node files & activity ───────────────────────────────────────────────────
 
 export const getNodeFiles = (nodeId) =>
-  api.get(`/api/nodes/${nodeId}/files/`).then((res) => res.data);
+  api.get(`/nodes/${nodeId}/files/`).then((res) => res.data);
 
 export const uploadNodeFile = (nodeId, formData) =>
-  api.post(`/api/nodes/${nodeId}/files/`, formData).then((res) => res.data);
+  api.post(`/nodes/${nodeId}/files/`, formData).then((res) => res.data);
 
 export const deleteNodeFile = (fileId) =>
-  api.delete(`/api/files/${fileId}/`).then((res) => res.data ?? null);
+  api.delete(`/files/${fileId}/`).then((res) => res.data ?? null);
 
 export const getNodeActivity = (nodeId) =>
-  api.get(`/api/nodes/${nodeId}/activity/`).then((res) => res.data);
+  api.get(`/nodes/${nodeId}/activity/`).then((res) => res.data);

@@ -1,115 +1,119 @@
-import api from "../api/axios";
+  import api from "../api/axios";
 
-// GET /api/file-list/
+// GET  /file-list/
 export const getFiles = (page = 1, search = "") =>
-  api.get("/api/file-list/", { params: { page, search } });
+  api.get("/file-list/", { params: { page, search } });
 
-// GET /api/files/:id/
+// GET /files/:id/
 export const getFileById = (fileId) =>
-  api.get(`/api/files/${fileId}/`);
+  api.get(`/files/${fileId}/`);
 
-// PATCH /api/files/:id/update/
-export const updateFile = (fileId, data) =>
-  api.patch(`/api/files/${fileId}/update/`, data);
 
-// POST /api/files/
+// PATCH /files/:id/update/
+export const updateFile=(fileId, data) =>
+  api.patch(`files/${fileId}/update/`, data);
+
+
+// POST /file-upload
 export const uploadFile = (formData) =>
-  api.post("/api/files/", formData, {
+  api.post("/files/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-// POST /api/files/upload/chunk/
+// POST /files/upload/chunk/
 export const uploadFileChunk = (formData) =>
-  api.post("/api/files/upload/chunk/", formData, {
+  api.post("/files/upload/chunk/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-// GET /api/files/upload/chunk/status/?upload_id=
+// GET /files/upload/chunk/status/?upload_id=
 export const getChunkUploadStatus = (uploadId) =>
-  api.get("/api/files/upload/chunk/status/", { params: { upload_id: uploadId } });
+  api.get("/files/upload/chunk/status/", { params: { upload_id: uploadId } });
 
-// POST /api/files/upload/chunk/control/
+// POST /files/upload/chunk/control/  { upload_id, action: pause|resume|cancel }
 export const controlChunkUpload = (uploadId, action) =>
-  api.post("/api/files/upload/chunk/control/", { upload_id: uploadId, action });
+  api.post("/files/upload/chunk/control/", { upload_id: uploadId, action });
 
-// GET /api/:id/file-download/
+// GET  /:id/file-download/
 export const downloadFile = (fileId) =>
-  api.get(`/api/${fileId}/file-download/`, { responseType: "blob" });
+  api.get(`/${fileId}/file-download/`, { responseType: "blob" });
 
-// DELETE /api/files/:id/delete/
+// DELETE /files/:id/file-delete/
 export const deleteFile = (fileId) =>
-  api.delete(`/api/files/${fileId}/delete/`);
+  api.delete(`/files/${fileId}/delete/`);
 
-// POST /api/files/bulk-delete/
+// POST /files/bulk-delete/
 export const bulkDeleteFiles = (fileIds) =>
-  api.post("/api/files/bulk-delete/", { file_ids: fileIds });
+  api.post("/files/bulk-delete/", { file_ids: fileIds });
 
-// POST /api/files/bulk-archive/
+// POST /files/bulk-archive/
 export const bulkArchiveFiles = (fileIds) =>
-  api.post("/api/files/bulk-archive/", { file_ids: fileIds });
+  api.post("/files/bulk-archive/", { file_ids: fileIds });
 
-// POST /api/files/:id/archive/
+// ARCHIVE /files/:id/archive/
 export const archiveFile = (fileId) =>
-  api.post(`/api/files/${fileId}/archive/`);
+  api.post(`/files/${fileId}/archive/`);
 
-// GET /api/files/archives/
+// GET /files/archives/
 export const getArchives = (page = 1, search = "") =>
-  api.get("/api/files/archives/", { params: { page, search } });
+  api.get("/files/archives/", { params: { page, search } });
 
-// POST /api/files/:id/unarchive/
+// UNARCHIVE /files/:id/unarchive/
 export const unarchiveFile = (fileId) =>
-  api.post(`/api/files/${fileId}/unarchive/`);
+  api.post(`/files/${fileId}/unarchive/`);
 
-// POST /api/files/bulk-unarchive/
+// POST /files/bulk-unarchive/
 export const bulkUnarchiveFiles = (fileIds) =>
-  api.post("/api/files/bulk-unarchive/", { file_ids: fileIds });
+  api.post("/files/bulk-unarchive/", { file_ids: fileIds });
 
-// PUT /api/files/archives/delete/
+// PUT /files/archive-delete/
 export const deleteArchivedFiles = (fileIds) =>
-  api.put("/api/files/archives/delete/", { file_ids: fileIds });
+  api.put("/files/archives/delete/", {
+    file_ids: fileIds,
+  });
 
-// GET /api/files/view-recently-deleted/
+// GET  /files/view-recently-deleted/
 export const getDeletedFiles = (page = 1, search = "") =>
-  api.get("/api/files/view-recently-deleted/", { params: { page, search } });
+  api.get("/files/view-recently-deleted/", { params: { page, search } });
 
-// DELETE /api/files/clear-trash/:id/
+// DELETE /files/clear-trash/:id/
 export const clearTrashFile = (fileId) =>
-  api.delete(`/api/files/clear-trash/${fileId}/`);
+  api.delete(`/files/clear-trash/${fileId}/`);
 
-// POST /api/files/:id/restore/recently-deleted/
+// POST /files/:id/restore/recently-deleted/
 export const restoreFile = (fileId) =>
-  api.post(`/api/files/${fileId}/restore/recently-deleted/`);
+  api.post(`/files/${fileId}/restore/recently-deleted/`);
 
-// POST /api/files/bulk-restore-trash/
+// POST /files/bulk-restore-trash/
 export const bulkRestoreFiles = (fileIds) =>
-  api.post("/api/files/bulk-restore-trash/", { file_ids: fileIds });
+  api.post("/files/bulk-restore-trash/", { file_ids: fileIds });
 
-// DELETE /api/files/empty-trash/
+// DELETE /files/empty-trash/
 export const emptyTrash = () =>
-  api.delete("/api/files/empty-trash/");
+  api.delete("/files/empty-trash/");
 
-// POST /api/files/:id/share/
+// POST /files/:id/share/
 export const shareFile = (fileId, shareData) =>
-  api.post(`/api/files/${fileId}/share/`, shareData);
+  api.post(`/files/${fileId}/share/`, shareData);
 
-// GET /api/files/public/:token/
+// GET  /files/public/:token/   ← this one is PUBLIC, no cookie needed
 export const getPublicFile = (token) =>
-  api.get(`/api/files/public/${token}/`);
+  api.get(`/files/public/${token}/`);
 
-// GET /api/files/starred/
-export const getStarredFiles = () =>
-  api.get("/api/files/starred/");
 
-// GET /api/files/recents/
-export const getRecentFiles = () =>
-  api.get("/api/files/recents/");
+//GET /files/starred/
+export const getStarredFiles = () => api.get(`/files/starred/`);
+
+//GET files/recents/
+export const getRecentFiles = () => api.get(`/files/recents/`);
 
 export const getFileViewUrl = (fileId) => {
-  const baseURL = import.meta.env.VITE_API_URL || "";
-  return `${baseURL}/api/${fileId}/file-view-inline/`;
+  const baseURL = import.meta.env.VITE_API_URL || "/api";
+  return `${baseURL}/${fileId}/file-view-inline/`;
 };
 
 export const getFileDownloadUrl = (fileId) => {
-  const baseURL = import.meta.env.VITE_API_URL || "";
-  return `${baseURL}/api/${fileId}/file-download/`;
+  const baseURL = import.meta.env.VITE_API_URL || "/api";
+  return `${baseURL}/${fileId}/file-download/`;
 };
+

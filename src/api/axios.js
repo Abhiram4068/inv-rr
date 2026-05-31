@@ -65,7 +65,7 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      await api.post("/api/token/refresh/");
+      await api.post("/token/refresh/");
       processQueue(null);
       return api(original);
     } catch (refreshError) {
