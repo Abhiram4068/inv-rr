@@ -20,6 +20,7 @@ const FileDetails = () => {
   const [file, setFile] = useState(null);
   const [fetchError, setFetchError] = useState("");
   const [fetchLoading, setLoading] = useState(true);
+  const [showAllShares, setShowAllShares] = useState(false);
 
   //states for file update handling
   const [saveLoading, setSaveLoading] = useState(false);
@@ -110,6 +111,8 @@ useEffect(() => {
   const [collections, setCollections] = useState([]);
   const [organizeSearch, setOrganizeSearch] = useState("");
   const [organizeLoading, setOrganizeLoading] = useState(false);
+  const [collectionsPage, setCollectionsPage] = useState(1);
+const [collectionsTotalPages, setCollectionsTotalPages] = useState(1);
 
   const [tempName, setTempName] = useState(fileData.display_name);
   const [tempDesc, setTempDesc] = useState(fileData.description);
@@ -130,22 +133,25 @@ const showToast = (msg, type = 'success') => {
     }
   }, [toast.visible]);
 
-  useEffect(() => {
-    if (activeModal === 'organize') {
-      const fetchCollections = async () => {
-        setOrganizeLoading(true);
-        try {
-          const res = await getCollections();
-          setCollections(res.data.collections || []);
-        } catch (error) {
-          showToast("Failed to load collections");
-        } finally {
-          setOrganizeLoading(false);
-        }
-      };
-      fetchCollections();
-    }
-  }, [activeModal]);
+const fetchCollections = async (page = 1) => {
+  setOrganizeLoading(true);
+  try {
+    const res = await getCollections("", "created_at", "desc", page);
+    setCollections(res.data.results || []);
+    setCollectionsTotalPages(Math.ceil(res.data.count / 12));
+  } catch (error) {
+    showToast("Failed to load collections");
+  } finally {
+    setOrganizeLoading(false);
+  }
+};
+
+useEffect(() => {
+  if (activeModal === 'organize') {
+    fetchCollections(1);
+    setCollectionsPage(1);
+  }
+}, [activeModal]);
 
 const handleShareSuccess = (message) => {
   setActiveModal(null);
@@ -472,21 +478,34 @@ const handleDownload = async () => {
         <div className={`mt-auto border-t pt-8 mb-10 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
           <h3 className={`text-sm font-bold mb-5 ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared With</h3>
           <div className="flex flex-wrap gap-3">
-            {(file?.shares || []).map((share) => (
-              <div key={share.id} className={`border px-4 py-2 rounded-full flex items-center gap-3 text-xs transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                <div className="w-5 h-5 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center text-[8px] font-bold">
-                  {share.recipient_email[0].toUpperCase()}
-                </div>
-                <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{share.recipient_email}</span>
-               
-              </div>
-            ))}
-            {(file?.shares || []).length === 0 && (
-              <p className={`text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Not shared with anyone yet.</p>
-            )}
-            <button onClick={() => setActiveModal('share')} className={`border border-dashed px-4 py-2 rounded-full text-xs transition-all flex items-center gap-2 ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-blue-600 hover:border-blue-600'}`}>
-              <i className="fa-solid fa-plus"></i> Add Person
-            </button>
+{(file?.shares || []).length === 0 && (
+  <p className={`text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Not shared with anyone yet.</p>
+)}
+
+{(showAllShares ? (file?.shares || []) : (file?.shares || []).slice(0, 3)).map((share) => (
+  <div key={share.id} className={`border px-4 py-2 rounded-full flex items-center gap-3 text-xs transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+    <div className="w-5 h-5 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center text-[8px] font-bold">
+      {share.recipient_email[0].toUpperCase()}
+    </div>
+    <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{share.recipient_email}</span>
+  </div>
+))}
+
+{(file?.shares || []).length > 3 && !showAllShares && (
+  <button onClick={() => setShowAllShares(true)} className={`border px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]' : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400'}`}>
+    +{(file?.shares || []).length - 3} more
+  </button>
+)}
+
+{showAllShares && (file?.shares || []).length > 3 && (
+  <button onClick={() => setShowAllShares(false)} className={`border px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]' : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400'}`}>
+    Show less
+  </button>
+)}
+
+<button onClick={() => setActiveModal('share')} className={`border border-dashed px-4 py-2 rounded-full text-xs transition-all flex items-center gap-2 ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-blue-600 hover:border-blue-600'}`}>
+  <i className="fa-solid fa-plus"></i> Add Person
+</button>
           </div>
         </div>
       </main>
@@ -645,15 +664,29 @@ className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm flex-s
                     </div>
                   )}
                 </div>
-
-                <div className="mt-6 pt-6 border-t border-[#1a1a1a] flex gap-3">
-                  <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-red-600 hover:text-white' : 'border-slate-200 text-slate-500 hover:bg-red-600 hover:text-white'}`}>
-                    Close
-                  </button>
-                  <button onClick={() => navigate('/collections')} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-blue-600/10 text-blue-500 border border-blue-500/30 hover:bg-blue-600 hover:text-white' : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white'}`}>
-                    View all collections
-                  </button>
-                </div>
+<div className="mt-6 pt-6 border-t border-[#1a1a1a] flex flex-col gap-3">
+  <div className="flex items-center justify-between gap-2">
+    <button
+      disabled={collectionsPage === 1}
+      onClick={() => { const p = collectionsPage - 1; setCollectionsPage(p); fetchCollections(p); }}
+      className={`flex-1 py-2 border rounded-xl font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+    >
+      <i className="fa-solid fa-chevron-left mr-1"></i> Prev
+    </button>
+    <span className={`text-[10px] font-bold ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{collectionsPage} / {collectionsTotalPages}</span>
+    <button
+      disabled={collectionsPage === collectionsTotalPages}
+      onClick={() => { const p = collectionsPage + 1; setCollectionsPage(p); fetchCollections(p); }}
+      className={`flex-1 py-2 border rounded-xl font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+    >
+      Next <i className="fa-solid fa-chevron-right ml-1"></i>
+    </button>
+  </div>
+  <div className="flex gap-3">
+    <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-red-600 hover:text-white' : 'border-slate-200 text-slate-500 hover:bg-red-600 hover:text-white'}`}>Close</button>
+    <button onClick={() => navigate('/collections')} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-blue-600/10 text-blue-500 border border-blue-500/30 hover:bg-blue-600 hover:text-white' : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white'}`}>View all collections</button>
+  </div>
+</div>
               </div>
             )}
           </div>

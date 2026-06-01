@@ -809,7 +809,7 @@ const PaginatedFiles = () => {
 
       <ShareModal
         isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
+        onClose={() => { setIsShareModalOpen(false); if (!isSelectMode) setSelectedFileIds([]); }}
         fileIds={selectedFileIds}
         fileNames={files.filter((f) => selectedFileIds.includes(f.id)).map((f) => f.original_name)}
         isBulk={selectedFileIds.length > 1}

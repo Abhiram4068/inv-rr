@@ -4,7 +4,7 @@ import useAuth from "../hooks/useAuth";
 import adminService from '../services/adminservice/userservice';
 const AdminSidebar = ({ isOpen, onClose }) => {
 
-  const { logout, logout: clearUser } = useAuth();
+  const { logout: handleLogout } = useAuth();
    const [counts, setCounts] = useState({ pending: 0, roleChange: 0, reactivation: 0 });
   const navigate = useNavigate();
 
@@ -34,17 +34,6 @@ const fetchCounts = async () => {
       window.removeEventListener('admin:counts:refresh', fetchCounts);
     };
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch {
-      // even if the server call fails, clear client state
-    } finally {
-      clearUser(null);
-      navigate("/login", { replace: true });
-    }
-  };
 
 const isDark = true;  
 

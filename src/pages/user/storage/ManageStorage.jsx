@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { getStorageFiles, permanentDeleteFiles } from "../../../services/storageService";
 import { sizeFormatter } from '../../../utils/sizeFormatter';
+import { useNavigate } from "react-router-dom";
 
 const ManageStorage = () => {
+  const navigate = useNavigate();
   // --- THEME STATE SYNC ---
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -141,7 +143,6 @@ const ManageStorage = () => {
                 <th className="p-6 font-bold">File Name</th>
                 <th className="p-6 font-bold">Size</th>
                 <th className="p-6 font-bold">Added</th>
-                <th className="p-6 font-bold text-center">View</th>
                 <th className="p-6 font-bold text-right">Manage</th>
               </tr>
             </thead>
@@ -149,7 +150,7 @@ const ManageStorage = () => {
               {isLoading ? (
                 <tr><td colSpan="5" className="p-10 text-center"><i className="fa-solid fa-spinner fa-spin text-blue-500 text-2xl"></i></td></tr>
               ) : files.map((file) => (
-                <tr key={file.id} className={`group transition-all duration-200 ${isDark ? 'hover:bg-[#111]' : 'hover:bg-slate-50'}`}>
+                <tr key={file.id} onClick={() => navigate(`/file/${file.id}`)} className={`group transition-all duration-200 ${isDark ? 'hover:bg-[#111]' : 'hover:bg-slate-50'}`}>
                   <td className="p-4 text-sm">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isDark ? 'bg-[#111] group-hover:bg-[#1a1a1a]' : 'bg-slate-100'}`}>
@@ -160,11 +161,6 @@ const ManageStorage = () => {
                   </td>
                   <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{sizeFormatter(file.file_size)}</td>
                   <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>{new Date(file.created_at).toLocaleDateString()}</td>
-                  <td className="p-4 text-sm text-center">
-                    <button className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#111] text-[#808080] hover:text-white hover:bg-[#1a1a1a]' : 'bg-slate-100 text-slate-400 hover:text-blue-600 hover:bg-slate-200'}`}>
-                      <i className="fa-solid fa-eye text-xs"></i>
-                    </button>
-                  </td>
                   <td className="p-4 text-sm text-right">
                     <button 
                       onClick={() => handleDeleteClick(file)}
