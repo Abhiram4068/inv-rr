@@ -20,7 +20,7 @@ const FileDetails = () => {
   const [file, setFile] = useState(null);
   const [fetchError, setFetchError] = useState("");
   const [fetchLoading, setLoading] = useState(true);
-
+  const [showAllShares, setShowAllShares] = useState(false);
   //states for file update handling
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -468,27 +468,46 @@ const handleDownload = async () => {
           </div>
         </div>
 
-        {/* Shared With Section */}
-        <div className={`mt-auto border-t pt-8 mb-10 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
-          <h3 className={`text-sm font-bold mb-5 ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared With</h3>
-          <div className="flex flex-wrap gap-3">
-            {(file?.shares || []).map((share) => (
-              <div key={share.id} className={`border px-4 py-2 rounded-full flex items-center gap-3 text-xs transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                <div className="w-5 h-5 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center text-[8px] font-bold">
-                  {share.recipient_email[0].toUpperCase()}
-                </div>
-                <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{share.recipient_email}</span>
-               
-              </div>
-            ))}
-            {(file?.shares || []).length === 0 && (
-              <p className={`text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Not shared with anyone yet.</p>
-            )}
-            <button onClick={() => setActiveModal('share')} className={`border border-dashed px-4 py-2 rounded-full text-xs transition-all flex items-center gap-2 ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-blue-600 hover:border-blue-600'}`}>
-              <i className="fa-solid fa-plus"></i> Add Person
-            </button>
-          </div>
+{/* Shared With Section */}
+<div className={`mt-auto border-t pt-8 mb-10 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
+  <h3 className={`text-sm font-bold mb-5 ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared With</h3>
+  <div className="flex flex-wrap gap-3">
+    {(file?.shares || []).length === 0 && (
+      <p className={`text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Not shared with anyone yet.</p>
+    )}
+
+    {(showAllShares ? (file?.shares || []) : (file?.shares || []).slice(0, 3)).map((share) => (
+      <div key={share.id} className={`border px-4 py-2 rounded-full flex items-center gap-3 text-xs transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+        <div className="w-5 h-5 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center text-[8px] font-bold">
+          {share.recipient_email[0].toUpperCase()}
         </div>
+        <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{share.recipient_email}</span>
+      </div>
+    ))}
+
+    {(file?.shares || []).length > 3 && !showAllShares && (
+      <button
+        onClick={() => setShowAllShares(true)}
+        className={`border px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]' : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400'}`}
+      >
+        +{(file?.shares || []).length - 3} more
+      </button>
+    )}
+
+    {showAllShares && (file?.shares || []).length > 3 && (
+      <button
+        onClick={() => setShowAllShares(false)}
+        className={`border px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]' : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400'}`}
+      >
+        Show less
+      </button>
+    )}
+
+    <button onClick={() => setActiveModal('share')} className={`border border-dashed px-4 py-2 rounded-full text-xs transition-all flex items-center gap-2 ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-blue-600 hover:border-blue-600'}`}>
+      <i className="fa-solid fa-plus"></i> Add Person
+    </button>
+  </div>
+</div>
       </main>
 
       {/* --- MODALS --- */}

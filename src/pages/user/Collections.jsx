@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from "react-router-dom";
 import { getCollections, createCollection } from '../../services/collectionService';
 import { useViewMode } from '../../hooks/useViewMode';
@@ -55,22 +55,36 @@ const Collections = () => {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(null);
+  const [hasNext, setHasNext] = useState(false);
+
+  const pageNumbers = useMemo(() => {
+    const total = totalPages ?? page + 1;
+    const start = Math.max(1, page - 1);
+    const end = Math.min(total, page + 1);
+    const arr = [];
+    for (let p = start; p <= end; p++) arr.push(p);
+    return arr;
+  }, [page, totalPages]);
 
   useEffect(() => {
     const fetchCollections = async () => {
       try {
         setLoading(true);
-        const res = await getCollections(search, sortBy, sortOrder)
-        setCollections(res.data.collections);
+        const res = await getCollections(search, sortBy, sortOrder, page);
+        setCollections(res.data.results);
         setTotalCollections(res.data.total_collections);
+        setHasNext(Boolean(res.data.next));
+        setTotalPages(res.data.count !== null ? Math.ceil(res.data.count / 12) : null);
       } catch {
         setError("Failed to fetch collections");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     };
     fetchCollections();
-  }, [search, sortBy, sortOrder]);
+  }, [search, sortBy, sortOrder, page]);
 
   const formatSize = (bytes) => {
     if (!bytes || bytes === 0) return "0 B";
@@ -92,8 +106,9 @@ const Collections = () => {
         description: collectionDesc
       };
       await createCollection(payload);
-      const res = await getCollections(search, sortBy, sortOrder);
-      setCollections(res.data.collections);
+      const res = await getCollections(search, sortBy, sortOrder, 1);
+      setPage(1);
+      setCollections(res.data.results);
       setTotalCollections(res.data.total_collections);
       setModalOpen(false);
       setCollectionName('');
@@ -101,6 +116,7 @@ const Collections = () => {
       showToast("Collection created successfully");
     } catch (err) {
       const errorMessage =
+      err?.response?.data?.name?.[0] ||
         err?.response?.data?.detail?.name?.[0] ||
         err?.response?.data?.detail ||
         "Failed to create collection";
@@ -164,7 +180,7 @@ const Collections = () => {
               type="text"
               placeholder="Search Collections"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}
             />
           </div>
@@ -184,7 +200,11 @@ const Collections = () => {
         {/* PAGE HEADER */}
         <div className="flex justify-between items-center mb-5">
           <div className={`text-[20px] font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>My Collections</div>
-          <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>{totalCollections} collection(s)</div>
+          <div className={`text-sm ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+            {totalPages !== null
+              ? `Page ${page} of ${totalPages} · ${totalCollections} collection(s)`
+              : `${totalCollections} collection(s)`}
+          </div>
         </div>
         <div className="flex items-center gap-2 mb-5 flex-wrap">
           {[
@@ -202,6 +222,7 @@ const Collections = () => {
                   setSortBy(opt.value);
                   setSortOrder("desc");
                 }
+                setPage(1);
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${sortBy === opt.value
                 ? 'bg-blue-500/10 border-blue-500/40 text-blue-400'
@@ -320,9 +341,52 @@ const Collections = () => {
           </div>
         )}
 
+        {/* BOTTOM PAGINATION */}
+        {totalPages !== null && totalPages > 1 && (
+          <div className="flex justify-center items-center gap-1.5 pb-10">
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1 || loading}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all
+                ${page === 1 || loading
+                  ? isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed' : 'bg-white border-slate-200 text-slate-300 cursor-not-allowed'
+                  : isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            >
+              <i className="fa fa-chevron-left text-xs" />
+            </button>
+
+            {pageNumbers.map(p => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPage(p)}
+                disabled={loading}
+                className={`w-8 h-8 rounded-lg font-semibold text-xs border transition-all
+                  ${p === page
+                    ? isDark ? 'bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]' : 'bg-blue-600 border-blue-600 text-white'
+                    : isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+              >
+                {p}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setPage(p => p + 1)}
+              disabled={!hasNext || loading}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all
+                ${!hasNext || loading
+                  ? isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed' : 'bg-white border-slate-200 text-slate-300 cursor-not-allowed'
+                  : isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            >
+              <i className="fa fa-chevron-right text-xs" />
+            </button>
+          </div>
+        )}
+
       </div>
 
-      {/* NEW COLLECTION MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-[4px] flex justify-center items-center z-[2000] p-4">
           <div className={`border w-full max-w-[420px] p-6 rounded-[16px] shadow-[0_20px_40px_rgba(0,0,0,0.6)] transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
