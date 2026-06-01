@@ -170,10 +170,10 @@ const AdminDashboard = () => {
                         icon="fa-cloud-arrow-up" 
                     />
                     <DashboardTile 
-                        label="Requests Pending" 
+                        label="New Registration Requests" 
                         value={stats?.pending_registration_approvals || 0} 
                         icon="fa-clock-rotate-left"
-                        onClickAction={() => navigate('/admin/requests')}
+                        onClickAction={() => navigate('/admin/pending-users')}
                         actionLabel="View Requests"
                     />
                 </div>

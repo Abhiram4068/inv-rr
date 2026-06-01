@@ -31,9 +31,9 @@ function FileThumb({ file, size = 40 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: 7, flexShrink: 0,
-      overflow: "hidden", border: "1px solid #e2e8f0",
+      overflow: "hidden", border: "none",
       display: "flex", alignItems: "center", justifyContent: "center",
-      background: "#f8fafc",
+      background: "transparent",
     }}>
       {isImage && file.file_url ? (
         <img
