@@ -79,6 +79,7 @@ const BlockedUsers = () => {
                 setTotalCount(prev => prev - 1);
             }
             closeModal();
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error(`Operation failure:`, error);
         } finally {
@@ -118,7 +119,7 @@ const BlockedUsers = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-xl font-bold text-slate-800 tracking-tight">Restricted Accounts</h1>
-                        <p className="text-xs text-slate-400 mt-0.5">Manage frozen system profiles, lift operational blocks, or review directory records.</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Manage restricted user accounts and restore access when needed.</p>
                     </div>
 
                     <div className="relative w-full md:w-80">

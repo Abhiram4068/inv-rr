@@ -11,7 +11,7 @@ const CATEGORY_CONFIG = {
 };
 const StorageDashboard = () => {
   // --- THEME STATE SYNC ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const [storageSummary, setStorageSummary] = useState(null)
@@ -21,7 +21,7 @@ const StorageDashboard = () => {
 
   const isDark = theme === 'dark';
     useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -102,7 +102,7 @@ useEffect(() => {
   };
 
   return (
-    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 min-h-screen ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 min-h-screen ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       
       {/* Breadcrumb */}
       <div className="flex items-center gap-4 mb-6">
@@ -263,12 +263,11 @@ const ActivityItem = ({ icon, title, type, size, isDark }) => (
       <div className="text-right hidden sm:block">
         <span className={`text-sm font-bold ${isDark ? 'text-white/80' : 'text-slate-600'}`}>{size}</span>
       </div>
-      <div className="flex items-center gap-2">
-         <button className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-[#808080] hover:text-red-500">
-           <i className="fa-solid fa-trash-can text-xs"></i>
-         </button>
-         <i className={`fa-solid fa-ellipsis-vertical text-xs ${isDark ? 'text-[#222]' : 'text-slate-200'}`}></i>
-      </div>
+<div className="text-right hidden sm:block">
+  <span className={`text-sm font-bold ${isDark ? 'text-white/80' : 'text-slate-600'}`}>
+    {size}
+  </span>
+</div>
     </div>
   </div>
 );

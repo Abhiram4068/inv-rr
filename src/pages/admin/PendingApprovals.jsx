@@ -6,7 +6,7 @@ const PendingApprovals = () => {
     const [requests, setRequests] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    
+
     // Modal & Action State Management
     const [modalConfig, setModalConfig] = useState({
         isOpen: false,
@@ -28,9 +28,9 @@ const PendingApprovals = () => {
         const fetchPendingRequests = async () => {
             try {
                 setLoading(true);
-                const data = await userService.getPendingApprovals({ 
-                    page: currentPage, 
-                    search: searchTerm 
+                const data = await userService.getPendingApprovals({
+                    page: currentPage,
+                    search: searchTerm
                 });
                 setRequests(data.results || []);
                 setTotalCount(data.count || 0);
@@ -65,7 +65,7 @@ const PendingApprovals = () => {
     const handleConfirmAction = async () => {
         setIsActionLoading(true);
         const { type, targetUser } = modalConfig;
-        
+
         try {
             if (type === 'accept') {
                 await userService.resolvePendingApproval(targetUser.id, 'accept');
@@ -74,10 +74,11 @@ const PendingApprovals = () => {
                 await userService.resolvePendingApproval(targetUser.id, 'reject');
                 console.log(`Purged user node registration request: ${targetUser.id}`);
             }
-            
+
             // Filter local state layout on success status
             setRequests(prev => prev.filter(req => req.id !== targetUser.id));
             closeConfirmationModal();
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error(`Operation runtime failure during request evaluation:`, error);
         } finally {
@@ -98,14 +99,14 @@ const PendingApprovals = () => {
     return (
         <div className="flex-1 bg-[#f0f2f7] min-h-screen p-8 font-sans relative">
             <div className="max-w-7xl mx-auto">
-                
+
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-xl font-bold text-slate-800 tracking-tight">Pending Registrations</h1>
-                        <p className="text-xs text-slate-400 mt-0.5">Review, validate, and authorize inbound access tokens for incoming personnel directories.</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Review and approve user registration requests</p>
                     </div>
-                    
+
                     {/* Search Field Wrapper */}
                     <div className="relative w-full md:w-80">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
@@ -145,12 +146,12 @@ const PendingApprovals = () => {
                                                     <span className="text-xs text-slate-400 mt-0.5">{req.email}</span>
                                                 </div>
                                             </td>
-                                            
+
                                             {/* Designation */}
                                             <td className="py-4 px-6 text-slate-600 font-medium">
                                                 {req.designation}
                                             </td>
-                                            
+
                                             {/* Registered At Timestamp */}
                                             <td className="py-4 px-6 text-slate-500 font-normal">
                                                 {new Date(req.date_joined).toLocaleString('en-US', {
@@ -161,7 +162,7 @@ const PendingApprovals = () => {
                                             <td className="py-4 px-6 text-slate-600 font-medium">
                                                 {req.email}
                                             </td>
-                                            
+
                                             {/* Interactive Decision Actions */}
                                             <td className="py-4 px-6 text-right">
                                                 <div className="flex items-center justify-end gap-2.5">
@@ -192,7 +193,7 @@ const PendingApprovals = () => {
                             </tbody>
                         </table>
                     </div>
-                    
+
                     {/* Minimal Data Tracking Footer Row */}
                     <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex justify-between items-center text-xs text-slate-400 font-semibold">
                         <span>Showing {requests.length} processing buffers</span>
@@ -204,28 +205,27 @@ const PendingApprovals = () => {
             {modalConfig.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     {/* Backdrop Blur */}
-                    <div 
+                    <div
                         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
                         onClick={closeConfirmationModal}
                     />
-                    
+
                     {/* Modal Architecture Frame */}
                     <div className="bg-white rounded-sm shadow-xl max-w-md w-full overflow-hidden relative z-10 transform scale-100 transition-all animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-6">
                             <div className="flex items-start gap-4">
                                 {/* Color Variant Structural Toggle */}
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${
-                                    modalConfig.type === 'accept' 
-                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-500' 
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${modalConfig.type === 'accept'
+                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-500'
                                         : 'bg-rose-50 border-rose-100 text-rose-500'
-                                }`}>
+                                    }`}>
                                     {modalConfig.type === 'accept' ? (
                                         <i className="fa-solid fa-user-check text-base"></i>
                                     ) : (
                                         <i className="fa-solid fa-user-xmark text-base"></i>
                                     )}
                                 </div>
-                                
+
                                 <div>
                                     <h3 className="text-base font-bold text-slate-800 tracking-tight">
                                         {modalConfig.type === 'accept' ? 'Authorize Identity Node?' : 'Deny Directory Access?'}
@@ -255,11 +255,10 @@ const PendingApprovals = () => {
                                 type="button"
                                 disabled={isActionLoading}
                                 onClick={handleConfirmAction}
-                                className={`px-4 py-2 text-white rounded-sm text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 ${
-                                    modalConfig.type === 'accept'
+                                className={`px-4 py-2 text-white rounded-sm text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 ${modalConfig.type === 'accept'
                                         ? 'bg-emerald-500 border border-emerald-600 hover:bg-emerald-600'
                                         : 'bg-rose-500 border border-rose-600 hover:bg-rose-600'
-                                }`}
+                                    }`}
                             >
                                 {isActionLoading ? (
                                     <>

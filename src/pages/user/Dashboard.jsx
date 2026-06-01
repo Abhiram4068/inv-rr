@@ -7,32 +7,18 @@ import {
   getChunkUploadStatus,
   controlChunkUpload,
 } from '../../services/fileService';
+import { getSharedFiles } from '../../services/shareService';
+import { formatDateTime } from '../../utils/dateFormatter';
+import {
+  CHUNK_SIZE,
+  validateFileForUpload,
+  isNonRetryableUploadError,
+  getUploadErrorMessage,
+} from '../../utils/uploadValidation';
 
-const CHUNK_SIZE = 10 * 1024 * 1024;
-const MAX_FILE_BYTES = 100 * 1024 * 1024;
 const MAX_CHUNK_RETRIES = 3;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-const ALLOWED_CONTENT_TYPES = new Set([
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/plain',
-  'text/csv',
-  'image/jpeg',
-  'image/png',
-  'application/pdf',
-  'image/webp',
-  'application/zip',
-  'application/x-zip-compressed',
-  'application/json',
-  'application/xml',
-  'text/xml',
-]);
 
 const getFileCategory = (rawFile) => {
   const t = rawFile.type || '';
@@ -178,7 +164,7 @@ const STATUS_LABELS = {
 const Dashboard = () => {
   const navigate = useNavigate();
   // --- THEME STATE ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   
   // --- UPLOAD FUNCTIONALITY STATE ---
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -191,24 +177,62 @@ const Dashboard = () => {
 
   const [dashboardData, setDashboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sharedLinks, setSharedLinks] = useState([]);
+  const [loadingLinks, setLoadingLinks] = useState(true);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    let cancelled = false;
+
+    const loadDashboardPage = async () => {
+      setIsLoading(true);
+      setLoadingLinks(true);
+
+      const [dashboardResult, sharesResult] = await Promise.allSettled([
+        dashboardService.getDashboardData(),
+        getSharedFiles(1, 5),
+      ]);
+
+      if (cancelled) return;
+
+      if (dashboardResult.status === 'fulfilled') {
+        setDashboardData(dashboardResult.value);
+      } else {
+        const err = dashboardResult.reason;
+        const detail = err?.response?.data?.detail || err?.response?.data?.error;
+        showToast(detail || 'Failed to fetch dashboard data', 'error');
+      }
+
+      if (sharesResult.status === 'fulfilled') {
+        setSharedLinks(sharesResult.value.data?.data || []);
+      } else {
+        showToast('Failed to fetch shared links', 'error');
+      }
+
+      setIsLoading(false);
+      setLoadingLinks(false);
+    };
+
+    loadDashboardPage();
+
+    const refreshDashboardStats = async () => {
       try {
         const data = await dashboardService.getDashboardData();
-        setDashboardData(data);
-      } catch (error) {
-        showToast("Failed to fetch dashboard data", "error");
-      } finally {
-        setIsLoading(false);
+        if (!cancelled) setDashboardData(data);
+      } catch {
+        /* keep existing data; sidebar already refreshed storage */
       }
     };
-    fetchDashboardData();
+    window.addEventListener('storage:refresh', refreshDashboardStats);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('storage:refresh', refreshDashboardStats);
+    };
   }, []);
 
   // Theme Sync Logic
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -341,6 +365,7 @@ const Dashboard = () => {
           }
         } catch (error) {
           if (isDuplicateError(error)) throw error;
+          if (isNonRetryableUploadError(error)) throw error;
           chunkRetries += 1;
           if (chunkRetries >= MAX_CHUNK_RETRIES) {
             patchFile(file.id, { status: 'paused', uploadId, nextChunkIndex: chunkIndex });
@@ -377,14 +402,17 @@ const Dashboard = () => {
           patchFile(file.id, { status: 'completed', progress: 100 });
           showToast(`"${file.name}" uploaded`, 'success');
         } catch (retryErr) {
-          patchFile(file.id, { status: 'error' });
-          showToast(retryErr?.response?.data?.error || `Failed to upload "${file.name}"`, 'error');
+          patchFile(file.id, { status: isNonRetryableUploadError(retryErr) ? 'error' : 'paused' });
+          showToast(getUploadErrorMessage(retryErr, file.name), 'error');
         }
         return;
       }
-      if (file.status !== 'paused') patchFile(file.id, { status: 'error' });
-      const errData = err?.response?.data;
-      showToast(errData?.error || errData?.content_type?.[0] || `Upload failed for "${file.name}"`, 'error');
+      if (isNonRetryableUploadError(err)) {
+        patchFile(file.id, { status: 'error' });
+      } else if (file.status !== 'paused') {
+        patchFile(file.id, { status: 'paused' });
+      }
+      showToast(getUploadErrorMessage(err, file.name), 'error');
     }
   };
 
@@ -399,6 +427,7 @@ const Dashboard = () => {
       const result = await uploadSingleFile(file, null);
       if (result?.cancelled) return false;
       patchFile(file.id, { status: 'completed', progress: 100 });
+      window.dispatchEvent(new Event('storage:refresh'));
       return true;
     } catch (err) {
       if (isDuplicateError(err)) {
@@ -414,15 +443,23 @@ const Dashboard = () => {
           patchFile(file.id, { status: 'completed', progress: 100 });
           return true;
         } catch (retryErr) {
-          patchFile(file.id, { status: retryErr?.response ? 'paused' : 'error' });
-          showToast(retryErr?.response?.data?.message || `Failed to upload "${file.name}"`, 'error');
+          if (isNonRetryableUploadError(retryErr)) {
+            patchFile(file.id, { status: 'error' });
+          } else {
+            patchFile(file.id, { status: 'paused' });
+          }
+          showToast(getUploadErrorMessage(retryErr, file.name), 'error');
           return false;
         }
       }
+      if (isNonRetryableUploadError(err)) {
+        patchFile(file.id, { status: 'error' });
+        showToast(getUploadErrorMessage(err, file.name), 'error');
+        return false;
+      }
       if (file.status !== 'paused') patchFile(file.id, { status: 'paused' });
-      const errData = err?.response?.data;
       showToast(
-        errData?.error || errData?.content_type?.[0] || errData?.file?.[0] || errData?.file_size?.[0] ||
+        getUploadErrorMessage(err, file.name) ||
         `Upload interrupted for "${file.name}". Press Resume to continue.`,
         'error'
       );
@@ -438,12 +475,15 @@ const Dashboard = () => {
   const handleFiles = (files) => {
     const newFiles = Array.from(files)
       .filter(file => {
-        if (!file.type && file.size % 4096 === 0) { showToast('Folders are not supported', 'error'); return false; }
-        if (file.type && !ALLOWED_CONTENT_TYPES.has(file.type)) {
-          showToast(`"${file.name}" — type not allowed`, 'error');
+        if (!file.type && file.size % 4096 === 0) {
+          showToast('Folders are not supported', 'error');
           return false;
         }
-        if (file.size > MAX_FILE_BYTES) { showToast(`"${file.name}" exceeds 100MB`, 'error'); return false; }
+        const check = validateFileForUpload(file);
+        if (!check.ok) {
+          showToast(check.message, 'error');
+          return false;
+        }
         return true;
       })
       .map(file => ({
@@ -489,7 +529,7 @@ const Dashboard = () => {
   };
 
   return (
-    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       
       {duplicateModal && (
         <DuplicateModal isDark={isDark} file={duplicateModal.file} onResolve={handleModalResolve} />
@@ -711,7 +751,7 @@ const Dashboard = () => {
 
       {/* 3. KPI ROW (Moved down as requested) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Files in System" value={dashboardData?.kpi?.total_files || 0} sub="Total Files in System" isDark={isDark} />
+          <StatCard label="Total Files in System" value={dashboardData?.kpi?.total_files || 0} sub="Total Files Managed" isDark={isDark} />
           <StatCard label="Total Sent" value={dashboardData?.kpi?.total_sent || 0} sub="Files delivered" isDark={isDark} />
           <StatCard label="Shared Contacts" value={dashboardData?.kpi?.shared_contacts || 0} sub="Active recipients" isDark={isDark} />
           <div className={`border p-5 rounded-2xl flex flex-col justify-center transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -743,16 +783,31 @@ const Dashboard = () => {
         </div>
 
         <div className={`border rounded-xl p-6 transition-colors ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <div className="flex justify-between items-center mb-6">
-            <div className={`font-bold text-sm uppercase tracking-tighter ${isDark ? 'text-white' : 'text-slate-800'}`}>Active Shared Links</div>
-            <div className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline">Manage links</div>
+<div className="flex justify-between items-center mb-6">
+            <div className={`font-bold text-sm uppercase tracking-tighter ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared Links</div>
+            <div onClick={() => navigate("/viewallshares")} className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline">View all links</div>
           </div>
           <div className="space-y-3">
-            {dashboardData?.active_links?.map((link, index) => (
-                <SharedLinkItem key={index} title={link.title} expiry={link.expiry} clicks={link.clicks} active={link.active} isDark={isDark} />
-            ))}
-            {(!dashboardData?.active_links || dashboardData.active_links.length === 0) && (
-                <div className={`text-sm font-medium ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>No active links</div>
+            {loadingLinks ? (
+              <div className="py-4 flex justify-center">
+                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : sharedLinks.length === 0 ? (
+              <div className={`text-sm font-medium ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>No active links</div>
+            ) : (
+              sharedLinks.map((link) => (
+                <SharedLinkItem
+                  key={link.id}
+                  title={link.file_name}
+                  recipient={link.recipient_email}
+                  expiry={link.expiration_datetime}
+                  status={link.status}
+                  isBundle={link.is_bundle}
+                  shareUrl={link.share_url}
+                  active={link.is_active}
+                  isDark={isDark}
+                />
+              ))
             )}
           </div>
         </div>
@@ -784,15 +839,15 @@ const ActivityItem = ({ icon, title, sub, time, isDark }) => (
 );
 
 const SharedLinkItem = ({ title, expiry, clicks, active, isDark }) => (
-  <div className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:bg-[#0f0f0f]' : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-blue-200'}`}>
+  <div className={`flex items-center justify-between p-3  transition-all cursor-pointer`}>
     <div className="flex items-center min-w-0">
       <div className={`w-2 h-2 rounded-full mr-4 ${active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : (isDark ? 'bg-[#222]' : 'bg-slate-300')}`}></div>
       <div className="min-w-0">
         <p className={`text-sm font-bold truncate ${isDark ? 'text-[#ccc]' : 'text-slate-700'}`}>{title}</p>
-        <p className={`text-[10px] font-black uppercase tracking-tighter ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{clicks} views • {expiry}</p>
+        <p className={`text-[10px] font-black  ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{clicks} Expires • {formatDateTime(expiry)}</p>
       </div>
     </div>
-    <i className={`fa-solid fa-arrow-up-right-from-square text-[10px] ${isDark ? 'text-[#222]' : 'text-slate-300'}`}></i>
+    
   </div>
 );
 

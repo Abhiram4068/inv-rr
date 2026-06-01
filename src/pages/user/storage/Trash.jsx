@@ -2,13 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from "react-router-dom";
 import { getDeletedFiles, restoreFile, clearTrashFile, bulkRestoreFiles, emptyTrash } from "../../../services/fileService";
 import { sizeFormatter } from '../../../utils/sizeFormatter';
+import { formatDateTime } from '../../../utils/dateFormatter';
 
 const TrashManagement = () => {
   // --- THEME STATE SYNC ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -127,6 +128,7 @@ const TrashManagement = () => {
       setDeleteModalOpen(false);
       setSelectedFile(null);
       showToast("File permanently deleted");
+      window.dispatchEvent(new Event('storage:refresh'));
       await fetchTrashFiles();
     } catch (err) {
       showToast(
@@ -175,6 +177,7 @@ const TrashManagement = () => {
       await emptyTrash();
       setEmptyTrashModalOpen(false);
       showToast("Trash emptied successfully");
+      window.dispatchEvent(new Event('storage:refresh'));
       await fetchTrashFiles();
     } catch (err) {
       showToast("Failed to empty trash", 'error');
@@ -188,15 +191,15 @@ const TrashManagement = () => {
   const indexOfFirstRow = (currentPage - 1) * rowsPerPage;
 
   return (
-    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 no-scrollbar min-h-screen transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 no-scrollbar min-h-screen transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
 
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
-        <div 
+        <div
           className={`fixed top-6 left-0 right-0 flex justify-center z-[10000] pointer-events-none
             transition-all duration-[350ms]
-            ${toast.animateOut 
-              ? 'opacity-0 -translate-y-6 scale-95' 
+            ${toast.animateOut
+              ? 'opacity-0 -translate-y-6 scale-95'
               : 'opacity-100 translate-y-0 scale-100'
             }`}
           style={{
@@ -205,18 +208,18 @@ const TrashManagement = () => {
           }}
         >
           <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
-            ${isDark 
-              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+            ${isDark
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200'
               : 'bg-white border-slate-100 text-slate-800'}`}>
-            
+
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
-              ${toast.type === 'error' 
-                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+              ${toast.type === 'error'
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500')
                 : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
               }`}>
               <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
             </div>
-            
+
             <span className="flex-1 leading-normal tracking-wide text-[13px]">
               {toast.message}
             </span>
@@ -252,18 +255,18 @@ const TrashManagement = () => {
               className={`text-xs rounded-xl py-2.5 pl-10 pr-6 w-full focus:outline-none transition-all border ${isDark ? 'bg-neutral-900/50 border-neutral-800 text-white focus:border-neutral-600' : 'bg-white border-slate-200 text-slate-800 focus:border-blue-400 shadow-sm'}`}
             />
           </div>
-          <button 
+          <button
             onClick={() => setBulkRestoreModalOpen(true)}
             disabled={trashFiles.length === 0}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm border
-${isDark 
-  ? 'bg-[#0d0d0d] border-[#1e1e1e] text-blue-400 hover:bg-[#151515] hover:border-blue-500/30' 
-  : 'bg-white border-slate-100 text-blue-600 hover:bg-slate-50 shadow-blue-500/5'
-} disabled:opacity-30 disabled:cursor-not-allowed`}>
-  <i className="fa-solid fa-rotate-left"></i>
+${isDark
+                ? 'bg-[#0d0d0d] border-[#1e1e1e] text-blue-400 hover:bg-[#151515] hover:border-blue-500/30'
+                : 'bg-white border-slate-100 text-blue-600 hover:bg-slate-50 shadow-blue-500/5'
+              } disabled:opacity-30 disabled:cursor-not-allowed`}>
+            <i className="fa-solid fa-rotate-left"></i>
             Restore All
           </button>
-          <button 
+          <button
             onClick={() => setEmptyTrashModalOpen(true)}
             disabled={trashFiles.length === 0}
             className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'bg-white text-black hover:bg-neutral-200' : 'bg-slate-800 text-white hover:bg-slate-900'}`}>
@@ -279,17 +282,17 @@ ${isDark
         <div className={`p-6 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${isDark ? 'border-[#1a1a1a] bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
           <div>
             <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>Trash Records</h3>
-          <p className={`text-[10px] font-bold mt-1 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
-            {loading
-              ? 'Loading...'
-              : (() => {
+            <p className={`text-[10px] font-bold mt-1 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
+              {loading
+                ? 'Loading...'
+                : (() => {
                   const start = totalFiles === 0 ? 0 : indexOfFirstRow + 1;
                   const end = Math.min(indexOfFirstRow + trashFiles.length, totalFiles);
                   const safeEnd = end < start ? start : end;
 
                   return `Showing ${start}–${safeEnd} of ${totalFiles}`;
                 })()}
-          </p>
+            </p>
           </div>
 
           <div className="flex items-center gap-3 p-1.5">
@@ -322,6 +325,7 @@ ${isDark
                 <th className="p-4 pl-6 text-[10px] uppercase text-[#444] font-bold tracking-widest">File Name</th>
                 <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Deleted At</th>
                 <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Size</th>
+                <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Expires In</th>
                 <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest text-right pr-6">Actions</th>
               </tr>
             </thead>
@@ -361,17 +365,35 @@ ${isDark
                         <div>
                           <p className={`text-sm font-bold truncate max-w-[220px] ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.original_name}</p>
                           <p className={`text-[10px] font-bold ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>
-                            Deleted on: {file.deleted_at ? new Date(file.deleted_at).toLocaleDateString() : 'N/A'}
+                            Deleted on: {file.deleted_at ? formatDateTime(file.deleted_at) : 'N/A'}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-                      {file.deleted_at ? new Date(file.deleted_at).toLocaleString() : '—'}
+                      {file.deleted_at ? formatDateTime(file.deleted_at) : '—'}
                     </td>
                     <td className="p-4">
-                      <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.file_size || '—'}</span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{file.file_size || '—'}</span>
                     </td>
+                    <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
+              {file.deleted_at ? (() => {
+                const deletedDate = new Date(file.deleted_at);
+                const expiresAt = new Date(deletedDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+                const daysLeft = Math.ceil((expiresAt - new Date()) / (1000 * 60 * 60 * 24));
+                return (
+                  <span className={`font-bold ${
+                    daysLeft <= 3
+                      ? 'text-red-500'
+                      : daysLeft <= 7
+                        ? 'text-amber-500'
+                        : isDark ? 'text-[#808080]' : 'text-slate-500'
+                  }`}>
+                    {daysLeft <= 0 ? 'Expiring soon' : `${daysLeft} day${daysLeft === 1 ? '' : 's'}`}
+                  </span>
+                );
+              })() : '—'}
+            </td>
                     <td className="p-4 pr-6">
                       <div className="flex justify-end gap-2">
                         <button
@@ -433,7 +455,7 @@ ${isDark
                 <button
                   onClick={handleRestoreFile}
                   disabled={actionLoading}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg   disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {actionLoading
                     ? <><i className="fa-solid fa-circle-notch animate-spin"></i> Restoring...</>
@@ -444,76 +466,72 @@ ${isDark
           </div>
         </div>
       )}
-{/* DELETE MODAL */}
-{isDeleteModalOpen && (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-    <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-6 border animate-in zoom-in-95 duration-200 ${
-      isDark
-        ? 'bg-[#0d0d0d] border-[#1a1a1a]'
-        : 'bg-white border-slate-200'
-    }`}>
-      
-      <div className="text-center">
+      {/* DELETE MODAL */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-6 border animate-in zoom-in-95 duration-200 ${isDark
+            ? 'bg-[#0d0d0d] border-[#1a1a1a]'
+            : 'bg-white border-slate-200'
+            }`}>
 
-        <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i className="fa-solid fa-trash text-2xl"></i>
+            <div className="text-center">
+
+              <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i className="fa-solid fa-trash text-2xl"></i>
+              </div>
+
+              <h2 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'
+                }`}>
+                Delete File Permanently?
+              </h2>
+
+              <p className={`text-xs leading-relaxed mb-6 ${isDark ? 'text-[#666]' : 'text-slate-500'
+                }`}>
+                Are you sure you want to permanently delete{" "}
+                <strong className={isDark ? 'text-white' : 'text-slate-800'}>
+                  {selectedFile?.original_name}
+                </strong>?
+                {" "}This action cannot be undone.
+              </p>
+
+              <div className="flex gap-3">
+
+                <button
+                  onClick={() => setDeleteModalOpen(false)}
+                  disabled={actionLoading}
+                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${isDark
+                    ? 'bg-[#1a1a1a] text-[#808080] hover:bg-[#222]'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleDeleteFile}
+                  disabled={actionLoading}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {actionLoading
+                    ? (
+                      <>
+                        <i className="fa-solid fa-circle-notch animate-spin"></i>
+                        Deleting...
+                      </>
+                    )
+                    : (
+                      <>
+                        <i className="fa-solid fa-trash"></i>
+                        Delete
+                      </>
+                    )}
+                </button>
+
+              </div>
+            </div>
+          </div>
         </div>
-
-        <h2 className={`text-lg font-bold mb-2 ${
-          isDark ? 'text-white' : 'text-slate-800'
-        }`}>
-          Delete File Permanently?
-        </h2>
-
-        <p className={`text-xs leading-relaxed mb-6 ${
-          isDark ? 'text-[#666]' : 'text-slate-500'
-        }`}>
-          Are you sure you want to permanently delete{" "}
-          <strong className={isDark ? 'text-white' : 'text-slate-800'}>
-            {selectedFile?.original_name}
-          </strong>?
-          {" "}This action cannot be undone.
-        </p>
-
-        <div className="flex gap-3">
-
-          <button
-            onClick={() => setDeleteModalOpen(false)}
-            disabled={actionLoading}
-            className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${
-              isDark
-                ? 'bg-[#1a1a1a] text-[#808080] hover:bg-[#222]'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleDeleteFile}
-            disabled={actionLoading}
-            className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {actionLoading
-              ? (
-                <>
-                  <i className="fa-solid fa-circle-notch animate-spin"></i>
-                  Deleting...
-                </>
-              )
-              : (
-                <>
-                  <i className="fa-solid fa-trash"></i>
-                  Delete
-                </>
-              )}
-          </button>
-
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
       {/* BULK RESTORE MODAL */}
       {isBulkRestoreModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -537,7 +555,7 @@ ${isDark
                 <button
                   onClick={handleBulkRestore}
                   disabled={actionLoading}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg   disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {actionLoading
                     ? <><i className="fa-solid fa-circle-notch animate-spin"></i> Restoring...</>

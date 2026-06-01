@@ -4,7 +4,7 @@ import { updateFile, getFileById,  archiveFile, deleteFile, getFileViewUrl, down
 import ShareModal from '../../components/ShareModal';
 import { getCollections, addFileToCollection } from '../../services/collectionService';
 import { useNavigate } from 'react-router-dom';
-
+import { getFileMeta } from '../../utils/fileIcons';
 
 const FileDetails = () => {
 
@@ -20,6 +20,7 @@ const FileDetails = () => {
   const [file, setFile] = useState(null);
   const [fetchError, setFetchError] = useState("");
   const [fetchLoading, setLoading] = useState(true);
+  const [showAllShares, setShowAllShares] = useState(false);
 
   //states for file update handling
   const [saveLoading, setSaveLoading] = useState(false);
@@ -75,10 +76,10 @@ useEffect(() => {
   };
 }, [file?.file_url]);
   // Theme State Sync
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -110,6 +111,8 @@ useEffect(() => {
   const [collections, setCollections] = useState([]);
   const [organizeSearch, setOrganizeSearch] = useState("");
   const [organizeLoading, setOrganizeLoading] = useState(false);
+  const [collectionsPage, setCollectionsPage] = useState(1);
+const [collectionsTotalPages, setCollectionsTotalPages] = useState(1);
 
   const [tempName, setTempName] = useState(fileData.display_name);
   const [tempDesc, setTempDesc] = useState(fileData.description);
@@ -130,29 +133,35 @@ const showToast = (msg, type = 'success') => {
     }
   }, [toast.visible]);
 
-  useEffect(() => {
-    if (activeModal === 'organize') {
-      const fetchCollections = async () => {
-        setOrganizeLoading(true);
-        try {
-          const res = await getCollections();
-          setCollections(res.data.collections || []);
-        } catch (error) {
-          showToast("Failed to load collections");
-        } finally {
-          setOrganizeLoading(false);
-        }
-      };
-      fetchCollections();
-    }
-  }, [activeModal]);
+const fetchCollections = async (page = 1) => {
+  setOrganizeLoading(true);
+  try {
+    const res = await getCollections("", "created_at", "desc", page);
+    setCollections(res.data.results || []);
+    setCollectionsTotalPages(Math.ceil(res.data.count / 12));
+  } catch (error) {
+    showToast("Failed to load collections");
+  } finally {
+    setOrganizeLoading(false);
+  }
+};
 
-  const handleShareSuccess = () => {
-    setActiveModal(null);
-    showToast(`Shared successfully`);
-    fetchFile();
-  };
+useEffect(() => {
+  if (activeModal === 'organize') {
+    fetchCollections(1);
+    setCollectionsPage(1);
+  }
+}, [activeModal]);
 
+const handleShareSuccess = (message) => {
+  setActiveModal(null);
+
+  setTimeout(() => {
+    showToast(message || "File shared successfully");
+  }, 150);
+
+  fetchFile();
+};
 const saveDetails = async () => {
   setSaveLoading(true);
   setSaveError("");
@@ -286,22 +295,6 @@ const handleDownload = async () => {
     return `${days}d ago`;
   };
 
-  const iconClassForFile = (f) => {
-    const name = f?.original_name || "";
-    const ct = f?.content_type || "";
-    const lower = String(name).toLowerCase();
-
-    if (lower.endsWith(".pdf") || String(ct).includes("pdf")) return "fa-file-pdf";
-    if ((lower.endsWith(".doc") || lower.endsWith(".docx")) || String(ct).includes("word")) return "fa-file-word";
-    if ((lower.endsWith(".xls") || lower.endsWith(".xlsx")) || String(ct).includes("excel")) return "fa-file-excel";
-    if ((lower.endsWith(".ppt") || lower.endsWith(".pptx")) || String(ct).includes("powerpoint")) return "fa-file-powerpoint";
-    if ((lower.endsWith(".zip") || lower.endsWith(".rar")) || String(ct).includes("zip")) return "fa-file-zipper";
-    if (/\.(png|jpe?g|gif|webp)$/.test(lower) || String(ct).includes("image")) return "fa-file-image";
-    if (/\.(mp4|mov|mkv|webm)$/.test(lower) || String(ct).includes("video")) return "fa-file-video";
-    if (lower.endsWith(".txt") || String(ct).includes("text")) return "fa-file-lines";
-    return "fa-file";
-  };
-
   const getFileDocType = (f) => {
     const name = f?.original_name || "";
     const lower = String(name).toLowerCase();
@@ -323,8 +316,9 @@ const handleDownload = async () => {
       {fetchError}
     </div>
   );
+  const fileMeta = getFileMeta(file?.content_type || "");
   return (
-    <div className={`flex-1 flex flex-col lg:flex-row overflow-hidden transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <div className={`flex-1 flex flex-col lg:flex-row overflow-hidden transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
 
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
@@ -383,8 +377,8 @@ const handleDownload = async () => {
         {/* Top Header Section */}
         <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-500/20 text-white">
-              <i className={`fa-solid ${iconClassForFile(file)}`}></i>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style={{ color: fileMeta.color }}>
+            <i className={`fa-solid ${fileMeta.icon}`}></i>          
             </div>
             <div>
               <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{fileData.display_name}</h1>
@@ -484,21 +478,34 @@ const handleDownload = async () => {
         <div className={`mt-auto border-t pt-8 mb-10 ${isDark ? 'border-[#1a1a1a]' : 'border-slate-200'}`}>
           <h3 className={`text-sm font-bold mb-5 ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared With</h3>
           <div className="flex flex-wrap gap-3">
-            {(file?.shares || []).map((share) => (
-              <div key={share.id} className={`border px-4 py-2 rounded-full flex items-center gap-3 text-xs transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                <div className="w-5 h-5 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center text-[8px] font-bold">
-                  {share.recipient_email[0].toUpperCase()}
-                </div>
-                <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{share.recipient_email}</span>
-               
-              </div>
-            ))}
-            {(file?.shares || []).length === 0 && (
-              <p className={`text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Not shared with anyone yet.</p>
-            )}
-            <button onClick={() => setActiveModal('share')} className={`border border-dashed px-4 py-2 rounded-full text-xs transition-all flex items-center gap-2 ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-blue-600 hover:border-blue-600'}`}>
-              <i className="fa-solid fa-plus"></i> Add Person
-            </button>
+{(file?.shares || []).length === 0 && (
+  <p className={`text-xs ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>Not shared with anyone yet.</p>
+)}
+
+{(showAllShares ? (file?.shares || []) : (file?.shares || []).slice(0, 3)).map((share) => (
+  <div key={share.id} className={`border px-4 py-2 rounded-full flex items-center gap-3 text-xs transition-colors ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+    <div className="w-5 h-5 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center text-[8px] font-bold">
+      {share.recipient_email[0].toUpperCase()}
+    </div>
+    <span className={`${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{share.recipient_email}</span>
+  </div>
+))}
+
+{(file?.shares || []).length > 3 && !showAllShares && (
+  <button onClick={() => setShowAllShares(true)} className={`border px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]' : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400'}`}>
+    +{(file?.shares || []).length - 3} more
+  </button>
+)}
+
+{showAllShares && (file?.shares || []).length > 3 && (
+  <button onClick={() => setShowAllShares(false)} className={`border px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:text-white hover:border-[#333]' : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400'}`}>
+    Show less
+  </button>
+)}
+
+<button onClick={() => setActiveModal('share')} className={`border border-dashed px-4 py-2 rounded-full text-xs transition-all flex items-center gap-2 ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-blue-600 hover:border-blue-600'}`}>
+  <i className="fa-solid fa-plus"></i> Add Person
+</button>
           </div>
         </div>
       </main>
@@ -657,15 +664,29 @@ className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm flex-s
                     </div>
                   )}
                 </div>
-
-                <div className="mt-6 pt-6 border-t border-[#1a1a1a] flex gap-3">
-                  <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-red-600 hover:text-white' : 'border-slate-200 text-slate-500 hover:bg-red-600 hover:text-white'}`}>
-                    Close
-                  </button>
-                  <button onClick={() => navigate('/collections')} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-blue-600/10 text-blue-500 border border-blue-500/30 hover:bg-blue-600 hover:text-white' : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white'}`}>
-                    View all collections
-                  </button>
-                </div>
+<div className="mt-6 pt-6 border-t border-[#1a1a1a] flex flex-col gap-3">
+  <div className="flex items-center justify-between gap-2">
+    <button
+      disabled={collectionsPage === 1}
+      onClick={() => { const p = collectionsPage - 1; setCollectionsPage(p); fetchCollections(p); }}
+      className={`flex-1 py-2 border rounded-xl font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+    >
+      <i className="fa-solid fa-chevron-left mr-1"></i> Prev
+    </button>
+    <span className={`text-[10px] font-bold ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{collectionsPage} / {collectionsTotalPages}</span>
+    <button
+      disabled={collectionsPage === collectionsTotalPages}
+      onClick={() => { const p = collectionsPage + 1; setCollectionsPage(p); fetchCollections(p); }}
+      className={`flex-1 py-2 border rounded-xl font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-[#111]' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+    >
+      Next <i className="fa-solid fa-chevron-right ml-1"></i>
+    </button>
+  </div>
+  <div className="flex gap-3">
+    <button onClick={() => setActiveModal(null)} className={`flex-1 py-3 border rounded-xl font-bold text-xs transition-colors ${isDark ? 'border-[#1a1a1a] text-[#808080] hover:bg-red-600 hover:text-white' : 'border-slate-200 text-slate-500 hover:bg-red-600 hover:text-white'}`}>Close</button>
+    <button onClick={() => navigate('/collections')} className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-blue-600/10 text-blue-500 border border-blue-500/30 hover:bg-blue-600 hover:text-white' : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white'}`}>View all collections</button>
+  </div>
+</div>
               </div>
             )}
           </div>

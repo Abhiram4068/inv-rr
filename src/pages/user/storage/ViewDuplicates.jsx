@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { getStorageFiles, permanentDeleteFiles } from "../../../services/storageService";
 import { sizeFormatter } from '../../../utils/sizeFormatter';
+import { useNavigate } from "react-router-dom";
 
 const DuplicateManager = () => {
+  const navigate = useNavigate();
   // --- THEME STATE SYNC ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -16,7 +18,7 @@ const DuplicateManager = () => {
   const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -89,7 +91,7 @@ const DuplicateManager = () => {
   };
 
   return (
-    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar min-h-screen transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar min-h-screen transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       
       {/* Breadcrumb & Navigation */}
       <div className="flex items-center gap-4 mb-6">
@@ -102,7 +104,7 @@ const DuplicateManager = () => {
         <nav className="flex items-center gap-2 text-sm font-bold">
           <Link to="/dashboard" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Home</Link>
           <i className={`fa-solid fa-chevron-right text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
-          <Link to="/storage-management" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Storage Management</Link>
+          <Link to="/storage" className={`${isDark ? 'text-[#808080] hover:text-white' : 'text-slate-400 hover:text-blue-600'}`}>Storage Management</Link>
           <i className={`fa-solid fa-chevron-right text-[10px] ${isDark ? 'text-[#333]' : 'text-slate-300'}`}></i>
           <span className={isDark ? 'text-white' : 'text-slate-800'}>Duplicate Files</span>
         </nav>
@@ -131,15 +133,14 @@ const DuplicateManager = () => {
       </div>
 
       {/* Content Area - Data Table */}
-      <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
+      <div className={`rounded-lg border overflow-hidden ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className={`text-[10px] uppercase tracking-[0.15em] border-b ${isDark ? 'text-[#808080] border-[#1a1a1a]' : 'text-slate-400 border-slate-100 bg-slate-50/50'}`}>
                 <th className="p-6 font-bold">Duplicate File</th>
-                <th className="p-6 font-bold">Original File</th>
+                <th className="p-6 font-bold">Issue</th>
                 <th className="p-6 font-bold">Size</th>
-                <th className="p-6 font-bold text-center">View</th>
                 <th className="p-6 font-bold text-right">Manage</th>
               </tr>
             </thead>
@@ -147,7 +148,7 @@ const DuplicateManager = () => {
               {isLoading ? (
                 <tr><td colSpan="5" className="p-10 text-center"><i className="fa-solid fa-spinner fa-spin text-blue-500 text-2xl"></i></td></tr>
               ) : files.map((file) => (
-                <tr key={file.id} className={`group transition-all duration-200 ${isDark ? 'hover:bg-[#111]' : 'hover:bg-slate-50'}`}>
+                <tr key={file.id} onClick={() => navigate(`/file/${file.id}`)} className={`group transition-all duration-200 ${isDark ? 'hover:bg-[#111]' : 'hover:bg-slate-50'}`}>
                   <td className="p-4 text-sm">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isDark ? 'bg-[#111] group-hover:bg-[#1a1a1a]' : 'bg-slate-100'}`}>
@@ -164,17 +165,12 @@ const DuplicateManager = () => {
                     Duplicate file
                   </td>
                   <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{sizeFormatter(file.file_size)}</td>
-                  <td className="p-4 text-sm text-center">
-                    <button className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#111] text-[#808080] hover:text-white hover:bg-[#1a1a1a]' : 'bg-slate-100 text-slate-400 hover:text-blue-600 hover:bg-slate-200'}`}>
-                      <i className="fa-solid fa-eye text-xs"></i>
-                    </button>
-                  </td>
                   <td className="p-4 text-sm text-right">
                     <button 
                       onClick={() => handleDeleteClick(file)}
                       className="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm"
                     >
-                      Remove
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -219,7 +215,7 @@ const DuplicateManager = () => {
       {/* DELETE CONFIRMATION MODAL */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
-          <div className={`p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+          <div className={`p-8 rounded-lg w-full max-w-sm text-center shadow-2xl border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
             <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                <i className="fa-solid fa-trash-can text-xl"></i>
             </div>

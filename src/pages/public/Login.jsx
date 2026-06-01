@@ -34,7 +34,7 @@ const Login = () => {
         navigate("/dashboard", { replace: true });
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.error || err.response?.data?.detail || "Invalid email or password";
+      const errorMsg = err.response?.data?.error || err.response?.data?.detail || "Login Failed"
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -50,9 +50,13 @@ const Login = () => {
       {/* LEFT SIDE: Welcome Back Panel (Pure Deep Black & Ultra Clean Typography) */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-16 bg-black border-r border-[#1e1e20] relative">
         <div className="relative z-10">
-          <div className="text-xl font-bold tracking-tight text-white mb-24">
+        <div className="flex items-center gap-2 mb-24">
+          <i className="fa-solid fa-users text-white text-lg"></i>
+
+          <div className="text-xl font-bold tracking-tight text-white">
             HiveDrive<span className="text-blue-500">.</span>
           </div>
+        </div>
           <h1 className="text-5xl font-semibold tracking-tight text-white leading-[1.15] mb-6">
             Welcome back to <br />
             <span className="text-blue-400 font-bold italic">the Hive.</span>
@@ -63,6 +67,14 @@ const Login = () => {
         </div>
 
         <div className="relative z-10 flex items-center gap-4 text-[#71717a] text-xs tracking-wide uppercase border-t border-[#1e1e20] pt-8">
+                    <div>
+            <div className="text-white text-sm font-medium tracking-wide uppercase mb-1">Ready to Continue?</div>
+            <div className="text-[#71717a] text-xs leading-relaxed">Access your workspace and stay on top of every project.</div>
+          </div>
+          <div>
+            <div className="text-white text-sm font-medium tracking-wide uppercase mb-1">Back to Work, Simplified</div>
+            <div className="text-[#71717a] text-xs leading-relaxed">Manage projects and stay productive.</div>
+          </div>
         </div>
       </div>
 
@@ -81,7 +93,7 @@ const Login = () => {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-md bg-red-950/20 border border-red-900/50 text-red-400 text-xs tracking-wide text-center">
+            <div className="p-2 mb-2 rounded-md text-red-400 text-xs tracking-wide text-center">
               {error}
             </div>
           )}
@@ -97,11 +109,11 @@ const Login = () => {
                 <input 
                   type="email" 
                   name="email"
-                  placeholder="name@example.com" 
+                  placeholder="name@company.com" 
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm outline-none transition-colors focus:border-blue-500"
+                  className="w-full bg-[#121214] border border-[#27272a] py-3 pl-11 pr-4 rounded-md text-white text-sm outline-none   placeholder:text-xs placeholder:italic placeholder:text-[#4a4a4a]  transition-colors focus:border-blue-500"
                 />
               </div>
             </div>

@@ -10,11 +10,11 @@ const SchedulesList = () => {
 
 
   const [revokeTarget, setRevokeTarget] = useState(null);
-  const [revoking, setRevoking]         = useState(false);
+  const [revoking, setRevoking] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success', animateOut: false });
 
   const scrollRef = useRef(null);
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [viewMode, setViewMode] = useState('list');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedSchedule, setSelectedSchedule] = useState(null);
@@ -22,7 +22,7 @@ const SchedulesList = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [schedules, setSchedules] = useState([]);
   const [totalSchedules, setTotalSchedules] = useState(0);
-  const [filteredTotal, setFilteredTotal] = useState(0); 
+  const [filteredTotal, setFilteredTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,7 +36,7 @@ const SchedulesList = () => {
   const showToast = (message, type = 'success') => {
     setToast({ visible: true, message: message, type: type, animateOut: false });
   };
- 
+
   // Toast auto-dismiss with clean slide-up exit animation
   useEffect(() => {
     if (toast.visible) {
@@ -86,10 +86,10 @@ const SchedulesList = () => {
       }
     };
     fetchSchedules();
-  }, [currentPage, statusFilter]); 
+  }, [currentPage, statusFilter]);
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -167,9 +167,9 @@ const SchedulesList = () => {
 
   const getShareStyle = (share) => {
     switch (share) {
-      case 'active': return isDark ? 'text-emerald-500 ' : 'text-emerald-600';
+      case 'Active': return isDark ? 'text-emerald-500 ' : 'text-emerald-600';
       case 'Accessed': return isDark ? 'text-blue-500 ' : 'text-blue-600';
-      case 'revoked': return isDark ? 'text-red-500 ' : 'text-red-600';
+      case 'Revoked': return isDark ? 'text-red-400 ' : 'text-red-500';
       default: return isDark ? 'text-[#808080] ' : 'text-slate-500';
     }
   };
@@ -177,7 +177,6 @@ const SchedulesList = () => {
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Sent': return isDark ? ' text-emerald-500 ' : ' text-emerald-600 ';
-      case 'Failed': return isDark ? ' text-red-500 ' : ' text-red-600 ';
       case 'Pending': return isDark ? ' text-yellow-400 ' : ' text-yellow-600 ';
       case 'Revoked': return isDark ? ' text-orange-500 ' : ' text-orange-600 ';
       default: return isDark ? 'text-[#808080] ' : ' text-slate-500 ';
@@ -207,49 +206,49 @@ const SchedulesList = () => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-const getStatusStyles = (status) => {
-  switch ((status || "").toLowerCase()) {
+  const getStatusStyles = (status) => {
+    switch ((status || "").toLowerCase()) {
 
-    case "active":
-      return isDark
-        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-        : "bg-emerald-50 text-emerald-600 border border-emerald-100";
+      case "sent":
+        return isDark
+          ? "text-emerald-400  border-emerald-500/20"
+          : "text-emerald-600  border-emerald-100";
 
-    case "expired":
-      return isDark
-        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-        : "bg-amber-50 text-amber-600 border border-amber-100";
+      case "expired":
+        return isDark
+          ? "text-amber-400  border-amber-500/20"
+          : "text-amber-600  border-amber-100";
 
-    case "revoked":
-      return isDark
-        ? "bg-red-500/10 text-red-400 border border-red-500/20"
-        : "bg-red-50 text-red-600 border border-red-100";
+      case "revoked":
+        return isDark
+          ? "text-red-400  border-red-500/20"
+          : "text-red-600  border-red-100";
 
-    case "accessed":
-      return isDark
-        ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-        : "bg-blue-50 text-blue-600 border border-blue-100";
+      case "accessed":
+        return isDark
+          ? "text-blue-400  border-blue-500/20"
+          : "text-blue-600  border-blue-100";
 
-    case "scheduled":
-      return isDark
-        ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-        : "bg-purple-50 text-purple-600 border border-purple-100";
+      case "pending":
+        return isDark
+          ? "text-yellow-400  border-yellow-500/20"
+          : "text-yellow-600  border-yellow-100";
 
-    default:
-      return isDark
-        ? "bg-neutral-800 text-neutral-300 border border-neutral-700"
-        : "bg-slate-100 text-slate-600 border border-slate-200";
-  }
-};
+      default:
+        return isDark
+          ? "text-neutral-300  border-neutral-700"
+          : "text-slate-600  border-slate-200";
+    }
+  };
   return (
-    <div ref={scrollRef} className={`flex-1 min-h-screen p-6 lg:p-10 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <div ref={scrollRef} className={`flex-1 min-h-screen p-6 lg:p-10 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
-        <div 
+        <div
           className={`fixed top-6 left-0 right-0 flex justify-center z-[10000] pointer-events-none
             transition-all duration-[350ms]
-            ${toast.animateOut 
-              ? 'opacity-0 -translate-y-6 scale-95' 
+            ${toast.animateOut
+              ? 'opacity-0 -translate-y-6 scale-95'
               : 'opacity-100 translate-y-0 scale-100'
             }`}
           style={{
@@ -258,18 +257,18 @@ const getStatusStyles = (status) => {
           }}
         >
           <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
-            ${isDark 
-              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' 
+            ${isDark
+              ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200'
               : 'bg-white border-slate-100 text-slate-800'}`}>
-            
+
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
-              ${toast.type === 'error' 
-                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500') 
+              ${toast.type === 'error'
+                ? (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500')
                 : (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')
               }`}>
               <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
             </div>
-            
+
             <span className="flex-1 leading-normal tracking-wide text-[13px]">
               {toast.message}
             </span>
@@ -283,67 +282,67 @@ const getStatusStyles = (status) => {
           to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
-{revokeTarget && (
-  <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-md">
-    <div className={`p-8 rounded-xl w-full max-w-lg shadow-2xl border animate-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0a0a0a] border-neutral-800' : 'bg-white border-slate-200'}`}>
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <p className={`text-[10px] uppercase font-black tracking-[0.2em] mb-2 ${isDark ? 'text-red-500' : 'text-red-600'}`}>
-            Confirm Revoke
-          </p>
-          <h3 className={`text-2xl font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            Are you sure?
-          </h3>
-        </div>
-        <button
-          onClick={() => setRevokeTarget(null)}
-          className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-neutral-800 text-neutral-500' : 'hover:bg-slate-100 text-slate-400'} hover:text-red-500`}
-        >
-          <i className="fa-solid fa-xmark text-xl"></i>
-        </button>
-      </div>
+      {revokeTarget && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-md">
+          <div className={`p-8 rounded-xl w-full max-w-lg shadow-2xl border animate-in zoom-in-95 duration-200 ${isDark ? 'bg-[#0a0a0a] border-neutral-800' : 'bg-white border-slate-200'}`}>
+            <div className="flex justify-between items-start mb-8">
+              <div>
+                <p className={`text-[10px] uppercase font-black tracking-[0.2em] mb-2 ${isDark ? 'text-red-500' : 'text-red-600'}`}>
+                  Confirm Revoke
+                </p>
+                <h3 className={`text-2xl font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  Are you sure?
+                </h3>
+              </div>
+              <button
+                onClick={() => setRevokeTarget(null)}
+                className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-neutral-800 text-neutral-500' : 'hover:bg-slate-100 text-slate-400'} hover:text-red-500`}
+              >
+                <i className="fa-solid fa-xmark text-xl"></i>
+              </button>
+            </div>
 
-      <div className="space-y-6">
-        <div className={`flex items-center gap-4 p-4 rounded-xl border ${isDark ? 'bg-[#111] border-neutral-800' : 'bg-slate-50 border-slate-200'}`}>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-red-500/10' : 'bg-red-50'}`}>
-            <i className="fa-solid fa-ban text-red-500"></i>
+            <div className="space-y-6">
+              <div className={`flex items-center gap-4 p-4 rounded-xl border ${isDark ? 'bg-[#111] border-neutral-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-red-500/10' : 'bg-red-50'}`}>
+                  <i className="fa-solid fa-ban text-red-500"></i>
+                </div>
+                <div>
+                  <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    {revokeTarget.file_name}
+                  </p>
+                  <p className={`text-[11px] mt-0.5 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
+                    {revokeTarget.recipients?.[0]} · {revokeTarget.date} at {revokeTarget.time}
+                  </p>
+                </div>
+              </div>
+
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
+                This will permanently cancel the scheduled delivery. The action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-10">
+              <button
+                onClick={() => setRevokeTarget(null)}
+                disabled={revoking}
+                className={`flex-1 border py-4 rounded-2xl text-sm font-bold transition-all ${isDark ? 'bg-transparent text-neutral-400 border-neutral-800 hover:bg-neutral-900 hover:text-white' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRevoke}
+                disabled={revoking}
+                className="flex-[2] py-4 rounded-2xl text-sm font-bold transition-all active:scale-[0.98] bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {revoking
+                  ? <><i className="fa-solid fa-circle-notch animate-spin"></i> Revoking...</>
+                  : <><i className="fa-solid fa-ban"></i> Yes, Revoke</>}
+              </button>
+            </div>
           </div>
-          <div>
-            <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {revokeTarget.file_name}
-            </p>
-            <p className={`text-[11px] mt-0.5 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>
-              {revokeTarget.recipients?.[0]} · {revokeTarget.date} at {revokeTarget.time}
-            </p>
-          </div>
         </div>
-
-        <p className={`text-sm leading-relaxed ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
-          This will permanently cancel the scheduled delivery. The action cannot be undone.
-        </p>
-      </div>
-
-      <div className="flex gap-3 mt-10">
-        <button
-          onClick={() => setRevokeTarget(null)}
-          disabled={revoking}
-          className={`flex-1 border py-4 rounded-2xl text-sm font-bold transition-all ${isDark ? 'bg-transparent text-neutral-400 border-neutral-800 hover:bg-neutral-900 hover:text-white' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'}`}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleRevoke}
-          disabled={revoking}
-          className="flex-[2] py-4 rounded-2xl text-sm font-bold transition-all active:scale-[0.98] bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {revoking
-            ? <><i className="fa-solid fa-circle-notch animate-spin"></i> Revoking...</>
-            : <><i className="fa-solid fa-ban"></i> Yes, Revoke</>}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
       {/* --- DETAIL MODAL --- */}
       {selectedSchedule && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-md">
@@ -395,36 +394,35 @@ const getStatusStyles = (status) => {
                 </div>
               </div>
             </div>
-<div className="flex gap-3 mt-10">
-  {/* Cancel Button */}
-  <button
-    onClick={() => setSelectedSchedule(null)}
-    className={`flex-1 border py-4 rounded-xl text-sm font-bold transition-all ${
-      isDark
-        ? 'bg-transparent text-neutral-400 border-neutral-800 hover:bg-neutral-900 hover:text-white'
-        : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
-    }`}
-  >
-    Cancel
-  </button>
+            <div className="flex gap-3 mt-10">
+              {/* Cancel Button */}
+              <button
+                onClick={() => setSelectedSchedule(null)}
+                className={`flex-1 border py-4 rounded-xl text-sm font-bold transition-all ${isDark
+                    ? 'bg-transparent text-neutral-400 border-neutral-800 hover:bg-neutral-900 hover:text-white'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                  }`}
+              >
+                Cancel
+              </button>
 
-  {/* Revoke Button */}
-<button
-  onClick={() => {
-    if (selectedSchedule.status !== "Pending") return;
-    const schedule = selectedSchedule;
-    setSelectedSchedule(null);
-    setRevokeTarget(schedule);
-  }}
-  disabled={selectedSchedule.status !== "Pending"}
-  className={`flex-[2] py-4 rounded-xl text-sm font-bold transition-all
+              {/* Revoke Button */}
+              <button
+                onClick={() => {
+                  if (selectedSchedule.status !== "Pending") return;
+                  const schedule = selectedSchedule;
+                  setSelectedSchedule(null);
+                  setRevokeTarget(schedule);
+                }}
+                disabled={selectedSchedule.status !== "Pending"}
+                className={`flex-[2] py-4 rounded-xl text-sm font-bold transition-all
     ${selectedSchedule.status !== "Pending" ? 'opacity-40 cursor-not-allowed bg-gray-400' : 'bg-red-600 hover:bg-red-900'}
     text-white shadow-lg
   `}
->
-    Revoke Schedule
-  </button>
-</div>       </div>
+              >
+                Revoke Schedule
+              </button>
+            </div>       </div>
         </div>
       )}
 
@@ -435,12 +433,12 @@ const getStatusStyles = (status) => {
           <p className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm mt-1`}>Manage your automated and upcoming file deliveries.</p>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <Link to="/schedule-mail" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20">
+          <Link to="/schedule-mail" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg  ">
             <i className="fa-solid fa-plus"></i> Schedule
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200 shadow-sm'}`}>
-              {['All', 'Pending', 'Sent', 'Failed', 'Revoked'].map((status) => (
+              {['All', 'Pending', 'Sent',  'Revoked'].map((status) => (
                 <button
                   key={status}
                   onClick={() => { setStatusFilter(status); setCurrentPage(1); }}
@@ -595,60 +593,60 @@ const getStatusStyles = (status) => {
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-neutral-900' : 'divide-slate-200'}`}>
-               {filteredSchedules.length === 0 ? (
-    <tr>
-      <td colSpan="6" className="py-20 text-center">
-        <p className={`text-sm font-semibold ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>No schedules found</p>
-        <p className={`text-xs mt-1 ${isDark ? 'text-neutral-700' : 'text-slate-300'}`}>Scheduled file deliveries will appear here</p>
-      </td>
-    </tr>
-  ) : 
-                (filteredSchedules.map((item) => {
-                  const visuals = getFileVisuals(item.content_type || item.file_name);
-                  return (
-                    <tr key={item.id} className={`group transition-colors ${isDark ? 'hover:bg-neutral-900/40' : 'hover:bg-slate-50'}`}>
-                      <td className="py-7 px-4 text-sm text-center align-middle">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors">
-                            <i className={`fa-solid ${visuals.icon} text-lg`} style={{ color: visuals.color }}></i>
+                {filteredSchedules.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-20 text-center">
+                      <p className={`text-sm font-semibold ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>No schedules found</p>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-neutral-700' : 'text-slate-300'}`}>Scheduled file deliveries will appear here</p>
+                    </td>
+                  </tr>
+                ) :
+                  (filteredSchedules.map((item) => {
+                    const visuals = getFileVisuals(item.content_type || item.file_name);
+                    return (
+                      <tr key={item.id} className={`group transition-colors ${isDark ? 'hover:bg-neutral-900/40' : 'hover:bg-slate-50'}`}>
+                        <td className="py-7 px-4 text-sm text-center align-middle">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors">
+                              <i className={`fa-solid ${visuals.icon} text-lg`} style={{ color: visuals.color }}></i>
+                            </div>
+                            <div>
+                              <span className={`font-bold block line-clamp-2 break-all max-w-[250px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`}>{formatFileName(item.file_name)}</span>
+                              {item.isProtected && <span className="flex items-center gap-1 text-[9px] text-blue-500 font-bold uppercase mt-1 rounded"><i className="fa-solid fa-shield-halved"></i> Protected</span>}
+                            </div>
                           </div>
-                          <div>
-                            <span className={`font-bold block line-clamp-2 break-all max-w-[250px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`}>{formatFileName(item.file_name)}</span>
-                            {item.isProtected && <span className="flex items-center gap-1 text-[9px] text-blue-500 font-bold uppercase mt-1 rounded"><i className="fa-solid fa-shield-halved"></i> Protected</span>}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-7 px-4 text-sm text-center align-middle">
-                        <span className={`font-medium ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>{item.recipients[0]}</span>
-                      </td>
-                      <td className="py-7 px-4 text-sm text-center align-middle">
-                        <div className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{item.date}</div>
-                        <div className={`text-[10px] font-bold uppercase mt-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>{item.time}</div>
-                      </td>
-                      <td className="py-7 px-4 text-sm text-center align-middle">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${getStatusStyles(item.status)}`}>{item.status}</span>
-                      </td>
-                      <td className="py-7 px-4 text-sm">
-                        <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight ${getShareStyle(item.share)}`}>{item.share || "N/A"}</span>
-                      </td>
-                      <td className="py-7 pr-8 text-sm text-right">
-                        <div className="flex justify-end gap-3">
-                          <button onClick={() => setSelectedSchedule(item)} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isDark ? 'border border-transparent hover:bg-neutral-800 text-blue-400' : 'border border-transparent hover:shadow-sm hover:shadow text-blue-600'}`} title="View Details"><i className="fa-solid fa-eye"></i></button>
-<button
-  onClick={() => item.status === "Pending" && setRevokeTarget(item)}
-  disabled={item.status !== "Pending"}
-  className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all
+                        </td>
+                        <td className="py-7 px-4 text-sm text-center align-middle">
+                          <span className={`font-medium ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>{item.recipients[0]}</span>
+                        </td>
+                        <td className="py-7 px-4 text-sm text-center align-middle">
+                          <div className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>{item.date}</div>
+                          <div className={`text-[10px] font-bold uppercase mt-1 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>{item.time}</div>
+                        </td>
+                        <td className="py-7 px-4 text-sm text-center align-middle">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${getStatusStyles(item.status)}`}>{item.status}</span>
+                        </td>
+                        <td className="py-7 px-4 text-sm">
+                          <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight ${getShareStyle(item.share)}`}>{item.share || "N/A"}</span>
+                        </td>
+                        <td className="py-7 pr-8 text-sm text-right">
+                          <div className="flex justify-end gap-3">
+                            <button onClick={() => setSelectedSchedule(item)} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isDark ? 'border border-transparent hover:bg-neutral-800 text-blue-400' : 'border border-transparent hover:shadow-sm hover:shadow text-blue-600'}`} title="View Details"><i className="fa-solid fa-eye"></i></button>
+                            <button
+                              onClick={() => item.status === "Pending" && setRevokeTarget(item)}
+                              disabled={item.status !== "Pending"}
+                              className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all
     ${item.status !== "Pending" ? 'opacity-30 cursor-not-allowed' : ''}
     ${isDark ? 'border border-transparent hover:border-red-500/30 hover:bg-neutral-800 text-red-400' : 'border border-transparent hover:shadow-sm hover:shadow text-red-500'}
   `}
-  title="Revoke Schedule"
->
-  <i className="fa-solid fa-ban"></i>
-</button>                     </div>
-                      </td>
-                    </tr>
-                  );
-                }))}
+                              title="Revoke Schedule"
+                            >
+                              <i className="fa-solid fa-ban"></i>
+                            </button>                     </div>
+                        </td>
+                      </tr>
+                    );
+                  }))}
               </tbody>
             </table>
           </div>
@@ -657,20 +655,20 @@ const getStatusStyles = (status) => {
         /* --- CALENDAR VIEW CONTENT --- */
         <div className={`border rounded-2xl p-6 animate-in slide-in-from-bottom-4 duration-400 shadow-sm ${isDark ? 'bg-[#050505] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
           <div className="flex items-center justify-between mb-8">
-              <h3 className={`font-bold text-lg tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
-              </h3>
-              <div className="flex gap-2">
-                <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))} className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] text-[#808080]' : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-500'}`}><i className="fa-solid fa-chevron-left text-xs"></i></button>
-                <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))} className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] text-[#808080]' : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-500'}`}><i className="fa-solid fa-chevron-right text-xs"></i></button>
-              </div>
+            <h3 className={`font-bold text-lg tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
+            </h3>
+            <div className="flex gap-2">
+              <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))} className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] text-[#808080]' : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-500'}`}><i className="fa-solid fa-chevron-left text-xs"></i></button>
+              <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))} className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a] hover:border-[#333] text-[#808080]' : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-500'}`}><i className="fa-solid fa-chevron-right text-xs"></i></button>
+            </div>
           </div>
-          
+
           <div className={`grid grid-cols-7 gap-px border rounded-xl overflow-hidden ${isDark ? 'bg-[#1a1a1a] border-[#1a1a1a]' : 'bg-slate-200 border-slate-200'}`}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
               <div key={day} className={`p-4 text-center text-[10px] uppercase font-bold tracking-widest ${isDark ? 'bg-[#080808] text-[#444]' : 'bg-slate-50 text-slate-400'}`}>{day}</div>
             ))}
-            
+
             {[...Array(firstDayOfMonth)].map((_, i) => (
               <div key={`empty-${i}`} className={`${isDark ? 'bg-[#030303]' : 'bg-slate-50/50'} min-h-[120px]`}></div>
             ))}
@@ -678,7 +676,7 @@ const getStatusStyles = (status) => {
             {[...Array(daysInMonth)].map((_, i) => {
               const day = i + 1;
               const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              
+
               const daySchedules = schedules.filter(s => s.date === dateStr);
               const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
               const isSelected = selectedCalendarDay?.dateStr === dateStr;
@@ -692,11 +690,11 @@ const getStatusStyles = (status) => {
                   <span className={`text-xs font-bold ${isToday ? 'text-blue-500 bg-blue-500/10 px-2 py-1 rounded-md' : (isDark ? 'text-[#333]' : 'text-slate-300')}`}>
                     {day}
                   </span>
-                  
+
                   <div className="mt-2 space-y-1">
                     {daySchedules.length > 1 ? (
                       /* --- MULTIPLE SCHEDULES ICON/SUMMARY --- */
-                      <div 
+                      <div
                         className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all border-dashed ${isDark ? 'bg-blue-500/5 border-blue-500/30 hover:bg-blue-500/10' : 'bg-blue-50 border-blue-200 hover:bg-blue-100'}`}
                       >
                         <i className="fa-solid fa-layer-group text-blue-500 text-xs"></i>
@@ -705,7 +703,7 @@ const getStatusStyles = (status) => {
                     ) : (
                       /* --- SINGLE SCHEDULE --- */
                       daySchedules.map((event) => (
-                        <div 
+                        <div
                           key={event.id}
                           className={`p-1.5 rounded-md border text-left transition-all shadow-sm ${getStatusStyle(event.status)}`}
                         >

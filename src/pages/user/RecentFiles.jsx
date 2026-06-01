@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import FileCard from '../../components/FileCard';
 
 const RecentActivityMain = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   
   // Separate states for the two sections
   const [recentAccessed, setRecentAccessed] = useState([]);
@@ -30,7 +30,7 @@ const RecentActivityMain = () => {
   }, [toast.visible]);
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -126,7 +126,7 @@ const RecentActivityMain = () => {
   );
 
   return (
-    <div className={`flex-1 flex overflow-hidden transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#E6EBF2] text-slate-800'}`}>
+    <div className={`flex-1 flex overflow-hidden transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
       {/* Professional Top-Sliding Toast */}
       {toast.visible && (
         <div

@@ -28,7 +28,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
       lg:translate-x-0 lg:static fixed top-[60px] lg:top-0 bottom-0 left-0 w-[260px] 
       flex flex-col z-40 transition-all duration-300 ease-in-out p-[24px_16px] overflow-y-auto no-scrollbar
-      ${isDark ? 'bg-black border-r border-[#333]' : 'bg-white border-r border-slate-200'}
+      ${isDark ? 'bg-black border-r border-[#333]' : 'bg-slate-200 border-r border-slate-300'}
     `}>
       
       {/* Main Feed Section */}

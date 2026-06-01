@@ -34,7 +34,7 @@ const Sidebar = ({ isOpen }) => {
     <aside className={`
       ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
       lg:translate-x-0 lg:static fixed inset-y-0 left-0 w-[260px] flex flex-col z-40 transition-all duration-300 ease-in-out p-[24px_16px] overflow-y-auto no-scrollbar border-r
-      ${isDark ? 'bg-black border-neutral-800' : 'bg-[#F8FAFC] border-slate-200'}
+      ${isDark ? 'bg-black border-neutral-800' : 'bg-slate-200 border-r border-slate-300'}
     `}>
       
       <div className={`text-[11px] uppercase tracking-widest m-[24px_0_12px_12px] font-bold ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}>

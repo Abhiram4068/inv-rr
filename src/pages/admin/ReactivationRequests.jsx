@@ -84,6 +84,7 @@ const ReactivationRequests = () => {
             // Splice tracking record locally out of active buffer list
             setRequests(prev => prev.filter(req => req.id !== targetRequest.id));
             closeConfirmationModal();
+            window.dispatchEvent(new Event('admin:counts:refresh'));
         } catch (error) {
             console.error(`Failed to execute profile appeal decision:`, error);
         } finally {
@@ -109,7 +110,7 @@ const ReactivationRequests = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-xl font-bold text-slate-800 tracking-tight">Reactivation Appeals</h1>
-                        <p className="text-xs text-slate-400 mt-0.5">Evaluate structural statements and clear execution queues for suspended directories requesting reactivation.</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Review, approve, or reject account reactivation requests.</p>
                     </div>
 
                     {/* Filter Inputs Box */}

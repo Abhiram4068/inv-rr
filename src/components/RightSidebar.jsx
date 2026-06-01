@@ -34,6 +34,9 @@ const RightSidebar = ({ isOpen, onClose }) => {
       }
     };
     fetchStorage();
+     // Re-fetch whenever storage changes
+  window.addEventListener('storage:refresh', fetchStorage);
+  return () => window.removeEventListener('storage:refresh', fetchStorage);
   }, []);
 
   return (
@@ -41,7 +44,7 @@ const RightSidebar = ({ isOpen, onClose }) => {
       ${isOpen ? 'translate-x-0' : 'translate-x-full'} 
       lg:translate-x-0 lg:static fixed top-[60px] lg:top-0 bottom-0 right-0 w-[320px] 
       p-[24px_20px] border-l shrink-0 z-40 transition-all duration-300 ease-in-out overflow-y-auto no-scrollbar
-      ${isDark ? 'bg-black border-[#262626]' : 'bg-[#F8FAFC] border-slate-200'}
+      ${isDark ? 'bg-black border-[#262626]' : 'bg-slate-200 border-r border-slate-300'}
     `}>
       
       {/* Home Tab */}
@@ -56,9 +59,10 @@ const RightSidebar = ({ isOpen, onClose }) => {
           onClick={() => onClose?.()}
           className={`block w-full p-2.5 rounded-[20px] font-semibold text-center text-sm mb-3 transition-all border
             ${isDark 
-              ? 'bg-transparent text-white border-[#1a1a1a] hover:bg-[#111]' 
+              ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md' 
               : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md'}`}
         >
+          <i className="fa-solid fa-plus text-white mr-2"></i>
           Upload File
         </Link>
 

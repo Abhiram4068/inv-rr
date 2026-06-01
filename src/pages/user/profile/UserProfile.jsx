@@ -5,7 +5,7 @@ import { sizeFormatter } from '../../../utils/sizeFormatter';
 
 const UserProfile = () => {
   // --- THEME STATE SYNC (Untouched) ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +25,7 @@ const UserProfile = () => {
   }, []);
 
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -155,16 +155,11 @@ const UserProfile = () => {
                 <div className="flex flex-col gap-y-8">
                   <DetailItem label="Date Joined" value={userProfile.date_joined} isDark={isDark} />
                   <DetailItem label="Total Files" value={`${userProfile.total_files} File(s)`} isDark={isDark} />
-                  <DetailItem label="Storage Metrics" value={sizeFormatter(userProfile.storage_used_bytes) + " / 1 GB"} isDark={isDark} />
-                  <DetailItem label="Account Standing" value={userProfile.status} valueColor="#10b981" isDark={isDark} />
+                  <DetailItem label="Storage" value={sizeFormatter(userProfile.storage_used_bytes) + " / 1 GB"} isDark={isDark} />
+                  <DetailItem label="Account Status" value={userProfile.status} valueColor="#10b981" isDark={isDark} />
                 </div>
               </div>
 
-            </div>
-
-            {/* Footer Note */}
-            <div className={`px-8 py-4 text-[11px] font-medium tracking-wide border-t uppercase opacity-50 ${isDark ? 'border-neutral-800 text-neutral-500' : 'border-slate-100 text-slate-400'}`}>
-              Identity verified via secure Hive protocol
             </div>
           </div>
         </div>

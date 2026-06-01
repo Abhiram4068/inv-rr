@@ -7,6 +7,56 @@ import { sizeFormatter } from '../../utils/sizeFormatter';
 import { getFiles, getFileById } from '../../services/fileService';
 import FileCard from '../../components/FileCard';
 
+
+function FileThumb({ file, size = 40 }) {
+  const name = file?.original_name || file?.file_name || "";
+  const ct = file?.content_type || "";
+  const lower = String(name).toLowerCase();
+  
+  const isImage = ct.includes("image") || /\.(png|jpe?g|gif|webp)$/.test(lower);
+  
+  const getIconMeta = () => {
+    if (lower.endsWith(".pdf") || ct.includes("pdf"))         return { icon: "fa-file-pdf",        color: "#ef4444" };
+    if (/\.(doc|docx)$/.test(lower) || ct.includes("word"))  return { icon: "fa-file-word",       color: "#3b82f6" };
+    if (/\.(xls|xlsx)$/.test(lower) || ct.includes("excel")) return { icon: "fa-file-excel",      color: "#22c55e" };
+    if (/\.(ppt|pptx)$/.test(lower) || ct.includes("powerpoint")) return { icon: "fa-file-powerpoint", color: "#f97316" };
+    if (/\.(zip|rar)$/.test(lower)  || ct.includes("zip"))   return { icon: "fa-file-zipper",     color: "#a855f7" };
+    if (/\.(mp4|mov|mkv|webm)$/.test(lower) || ct.includes("video")) return { icon: "fa-file-video", color: "#ec4899" };
+    if (lower.endsWith(".txt") || ct.includes("text"))        return { icon: "fa-file-lines",      color: "#64748b" };
+    return { icon: "fa-file", color: "#94a3b8" };
+  };
+
+  const meta = getIconMeta();
+
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 7, flexShrink: 0,
+      overflow: "hidden", border: "none",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "transparent",
+    }}>
+      {isImage && file.file_url ? (
+        <img
+          src={file.file_url}
+          alt={name}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          onError={e => {
+            e.target.style.display = "none";
+            e.target.nextSibling.style.display = "flex";
+          }}
+        />
+      ) : null}
+      <div style={{
+        display: isImage && file.file_url ? "none" : "flex",
+        width: "100%", height: "100%",
+        alignItems: "center", justifyContent: "center",
+      }}>
+        <i className={`fa-solid ${meta.icon}`} style={{ fontSize: size * 0.45, color: meta.color }} />
+      </div>
+    </div>
+  );
+}
+
 const CollectionDetails = () => {
   const { 
     isManageOpen, 
@@ -22,7 +72,7 @@ const CollectionDetails = () => {
   const { id } = useParams();
 
   // --- States ---
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [collectionInfo, setCollectionInfo] = useState(null);
   const [collectionFile, setCollectionFile] = useState([]);
   const [totalFiles, setTotalFiles] = useState(0);
@@ -39,7 +89,7 @@ const CollectionDetails = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ name: "", description: "" });
-
+  const [nameApiError, setNameApiError] = useState("");
   const [search, setSearch]=useState("")
 
   // Toast State
@@ -95,7 +145,7 @@ const showToast = (msg, type = 'success') => {
 
   // --- Theme Sync ---
   useEffect(() => {
-    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'dark');
+    const handleStorageChange = () => setTheme(localStorage.getItem('theme') || 'light');
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(() => {
       const current = localStorage.getItem('theme');
@@ -204,23 +254,23 @@ const showToast = (msg, type = 'success') => {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      await handleUpdateCollection(formData);
-      setCollectionInfo({ ...collectionInfo, ...formData });
-      setIsManageOpen(false);
-      showToast("Collection updated successfully!");
-    } catch (err) {
-      setIsManageOpen(false);
-      if (err.response?.data?.detail?.name) {
-        showToast(err.response.data.detail.name[0], "error");
-      } else if (typeof err.response?.data?.detail === "string") {
-        showToast(err.response.data.detail, "error");
-      } else {
-        showToast("Failed to update collection", "error");
-      }
+const handleSave = async () => {
+  try {
+    await handleUpdateCollection(formData);
+    setCollectionInfo({ ...collectionInfo, ...formData });
+    setIsManageOpen(false);
+    setNameApiError("");
+    showToast("Collection updated successfully!");
+  } catch (err) {
+    const nameErr = err?.response?.data?.name?.[0];
+    if (nameErr) {
+      setNameApiError(nameErr);
+      return;
     }
-  };
+    setIsManageOpen(false);
+    showToast(err?.response?.data?.detail || "Failed to update collection", "error");
+  }
+};
 
   const onConfirmDelete = async () => {
     await handleDeleteCollection();
@@ -246,7 +296,7 @@ const showToast = (msg, type = 'success') => {
 
 
   return (
-    <div className="collection-container transition-colors duration-300" style={{ width: '100%', height: '100%', overflowY: 'hidden', display: 'flex', flexDirection: 'column', background: isDark ? 'transparent' : '#E6EBF2' }}>
+    <div className="collection-container transition-colors duration-300" style={{ width: '100%', height: '100%', overflowY: 'hidden', display: 'flex', flexDirection: 'column', background: isDark ? 'transparent' : '#EFEFEF' }}>
       
       
       {/* Professional Top-Sliding Toast */}
@@ -319,7 +369,7 @@ const showToast = (msg, type = 'success') => {
 
             <button 
               onClick={() => setIsAddFileOpen(true)}
-              className="bg-[#3b82f6] text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center gap-2 shadow-lg shadow-blue-500/20"
+              className="bg-[#3b82f6] text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 flex items-center gap-2 shadow-lg"
             >
               <i className="fa-solid fa-plus"></i> Add Files
             </button>
@@ -454,17 +504,20 @@ const showToast = (msg, type = 'success') => {
                   ) : allFiles.length > 0 ? (
                     allFiles.map((file) => (
                       <tr key={file.id} className={`group border-b last:border-0 transition-colors ${isDark ? 'border-[#1a1a1a] hover:bg-[#ffffff05]' : 'border-slate-50 hover:bg-slate-50/50'}`}>
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <i className={`fa-solid ${iconClassForFile(file)} text-lg text-[#3b82f6]`}></i>
-                            <span className="font-medium truncate max-w-[200px]">{file.original_name || file.file_name}</span>
+                            {/* ── Preview thumbnail ── */}
+                            <FileThumb file={file} size={38} />
+                            <span className="font-medium truncate max-w-[200px] text-sm">
+                              {file.original_name || file.file_name}
+                            </span>
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-[#808080]">
-                         {sizeFormatter(file.file_size)}
+                          {sizeFormatter(file.file_size)}
                         </td>
                         <td className="px-4 py-4 text-right">
-                          <button 
+                          <button
                             onClick={() => handleAddFile(file.id)}
                             className="bg-[#3b82f6] hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md"
                           >
@@ -519,9 +572,12 @@ const showToast = (msg, type = 'success') => {
                   type="text"
                   placeholder="Collection Name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={`w-full border p-3 rounded-xl text-sm outline-none transition-all ${isDark ? 'bg-black border-[#1a1a1a] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500'}`}
+                  onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setNameApiError(""); }}
+                  className={`w-full border p-3 rounded-xl text-sm outline-none transition-all ${nameApiError ? 'border-red-500 bg-red-500/5' : isDark ? 'bg-black border-[#1a1a1a] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500'}`}
                 />
+                {nameApiError && (
+                  <p className="text-red-500 text-[11px] mt-1.5 font-medium ml-1">{nameApiError}</p>
+                )}
               </div>
               
               <div className="space-y-1">
