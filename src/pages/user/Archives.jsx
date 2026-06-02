@@ -107,7 +107,7 @@ const handleUnarchive = async () => {
 
   } catch (err) {
     console.error("Unarchive failed", err);
-    alert("Failed to restore file. Try again.");
+    setToast({ visible: true, message: "Failed to restore file. Try again.", type: 'error', animateOut: false });
   }finally{
      setActionLoading(false);
   }
@@ -182,6 +182,23 @@ const handleDeleteArchive=async(item)=>{
         @keyframes slideDownProfessional {
           from { transform: translateY(-20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
+        }
+        .archive-table-scroll::-webkit-scrollbar {
+          height: 5px;
+        }
+        .archive-table-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .archive-table-scroll::-webkit-scrollbar-thumb {
+          background: #6b7280;
+          border-radius: 99px;
+        }
+        .archive-table-scroll::-webkit-scrollbar-thumb:hover {
+          background: #9ca3af;
+        }
+        .archive-table-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #6b7280 transparent;
         }
       `}</style>
       {/* --- UNARCHIVE CONFIRMATION MODAL --- */}
@@ -432,7 +449,7 @@ const handleDeleteArchive=async(item)=>{
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto archive-table-scroll">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className={`border-b ${isDark ? 'border-[#1a1a1a] bg-[#080808]' : 'border-slate-100 bg-slate-50'}`}>

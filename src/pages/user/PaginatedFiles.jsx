@@ -356,8 +356,8 @@ const PaginatedFiles = () => {
       )}
 
       {/* Search and Action Bar */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-        <div className={`w-full max-w-[450px] border p-[10px_16px] rounded-xl flex items-center transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+      <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 mb-4">
+        <div className={`w-full lg:max-w-[450px] border p-[10px_16px] rounded-xl flex items-center transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
           <i className={`fa fa-search ${isDark ? 'text-[#808080]' : 'text-slate-400'}`}></i>
           <input
             type="text"
@@ -367,7 +367,7 @@ const PaginatedFiles = () => {
             className={`bg-transparent border-none ml-3 w-full outline-none text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}
           />
         </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
 
           {/* View Mode Toggle */}
           <div className={`flex items-center rounded-xl border overflow-hidden flex-shrink-0 ${isDark ? 'border-[#1a1a1a] bg-[#0a0a0a]' : 'border-slate-200 bg-white'}`}>
@@ -379,7 +379,7 @@ const PaginatedFiles = () => {
             type="button"
             disabled={files.length === 0}
             onClick={() => setIsSelectMode(!isSelectMode)}
-            className={`w-full md:w-auto p-[10px_20px] rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border disabled:opacity-40 disabled:cursor-not-allowed
+            className={`w-full sm:w-auto p-[10px_20px] rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border disabled:opacity-40 disabled:cursor-not-allowed
               ${isSelectMode
                 ? 'bg-blue-600/10 border-blue-500 text-blue-500'
                 : isDark
@@ -390,7 +390,7 @@ const PaginatedFiles = () => {
             {isSelectMode ? 'Cancel Selection' : 'Select Files'}
           </button>
 
-          <Link to="/upload-file" className="w-full md:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg   whitespace-nowrap">
+          <Link to="/upload-file" className="w-full sm:w-auto bg-[#3b82f6] text-white p-[10px_20px] rounded-xl no-underline font-semibold text-sm transition-all hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
             <i className="fa-solid fa-plus"></i> New Document
           </Link>
         </div>
@@ -398,8 +398,8 @@ const PaginatedFiles = () => {
 
       {/* ── Selection Action Sub-Bar ── */}
       {(isSelectMode || selectedFileIds.length > 0) && files.length > 0 && (
-        <div className={`p-4 mb-6 rounded-xl flex flex-wrap justify-between items-center gap-4 transition-colors duration-300`}>
-          <div className="flex items-center gap-3">
+        <div className={`p-3 sm:p-4 mb-6 rounded-xl flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center gap-3 sm:gap-4 transition-colors duration-300`}>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <label className="flex items-center gap-2 cursor-pointer text-sm font-medium select-none">
               <input
                 type="checkbox"
@@ -415,11 +415,11 @@ const PaginatedFiles = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
               onClick={handleArchiveSelected}
               disabled={selectedFileIds.length === 0}
-              className={`p-[8px_16px] rounded-lg font-bold text-xs border transition-all disabled:opacity-40 disabled:cursor-not-allowed
+              className={`flex-1 sm:flex-none p-[8px_16px] rounded-lg font-bold text-xs border transition-all disabled:opacity-40 disabled:cursor-not-allowed
                 ${isDark
                   ? 'bg-[#111] border-[#222] text-slate-300 hover:bg-[#161616]'
                   : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
@@ -429,7 +429,7 @@ const PaginatedFiles = () => {
             <button
               onClick={handleShareSelected}
               disabled={selectedFileIds.length === 0}
-              className={`p-[8px_16px] rounded-lg font-bold text-xs border transition-all disabled:opacity-40 disabled:cursor-not-allowed
+              className={`flex-1 sm:flex-none p-[8px_16px] rounded-lg font-bold text-xs border transition-all disabled:opacity-40 disabled:cursor-not-allowed
                 ${isDark
                   ? 'bg-[#111] border-[#222] text-slate-300 hover:bg-[#161616]'
                   : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
@@ -439,7 +439,7 @@ const PaginatedFiles = () => {
             <button
               onClick={handleDeleteSelected}
               disabled={selectedFileIds.length === 0}
-              className="p-[8px_16px] bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-none p-[8px_16px] bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             >
               <i className="fa-regular fa-trash-can" /> Delete Selected
             </button>
@@ -448,9 +448,8 @@ const PaginatedFiles = () => {
       )}
 
       {/* Header Info */}
-{/* Header Info */}
-<div className="flex justify-between items-center mb-6">
-  <div>
+<div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
+  <div className="min-w-0">
     <div className={`text-[18px] md:text-[20px] font-semibold transition-colors ${isDark ? 'text-white' : 'text-slate-800'}`}>My Files</div>
     <div className={`text-xs font-medium mt-0.5 ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
       {totalPages !== null
@@ -459,7 +458,7 @@ const PaginatedFiles = () => {
     </div>
   </div>
   {totalPages !== null && totalPages > 1 && (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 shrink-0 max-w-full">
       <button
         type="button"
         onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -541,7 +540,7 @@ const PaginatedFiles = () => {
         </div>
       ) : viewMode === 'file_grid' ? (
         /* ── GRID VIEW ── */
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 mb-10">
           {files.map((file) => (
             <FileCard
               key={file.id}
@@ -618,11 +617,11 @@ const PaginatedFiles = () => {
                       />
                     </th>
                   )}
-                  <th className={`py-4 font-bold ${(isSelectMode || selectedFileIds.length > 0) ? '' : 'pl-6'}`}>File Name</th>
-                  <th className="py-4 font-bold">Type</th>
-                  <th className="py-4 font-bold">Size</th>
-                  <th className="py-4 font-bold">Uploaded</th>
-                  <th className="py-4 pr-6 font-bold text-right">Actions</th>
+                  <th className={`py-4 font-bold min-w-[140px] ${(isSelectMode || selectedFileIds.length > 0) ? '' : 'pl-4 sm:pl-6'}`}>File Name</th>
+                  <th className="py-4 font-bold hidden md:table-cell">Type</th>
+                  <th className="py-4 font-bold hidden lg:table-cell">Size</th>
+                  <th className="py-4 font-bold hidden sm:table-cell">Uploaded</th>
+                  <th className="py-4 pr-4 sm:pr-6 font-bold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-neutral-900' : 'divide-slate-100'}`}>
@@ -658,55 +657,58 @@ const PaginatedFiles = () => {
                       )}
 
                       {/* Name col */}
-                      <td className={`py-5 text-sm ${showSel ? '' : 'pl-6'}`}>
-                        <div className="flex items-center gap-4">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-neutral-900' : 'bg-slate-100'}`}>
-                            <i className={`fa-solid ${iconClass} text-base ${iconColorForClass(iconClass)}`} />
+                      <td className={`py-4 sm:py-5 text-sm min-w-0 ${showSel ? '' : 'pl-4 sm:pl-6'}`}>
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                          <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-neutral-900' : 'bg-slate-100'}`}>
+                            <i className={`fa-solid ${iconClass} text-sm sm:text-base ${iconColorForClass(iconClass)}`} />
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             {!showSel && file.file_url ? (
                               <a
                                 href={file.file_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="no-underline"
+                                className="no-underline block min-w-0"
                                 onClick={e => e.stopPropagation()}
                               >
-                                <span className={`font-bold block truncate w-[180px] leading-tight ${isDark ? 'text-white hover:text-blue-400' : 'text-slate-700 hover:text-blue-600'} transition-colors`} title={file.display_name || file.original_name}>
+                                <span className={`font-bold block truncate max-w-[140px] sm:max-w-[220px] md:max-w-none leading-tight ${isDark ? 'text-white hover:text-blue-400' : 'text-slate-700 hover:text-blue-600'} transition-colors`} title={file.display_name || file.original_name}>
                                   {file.original_name || file.description || "Untitled"}
                                 </span>
                               </a>
                             ) : (
-                              <span className={`font-bold block truncate w-[180px] leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`} title={file.display_name || file.original_name}>
+                              <span className={`font-bold block truncate max-w-[140px] sm:max-w-[220px] md:max-w-none leading-tight ${isDark ? 'text-white' : 'text-slate-700'}`} title={file.display_name || file.original_name}>
                                 {file.original_name || file.description || "Untitled"}
                               </span>
                             )}
-                            <span className={`text-[11px] truncate block mt-0.5 w-[180px] ${isDark ? 'text-neutral-600' : 'text-slate-400'}`} title={file.original_name}>
+                            <span className={`text-[11px] truncate block mt-0.5 max-w-[140px] sm:max-w-[220px] md:max-w-none ${isDark ? 'text-neutral-600' : 'text-slate-400'}`} title={file.original_name}>
                               {file.display_name}
+                            </span>
+                            <span className={`text-[10px] mt-1 sm:hidden ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                              {getReadableFileType(file)} · {sizeFormatter(file.file_size)} · {timeFormatter(file.created_at)}
                             </span>
                           </div>
                         </div>
                       </td>
 
                       {/* Type col */}
-                      <td className="py-5 text-sm">
+                      <td className="py-5 text-sm hidden md:table-cell">
                         <span className={`inline-flex items-center px-2 py-0.5  text-[10px] font-bold ${isDark ? 'text-neutral-400' : ' text-slate-500'}`}>
                           {getReadableFileType(file)}
                         </span>
                       </td>
 
                       {/* Size col */}
-                      <td className={`py-5 text-sm font-medium ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                      <td className={`py-5 text-sm font-medium hidden lg:table-cell ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
                         {sizeFormatter(file.file_size)}
                       </td>
 
                       {/* Time col */}
-                      <td className={`py-5 text-sm ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
+                      <td className={`py-5 text-sm hidden sm:table-cell ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
                         {timeFormatter(file.created_at)}
                       </td>
 
                       {/* Actions col */}
-                      <td className="py-5 pr-6 text-sm text-right" onClick={e => e.stopPropagation()}>
+                      <td className="py-4 sm:py-5 pr-4 sm:pr-6 text-sm text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-end gap-1">
                           <button
                             type="button"
@@ -807,8 +809,9 @@ const PaginatedFiles = () => {
 
       <ShareModal
         isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
+        onClose={() => { setIsShareModalOpen(false); if (!isSelectMode) setSelectedFileIds([]); }}
         fileIds={selectedFileIds}
+        fileNames={files.filter((f) => selectedFileIds.includes(f.id)).map((f) => f.original_name)}
         isBulk={selectedFileIds.length > 1}
         isDark={isDark}
         onShareSuccess={(message) => {

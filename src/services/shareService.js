@@ -1,41 +1,40 @@
 import api from "../api/axios";
 
-// POST /api/files/:id/share/
+// POST /files/:id/share/
 export const shareFile = (fileId, shareData) =>
-  api.post(`/api/files/${fileId}/share/`, shareData);
+  api.post(`/files/${fileId}/share/`, shareData);
 
-// GET /api/files/shares/
-export const getSharedFiles = (page = 1, pageSize = 10) =>
-  api.get(`/api/files/shares/`, { params: { page, page_size: pageSize } });
+// GET /files/scheduled/
+export const getSharedFiles = (page=1, pageSize=10) =>
+  api.get(`/files/shares/`, { params: { page, page_size: pageSize } });
 
-// POST /api/files/:id/share/schedule/
+// POST /files/:id/share/schedule/
 export const scheduleShareFile = (fileId, shareData) =>
-  api.post(`/api/files/${fileId}/share/schedule/`, shareData);
+  api.post(`/files/${fileId}/share/schedule/`, shareData);
 
-// GET /api/scheduled-mails/
 export const getScheduledFiles = (page = 1, pageSize = 7, statusFilter = 'All') =>
-  api.get(`/api/scheduled-mails/`, {
-    params: {
-      page,
+  api.get(`/scheduled-mails/`, { 
+    params: { 
+      page, 
       page_size: pageSize,
       ...(statusFilter !== 'All' && { status: statusFilter.toLowerCase() })
-    }
-  });
+    } 
+  }); 
 
-// GET /api/scheduled-mails/calendar/
-export const getScheduledCalendar = (month, year) =>
-  api.get("/api/scheduled-mails/calendar/", {
+export const getScheduledCalendar = (month, year) => {
+  return api.get("/scheduled-mails/calendar/", {
     params: { month, year }
   });
+};
 
-// POST /api/files/bulk-share/
+// POST /files/bulk-share/
 export const bulkShareFiles = (shareData) =>
-  api.post(`/api/files/bulk-share/`, shareData);
+  api.post(`/files/bulk-share/`, shareData);
 
-// PUT /api/files/:id/revoke/
+//PUT /files/revoke/
 export const revokeShare = (fileId) =>
-  api.put(`/api/files/${fileId}/revoke/`);
+  api.put(`/files/${fileId}/revoke/`);
 
-// POST /api/scheduled-mails/:id/revoke/
+//POST /scheduled-mails/:id/revoke/
 export const revokeScheduledMail = (mailId) =>
-  api.post(`/api/scheduled-mails/${mailId}/revoke/`);
+  api.post(`/scheduled-mails/${mailId}/revoke/`);

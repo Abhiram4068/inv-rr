@@ -22,7 +22,7 @@ const StarredFiles = () => {
 
   const isDark = theme === 'dark';
 
-  const [files, setFiles] = useState([]);
+  const [allFiles, setAllFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -42,10 +42,8 @@ const StarredFiles = () => {
     return () => clearTimeout(timer);
   }, [toast.visible]);
 
-
+  const PAGE_SIZE = 12;
   const [page, setPage] = useState(1);
-  const [count, setCount] = useState(null);
-  const [hasNext, setHasNext] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -113,18 +111,6 @@ const StarredFiles = () => {
     return "fa-file";
   };
 
-  const pageNumbers = useMemo(() => {
-    if (count === null) return [page - 1, page, page + 1].filter((p) => p >= 1);
-    // Fallback if backend doesn't tell us page size.
-    const pageSizeFallback = 12;
-    const totalPages = Math.max(1, Math.ceil(count / pageSizeFallback));
-    const start = Math.max(1, page - 1);
-    const end = Math.min(totalPages, page + 1);
-    const arr = [];
-    for (let p = start; p <= end; p++) arr.push(p);
-    return arr;
-  }, [count, page]);
-
   useEffect(() => {
     let isCancelled = false;
 
@@ -144,15 +130,11 @@ const StarredFiles = () => {
               : [];
 
         if (isCancelled) return;
-        setFiles(results);
-        setCount(data?.count ?? null);
-        setHasNext(Boolean(data?.next));
+        setAllFiles(results);
       } catch (err) {
         if (isCancelled) return;
         setError(err?.response?.data?.detail || "Failed to load files.");
-        setFiles([]);
-        setCount(null);
-        setHasNext(false);
+        setAllFiles([]);
       } finally {
         if (!isCancelled) setLoading(false);
       }
@@ -162,7 +144,45 @@ const StarredFiles = () => {
     return () => {
       isCancelled = true;
     };
-  }, [page, search]);
+  }, []);
+
+  // ── Client-side Filter & Pagination ──
+  const filteredFiles = useMemo(() => {
+    if (!search.trim()) return allFiles;
+    const query = search.toLowerCase().trim();
+    return allFiles.filter(file => {
+      const originalName = String(file?.original_name || "").toLowerCase();
+      const displayName = String(file?.display_name || "").toLowerCase();
+      const description = String(file?.description || "").toLowerCase();
+      return originalName.includes(query) || displayName.includes(query) || description.includes(query);
+    });
+  }, [allFiles, search]);
+
+  const count = filteredFiles.length;
+  const totalPages = Math.ceil(count / PAGE_SIZE);
+  const hasNext = page < totalPages;
+
+  const filesToDisplay = useMemo(() => {
+    const startIdx = (page - 1) * PAGE_SIZE;
+    const endIdx = startIdx + PAGE_SIZE;
+    return filteredFiles.slice(startIdx, endIdx);
+  }, [filteredFiles, page]);
+
+  const pageNumbers = useMemo(() => {
+    const total = totalPages || 1;
+    const start = Math.max(1, page - 1);
+    const end = Math.min(total, page + 1);
+    const arr = [];
+    for (let p = start; p <= end; p++) arr.push(p);
+    return arr;
+  }, [page, totalPages]);
+
+  // Adjust page number if items are deleted and page becomes out-of-bounds
+  useEffect(() => {
+    if (totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
 
   return (
     <main className={`flex-1 overflow-y-auto p-4 md:p-6 lg:p-[24px_40px] no-scrollbar transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-[#EFEFEF]'}`}>
@@ -206,7 +226,9 @@ const StarredFiles = () => {
       {/* Header Info */}
       <div className="flex justify-between items-center mb-6">
         <div className={`text-[18px] md:text-[20px] font-semibold transition-colors ${isDark ? 'text-white' : 'text-slate-800'}`}>All Starred Files</div>
-        <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm`}>1,248 items</div>
+        <div className={`${isDark ? 'text-[#808080]' : 'text-slate-500'} text-sm font-medium`}>
+          {count > 0 ? `${count} item(s)` : "0 items"}
+        </div>
       </div>
 
       {/* File Grid */}
@@ -218,17 +240,19 @@ const StarredFiles = () => {
         <div className="py-16 text-center">
           <div className={`text-sm font-bold ${isDark ? "text-[#ff6b6b]" : "text-red-600"}`}>{error}</div>
         </div>
-      ) : files.length === 0 ? (
+      ) : filesToDisplay.length === 0 ? (
         <div className="py-16 text-center">
-          <div className={`text-sm font-bold ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No files found.</div>
+          <div className={`text-sm font-bold ${isDark ? "text-[#808080]" : "text-slate-500"}`}>No starred files found.</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
-          {files.map((file) => (
+          {filesToDisplay.map((file) => (
             <FileCard
               key={file.id}
               id={file.id}
               title={file.original_name || file.description || "Untitled"}
+              display_name={file.display_name || file.description || "Untitled"}
+              originalName={file.original_name}
               size={sizeFormatter(file.file_size)}
               time={timeFormatter(file.created_at)}
               iconClass={iconClassForFile(file)}
@@ -238,12 +262,12 @@ const StarredFiles = () => {
               isStarred={true}
               onToggleStar={(fileId, newState) => {
                 if (!newState) {
-                  setFiles(prev => prev.filter(f => f.id !== fileId));
+                  setAllFiles(prev => prev.filter(f => f.id !== fileId));
                   showToast("Removed from Starred");
                 }
               }}
               onDeleted={(fileId) => {
-                setFiles(prev => prev.filter(f => f.id !== fileId));
+                setAllFiles(prev => prev.filter(f => f.id !== fileId));
                 showToast("File moved to trash");
               }}
             />
@@ -252,58 +276,60 @@ const StarredFiles = () => {
       )}
 
       {/* Pagination */}
-      <div className="flex flex-wrap justify-center items-center gap-2 py-6">
-        <button
-          type="button"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1 || loading}
-          className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${page === 1 || loading
-              ? isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
-                : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
-              : isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
-        >
-          <i className="fa fa-chevron-left text-xs" />
-        </button>
-
-        {pageNumbers.map((p) => (
+      {totalPages > 1 && (
+        <div className="flex flex-wrap justify-center items-center gap-2 py-6">
           <button
-            key={p}
             type="button"
-            onClick={() => setPage(p)}
-            disabled={loading}
-            className={`w-10 h-10 rounded-lg font-semibold border transition-all ${p === page
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1 || loading}
+            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${page === 1 || loading
                 ? isDark
-                  ? "bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]"
-                  : "bg-blue-600 border-blue-600 text-white"
+                  ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
+                  : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
                 : isDark
                   ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
           >
-            {p}
+            <i className="fa fa-chevron-left text-xs" />
           </button>
-        ))}
 
-        <button
-          type="button"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={!hasNext || loading}
-          className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${!hasNext || loading
-              ? isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
-                : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
-              : isDark
-                ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
-        >
-          <i className="fa fa-chevron-right text-xs" />
-        </button>
-      </div>
+          {pageNumbers.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPage(p)}
+              disabled={loading}
+              className={`w-10 h-10 rounded-lg font-semibold border transition-all ${p === page
+                  ? isDark
+                    ? "bg-[#0a0a0a] border-[#3b82f6] text-[#3b82f6]"
+                    : "bg-blue-600 border-blue-600 text-white"
+                  : isDark
+                    ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+            >
+              {p}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!hasNext || loading}
+            className={`border w-10 h-10 rounded-lg flex items-center justify-center transition-all ${!hasNext || loading
+                ? isDark
+                  ? "bg-[#0a0a0a] border-[#1a1a1a] text-[#444] cursor-not-allowed"
+                  : "bg-white border-slate-200 text-slate-300 cursor-not-allowed"
+                : isDark
+                  ? "bg-[#0a0a0a] border-[#1a1a1a] text-white hover:bg-[#111]"
+                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+              }`}
+          >
+            <i className="fa fa-chevron-right text-xs" />
+          </button>
+        </div>
+      )}
 
       {/* Mobile Storage Warning */}
       <div className="lg:hidden mt-8 space-y-4">

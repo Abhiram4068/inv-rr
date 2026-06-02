@@ -1,12 +1,11 @@
 import api from "../api/axios";
+// GET /storage/summary/
+export const getStorageSummary = () => api.get(`/storage/summary/`);
 
-// GET /api/storage/summary/
-export const getStorageSummary = () => api.get("/api/storage/summary/");
+export const getStorageFiles = (params) => {
+    return api.get('/storage/manage/', { params });
+};
 
-// GET /api/storage/manage/
-export const getStorageFiles = (params) =>
-  api.get("/api/storage/manage/", { params });
-
-// POST /api/storage/permanent-delete/
-export const permanentDeleteFiles = (file_ids) =>
-  api.post("/api/storage/permanent-delete/", { file_ids });
+export const permanentDeleteFiles = (file_ids) => {
+    return api.post('/storage/permanent-delete/', { file_ids });
+};

@@ -7,7 +7,7 @@ const RoleChangeRequests = () => {
     const [requests, setRequests] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    
+
     // Modal State Mechanics
     const [modalConfig, setModalConfig] = useState({
         isOpen: false,
@@ -53,7 +53,7 @@ const RoleChangeRequests = () => {
         try {
             const action = type === 'approve' ? 'approve' : 'reject';
             await userService.resolveDesignationChangeRequest(targetRequest.id, action);
-            
+
             console.log(`${action}d role migration for request signature: ${targetRequest.id}`);
 
             // Splice tracking record locally out of stack queue
@@ -81,14 +81,14 @@ const RoleChangeRequests = () => {
     return (
         <div className="flex-1 bg-[#f0f2f7] min-h-screen p-8 font-sans relative">
             <div className="max-w-7xl mx-auto">
-                
+
                 {/* Header Block Description Contexts */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-xl font-bold text-slate-800 tracking-tight">Designation Reassignments</h1>
-                        <p className="text-xs text-slate-400 mt-0.5">Evaluate and confirm structural job-title reclassifications and internal privilege updates.</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Review and approve designation change requests</p>
                     </div>
-                    
+
                     {/* Filter Entry Inputs */}
                     <div className="relative w-full md:w-80">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
@@ -151,31 +151,31 @@ const RoleChangeRequests = () => {
                                                 })}
                                             </td>
 
-                                             {/* Practical Functional Controls */}
-                                             <td className="py-4 px-6 text-right">
-                                                 <div className="flex items-center justify-end gap-2">
-                                                     <button
-                                                         onClick={() => navigate(`/admin/user-details/${req.user}`)}
-                                                         className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-wider shadow-sm"
-                                                     >
-                                                         View Profile
-                                                     </button>
-                                                     <button
-                                                         onClick={() => openModal('reject', req)}
-                                                         className="px-2.5 py-1.5 border border-slate-200 rounded-sm bg-white text-xs font-bold text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all shadow-sm uppercase tracking-wider"
-                                                     >
-                                                         Reject
-                                                     </button>
-                                                     <button
-                                                         onClick={() => openModal('approve', req)}
-                                                         className="px-2.5 py-1.5 bg-indigo-500 border border-indigo-600 rounded-sm text-xs font-bold text-white hover:bg-indigo-600 transition-all shadow-sm uppercase tracking-wider"
-                                                     >
-                                                         Approve
-                                                     </button>
-                                                 </div>
-                                             </td>
-                                         </tr>
-                                     ))
+                                            {/* Practical Functional Controls */}
+                                            <td className="py-4 px-6 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => navigate(`/admin/user-details/${req.user}`)}
+                                                        className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-sm text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-wider shadow-sm"
+                                                    >
+                                                        View Profile
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openModal('reject', req)}
+                                                        className="px-2.5 py-1.5 border border-slate-200 rounded-sm bg-white text-xs font-bold text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all shadow-sm uppercase tracking-wider"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openModal('approve', req)}
+                                                        className="px-2.5 py-1.5 bg-indigo-500 border border-indigo-600 rounded-sm text-xs font-bold text-white hover:bg-indigo-600 transition-all shadow-sm uppercase tracking-wider"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
                                 ) : (
                                     <tr>
                                         <td colSpan="5" className="text-center py-12 text-slate-400 font-medium">
@@ -187,7 +187,7 @@ const RoleChangeRequests = () => {
                             </tbody>
                         </table>
                     </div>
-                    
+
                     {/* Trackers footer */}
                     <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex justify-between items-center text-xs text-slate-400 font-semibold">
                         <span>Showing {filteredRequests.length} of {requests.length} evaluation structures</span>
@@ -199,27 +199,26 @@ const RoleChangeRequests = () => {
             {modalConfig.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     {/* Backdrop */}
-                    <div 
+                    <div
                         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
                         onClick={closeModal}
                     />
-                    
+
                     {/* Modal Base Box Layout (Removed external border lines) */}
                     <div className="bg-white rounded-sm shadow-xl max-w-md w-full overflow-hidden relative z-10 transform scale-100 transition-all animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-6">
                             <div className="flex items-start gap-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${
-                                    modalConfig.type === 'approve' 
-                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-500' 
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${modalConfig.type === 'approve'
+                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-500'
                                         : 'bg-rose-50 border-rose-100 text-rose-500'
-                                }`}>
+                                    }`}>
                                     {modalConfig.type === 'approve' ? (
                                         <i className="fa-solid fa-circle-check text-base"></i>
                                     ) : (
                                         <i className="fa-solid fa-circle-xmark text-base"></i>
                                     )}
                                 </div>
-                                
+
                                 <div>
                                     <h3 className="text-base font-bold text-slate-800 tracking-tight">
                                         {modalConfig.type === 'approve' ? 'Authorize Designation Shift?' : 'Deny Designation Shift?'}
@@ -251,11 +250,10 @@ const RoleChangeRequests = () => {
                                 type="button"
                                 disabled={isActionLoading}
                                 onClick={handleConfirmAction}
-                                className={`px-4 py-2 text-white rounded-sm text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 ${
-                                    modalConfig.type === 'approve'
+                                className={`px-4 py-2 text-white rounded-sm text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 ${modalConfig.type === 'approve'
                                         ? 'bg-emerald-500 border border-emerald-600 hover:bg-emerald-600'
                                         : 'bg-rose-500 border border-rose-600 hover:bg-rose-600'
-                                }`}
+                                    }`}
                             >
                                 {isActionLoading ? (
                                     <>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-const API = `${import.meta.env.VITE_API_URL}/api`;
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
 const getFileIcon = (contentType, shareType) => {
   if (shareType === 'zip_bundle') return { icon: 'fa-file-zipper', color: '#f59e0b' };
@@ -93,6 +93,53 @@ const ShareTypeBanner = ({ shareType, fileData }) => {
   return null;
 };
 
+const ActionErrorNotice = ({ message, onDismiss }) => {
+  if (!message) return null;
+  return (
+    <div
+      role="alert"
+      style={{
+        marginTop: 16,
+        padding: '12px 14px',
+        background: 'rgba(239,68,68,0.08)',
+        border: '1px solid rgba(239,68,68,0.22)',
+        borderRadius: 12,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 10,
+        textAlign: 'left',
+      }}
+    >
+      <i
+        className="fa-solid fa-circle-exclamation"
+        style={{ fontSize: 14, color: '#f87171', marginTop: 2, flexShrink: 0 }}
+      />
+      <p style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#fca5a5', margin: 0, lineHeight: 1.5 }}>
+        {message}
+      </p>
+      {onDismiss ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss error"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#f87171',
+            cursor: 'pointer',
+            padding: 0,
+            fontSize: 12,
+            lineHeight: 1,
+            flexShrink: 0,
+          }}
+        >
+          <i className="fa-solid fa-xmark" />
+        </button>
+      ) : null}
+    </div>
+  );
+};
+
 const ExternalShareView = () => {
   const { token } = useParams();
 
@@ -100,6 +147,7 @@ const ExternalShareView = () => {
   const [fileData, setFileData] = useState(null);
   const [backendError, setBackendError] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const [actionError, setActionError] = useState('');
   const [revokedModalVisible, setRevokedModalVisible] = useState(false);
 
   useEffect(() => {
@@ -166,11 +214,18 @@ const ExternalShareView = () => {
     if (shareType === 'zip_bundle' && action === 'view') return;
 
     setActionLoading(action);
+    setActionError('');
     try {
       const res = await fetch(`${API}/files/public/${token}/?action=${action}`);
       if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || 'Access denied.');
+        let message = 'Access denied.';
+        try {
+          const data = await res.json();
+          message = data.error || data.detail || message;
+        } catch {
+          // response may not be JSON
+        }
+        setActionError(message);
         return;
       }
       const blob = await res.blob();
@@ -209,7 +264,7 @@ const ExternalShareView = () => {
 
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch {
-      alert('Something went wrong. Please try again.');
+      setActionError('Something went wrong. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -410,7 +465,6 @@ const ExternalShareView = () => {
     }
 
     const fileIconData = getFileIcon(fileData.content_type, shareType);
-    const subtitle = fileData.bundle_message || fileData.scheduled_message;
     const accessedLabel = formatAccessedAt(fileData.accessed_at);
 
     return (
@@ -483,14 +537,12 @@ const ExternalShareView = () => {
                 Opens are recorded when you visit this page
               </p>
             )}
-            {subtitle ? (
-              <p style={{ fontSize: 12, color: '#555', margin: '6px 0 0', lineHeight: 1.4 }}>{subtitle}</p>
-            ) : null}
           </div>
         </div>
 
         {renderLimitStats()}
         {renderActionButtons()}
+        <ActionErrorNotice message={actionError} onDismiss={() => setActionError('')} />
 
         {!canView && !canDownload && enforcesLimits && (
           <div style={{
