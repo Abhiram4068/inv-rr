@@ -31,9 +31,9 @@ function FileThumb({ file, size = 40 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: 7, flexShrink: 0,
-      overflow: "hidden", border: "none",
+      overflow: "hidden", border: "1px solid #e2e8f0",
       display: "flex", alignItems: "center", justifyContent: "center",
-      background: "transparent",
+      background: "#f8fafc",
     }}>
       {isImage && file.file_url ? (
         <img
@@ -89,7 +89,7 @@ const CollectionDetails = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ name: "", description: "" });
-  const [nameApiError, setNameApiError] = useState("");
+
   const [search, setSearch]=useState("")
 
   // Toast State
@@ -254,23 +254,23 @@ const showToast = (msg, type = 'success') => {
     }
   };
 
-const handleSave = async () => {
-  try {
-    await handleUpdateCollection(formData);
-    setCollectionInfo({ ...collectionInfo, ...formData });
-    setIsManageOpen(false);
-    setNameApiError("");
-    showToast("Collection updated successfully!");
-  } catch (err) {
-    const nameErr = err?.response?.data?.name?.[0];
-    if (nameErr) {
-      setNameApiError(nameErr);
-      return;
+  const handleSave = async () => {
+    try {
+      await handleUpdateCollection(formData);
+      setCollectionInfo({ ...collectionInfo, ...formData });
+      setIsManageOpen(false);
+      showToast("Collection updated successfully!");
+    } catch (err) {
+      setIsManageOpen(false);
+      if (err.response?.data?.detail?.name) {
+        showToast(err.response.data.detail.name[0], "error");
+      } else if (typeof err.response?.data?.detail === "string") {
+        showToast(err.response.data.detail, "error");
+      } else {
+        showToast("Failed to update collection", "error");
+      }
     }
-    setIsManageOpen(false);
-    showToast(err?.response?.data?.detail || "Failed to update collection", "error");
-  }
-};
+  };
 
   const onConfirmDelete = async () => {
     await handleDeleteCollection();
@@ -572,12 +572,9 @@ const handleSave = async () => {
                   type="text"
                   placeholder="Collection Name"
                   value={formData.name}
-                  onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setNameApiError(""); }}
-                  className={`w-full border p-3 rounded-xl text-sm outline-none transition-all ${nameApiError ? 'border-red-500 bg-red-500/5' : isDark ? 'bg-black border-[#1a1a1a] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500'}`}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={`w-full border p-3 rounded-xl text-sm outline-none transition-all ${isDark ? 'bg-black border-[#1a1a1a] text-white focus:border-blue-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500'}`}
                 />
-                {nameApiError && (
-                  <p className="text-red-500 text-[11px] mt-1.5 font-medium ml-1">{nameApiError}</p>
-                )}
               </div>
               
               <div className="space-y-1">

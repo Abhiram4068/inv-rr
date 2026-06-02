@@ -99,7 +99,7 @@ const ViewAllShares = () => {
   };
 
   return (
-    <div className={`flex-1 min-w-0 overflow-y-auto no-scrollbar transition-colors duration-300 relative ${isDark ? 'bg-black text-white' : 'bg-[#EFEFEF] text-slate-800'}`}>
+    <div className={`w-full min-h-full transition-colors duration-300 relative ${isDark ? 'bg-black' : 'bg-[#EFEFEF]'}`}>
 
       {/* Toast */}
       {toast.visible && (
@@ -119,7 +119,7 @@ const ViewAllShares = () => {
         </div>
       )}
 
-      <div className="p-4 sm:p-6 lg:p-10 max-w-6xl mx-auto pb-12">
+      <div className="p-4 sm:p-6 lg:p-10 max-w-6xl mx-auto">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -141,11 +141,14 @@ const ViewAllShares = () => {
         </div>
 
         {/* Table container */}
-        <div className={`border rounded-lg shadow-sm
-          ${isDark ? 'border-neutral-900 bg-[#050505]' : 'border-slate-200 bg-white'}`}>
+        <div className={`border rounded-lg overflow-hidden shadow-2xl
+  ${isDark
+            ? 'border-neutral-900 bg-[#050505]'
+            : 'border-slate-200 bg-slate-50/50'}
+`}>
 
           {/* Pagination bar */}
-          <div className={`px-4 sm:px-6 py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 rounded-t-lg ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50'}`}>
+          <div className={`px-4 sm:px-6 py-4 border-b flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 ${isDark ? 'border-neutral-900 bg-[#080808]' : 'border-slate-100 bg-slate-50/50'}`}>
             <div>
               <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${isDark ? 'text-white' : 'text-slate-800'}`}>Shared Files</h3>
               <p className={`text-[10px] font-bold mt-0.5 uppercase ${isDark ? 'text-neutral-600' : 'text-slate-400'}`}>
@@ -180,12 +183,13 @@ const ViewAllShares = () => {
           {/* ── DESKTOP TABLE (md+) ── */}
           <div className="hidden md:block overflow-x-auto">
             <table
-              className={`w-full text-left border-collapse ${isDark ? 'bg-[#050505]' : 'bg-white'}`}
+              className={`w-full text-left border-collapse ${isDark ? 'bg-[#050505]' : 'bg-slate-50/50'
+                }`}
             >
               <thead>
                 <tr className={`text-[10px] uppercase tracking-[0.12em] border-b
-                  ${isDark ? 'text-neutral-500 border-neutral-900 bg-[#080808]' : 'text-slate-400 border-slate-100 bg-slate-50'}`}>
-                  <th className="py-3.5 pl-6 pr-3 font-bold w-[220px]">File Name/Package Title</th>
+                  ${isDark ? 'text-neutral-500 border-neutral-900 bg-[#080808]/70' : 'text-slate-400 border-slate-100 bg-slate-50/50'}`}>
+                  <th className="py-3.5 pl-6 pr-3 font-bold w-[220px]">File Name</th>
                   <th className="py-3.5 px-3 font-bold w-[180px]">Recipient</th>
                   <th className="py-3.5 px-3 font-bold w-[160px]">Sent</th>
                   <th className="py-3.5 px-3 font-bold w-[80px]">Status</th>

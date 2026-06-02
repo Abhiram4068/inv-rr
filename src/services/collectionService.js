@@ -1,29 +1,36 @@
 import api from "../api/axios";
 
-export const getCollections = (search = "", sortBy = "created_at", sortOrder = "desc", page = 1, pageSize = null) => 
-  api.get("/collections/", { params: { search, sort_by: sortBy, sort_order: sortOrder, page, ...(pageSize ? { page_size: pageSize } : {}) } });
+export const getCollections = (search = "", sortBy = "created_at", sortOrder = "desc") => 
+  api.get("/api/collections/", { params: { search, sort_by: sortBy, sort_order: sortOrder } });
 
-//GET /collections/:id/
-export const getCollectionById = (collectionId) => api.get(`/collections/${collectionId}/`);
+// GET /api/collections/:id/
+export const getCollectionById = (collectionId) =>
+  api.get(`/api/collections/${collectionId}/`);
 
-//POST /collections/
-export const createCollection = (collectionData) => api.post("/collections/", collectionData);
+// POST /api/collections/
+export const createCollection = (collectionData) =>
+  api.post("/api/collections/", collectionData);
 
-//PATCH /collections/:id/
-export const updateCollection = (collectionId, collectionData) => api.patch(`/collections/${collectionId}/`, collectionData);
+// PATCH /api/collections/:id/
+export const updateCollection = (collectionId, collectionData) =>
+  api.patch(`/api/collections/${collectionId}/`, collectionData);
 
-//DELETE /collections/:id/
-export const deleteCollection = (collectionId) => api.delete(`/collections/${collectionId}/`);
+// DELETE /api/collections/:id/
+export const deleteCollection = (collectionId) =>
+  api.delete(`/api/collections/${collectionId}/`);
 
-//POST /collections/:id/add-file/
-export const addFileToCollection = (collectionId, fileId) => api.post(`/collections/${collectionId}/files/${fileId}/`);
+// POST /api/collections/:id/files/:file_id/
+export const addFileToCollection = (collectionId, fileId) =>
+  api.post(`/api/collections/${collectionId}/files/${fileId}/`);
 
-//DELETE /collections/:id/files/:file_id/
-export const removeFileFromCollection = (collectionId, fileId) => api.delete(`/collections/${collectionId}/files/${fileId}/`);
+// DELETE /api/collections/:id/files/:file_id/
+export const removeFileFromCollection = (collectionId, fileId) =>
+  api.delete(`/api/collections/${collectionId}/files/${fileId}/`);
 
-//GET /collections/:id/files/
-export const getCollectionFiles = (collectionId, page = 1, search="") => api.get(`/collections/${collectionId}/files/`, { params: { page, search } });
+// GET /api/collections/:id/files/
+export const getCollectionFiles = (collectionId, page = 1, search = "") =>
+  api.get(`/api/collections/${collectionId}/files/`, { params: { page, search } });
 
-
-//GET /collections/starred/
-export const getStarredCollection = () => api.get(`/collections/starred/`);
+// GET /api/collections/starred/
+export const getStarredCollection = () =>
+  api.get("/api/collections/starred/");

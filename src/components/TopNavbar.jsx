@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../services/authService";
 
 import useAuth from "../hooks/useAuth";
 
 const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
-  const { user, logout: handleLogout } = useAuth();
+  const { user, logout: clearUser } = useAuth();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
@@ -28,7 +29,7 @@ const TopNavbar = ({ toggleSidebar, toggleRightSidebar }) => {
       document.body.style.backgroundColor = 'black';
     }
   }, [theme]);
-  
+
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
@@ -44,6 +45,16 @@ const dropdownRef = useRef(null);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await logout();          // tells the server to blacklist / clear the refresh cookie
+    } catch {
+      // even if the server call fails, clear client state
+    } finally {
+      clearUser(null);          // wipe user from context
+      navigate("/login", { replace: true });
+    }
+  };
   return (
     <nav className={`h-[60px] flex items-center justify-between px-4 md:px-6 border-b shrink-0 z-50 transition-colors duration-300 
       ${theme === 'dark' ? 'bg-black border-[#333]' : 'bg-slate-200 border-slate-300 shadow-sm'}`}>

@@ -239,7 +239,7 @@ const Register = () => {
       // ← show success screen instead of navigating to /login
       setRegistrationSuccess(true);
     } catch (err) {
-      setError((err.response?.data?.email || "Registration Failed."));
+      setError((err.response?.data?.email));
     } finally {
       setLoading(false);
     }

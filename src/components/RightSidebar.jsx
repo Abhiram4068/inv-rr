@@ -59,10 +59,9 @@ const RightSidebar = ({ isOpen, onClose }) => {
           onClick={() => onClose?.()}
           className={`block w-full p-2.5 rounded-[20px] font-semibold text-center text-sm mb-3 transition-all border
             ${isDark 
-              ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md' 
+              ? 'bg-transparent text-white border-[#1a1a1a] hover:bg-[#111]' 
               : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md'}`}
         >
-          <i className="fa-solid fa-plus text-white mr-2"></i>
           Upload File
         </Link>
 

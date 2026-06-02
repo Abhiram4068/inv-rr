@@ -34,7 +34,7 @@ const Login = () => {
         navigate("/dashboard", { replace: true });
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.error || err.response?.data?.detail || "Login Failed"
+      const errorMsg = err.response?.data?.error || err.response?.data?.detail || "Invalid email or password";
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -109,7 +109,7 @@ const Login = () => {
                 <input 
                   type="email" 
                   name="email"
-                  placeholder="name@company.com" 
+                  placeholder="name@example.com" 
                   required
                   value={formData.email}
                   onChange={handleChange}

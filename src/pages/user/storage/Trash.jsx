@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from "react-router-dom";
 import { getDeletedFiles, restoreFile, clearTrashFile, bulkRestoreFiles, emptyTrash } from "../../../services/fileService";
 import { sizeFormatter } from '../../../utils/sizeFormatter';
-import { formatDateTime } from '../../../utils/dateFormatter';
 
 const TrashManagement = () => {
   // --- THEME STATE SYNC ---
@@ -325,7 +324,6 @@ ${isDark
                 <th className="p-4 pl-6 text-[10px] uppercase text-[#444] font-bold tracking-widest">File Name</th>
                 <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Deleted At</th>
                 <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Size</th>
-                <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest">Expires In</th>
                 <th className="p-4 text-[10px] uppercase text-[#444] font-bold tracking-widest text-right pr-6">Actions</th>
               </tr>
             </thead>
@@ -365,35 +363,17 @@ ${isDark
                         <div>
                           <p className={`text-sm font-bold truncate max-w-[220px] ${isDark ? 'text-white' : 'text-slate-700'}`}>{file.original_name}</p>
                           <p className={`text-[10px] font-bold ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>
-                            Deleted on: {file.deleted_at ? formatDateTime(file.deleted_at) : 'N/A'}
+                            Deleted on: {file.deleted_at ? new Date(file.deleted_at).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-                      {file.deleted_at ? formatDateTime(file.deleted_at) : '—'}
+                      {file.deleted_at ? new Date(file.deleted_at).toLocaleString() : '—'}
                     </td>
                     <td className="p-4">
-                      <span className={`text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>{file.file_size || '—'}</span>
+                      <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.file_size || '—'}</span>
                     </td>
-                    <td className={`p-4 text-sm font-medium ${isDark ? 'text-[#808080]' : 'text-slate-500'}`}>
-              {file.deleted_at ? (() => {
-                const deletedDate = new Date(file.deleted_at);
-                const expiresAt = new Date(deletedDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-                const daysLeft = Math.ceil((expiresAt - new Date()) / (1000 * 60 * 60 * 24));
-                return (
-                  <span className={`font-bold ${
-                    daysLeft <= 3
-                      ? 'text-red-500'
-                      : daysLeft <= 7
-                        ? 'text-amber-500'
-                        : isDark ? 'text-[#808080]' : 'text-slate-500'
-                  }`}>
-                    {daysLeft <= 0 ? 'Expiring soon' : `${daysLeft} day${daysLeft === 1 ? '' : 's'}`}
-                  </span>
-                );
-              })() : '—'}
-            </td>
                     <td className="p-4 pr-6">
                       <div className="flex justify-end gap-2">
                         <button

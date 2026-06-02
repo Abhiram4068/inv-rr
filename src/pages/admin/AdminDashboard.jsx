@@ -79,15 +79,15 @@ const AdminDashboard = () => {
                 <div className="bg-white border border-slate-200 p-6 rounded-sm mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <div className="flex items-center gap-2 text-indigo-500 font-bold text-[10px] uppercase tracking-wider mb-1">
-                           
+                            <i className="fa-solid fa-shield-halved"></i> Security Node Active
                         </div>
                         <h1 className="text-xl font-bold text-slate-800 tracking-tight">System Control Console</h1>
                         <p className="text-xs text-slate-400 mt-0.5">
                             Welcome back, Administrator. Review pending registration bottlenecks and localized data pools below.
                         </p>
                     </div>
-                    <div className="flex items-center gap-4 text-xs  px-4 py-2.5 rounded-sm w-full md:w-auto justify-between md:justify-start">
-                       
+                    <div className="flex items-center gap-4 text-xs bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-sm w-full md:w-auto justify-between md:justify-start">
+                        <span className="text-slate-400 font-medium">Session Frame:</span>
                         <span className="text-slate-700 font-bold flex items-center gap-1.5">
                             <i className="fa-regular fa-calendar text-[11px] text-slate-400"></i> {formattedDate}
                         </span>
@@ -97,7 +97,7 @@ const AdminDashboard = () => {
                 {/* Sub-Header Label */}
                 <div className="flex justify-between items-center mb-4">
                     <div>
-                        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Administration Dashboard</h2>
+                        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Operational Infrastructure</h2>
                     </div>
                 </div>
 
@@ -170,59 +170,43 @@ const AdminDashboard = () => {
                         icon="fa-cloud-arrow-up" 
                     />
                     <DashboardTile 
-                        label="New Registration Requests" 
+                        label="History Pending" 
                         value={stats?.pending_registration_approvals || 0} 
                         icon="fa-clock-rotate-left"
-                        onClickAction={() => navigate('/admin/pending-users')}
-                        actionLabel="View Requests"
+                        onClickAction={() => navigate('/admin/requests')}
+                        actionLabel="View Queue"
                     />
                 </div>
 
-{/* Secondary Row */}
+                {/* Secondary Row with Notice Board & Balanced Metric Columns */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-sm border border-slate-200 p-6 flex flex-col h-full">
-                            <div className="flex justify-between items-center mb-4">
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Recent Activity</span>
-                                <button onClick={() => navigate('/admin/activity-logs')} className="text-[11px] font-bold text-indigo-500 hover:text-indigo-600 uppercase flex items-center gap-1">
-                                    View All <i className="fa-solid fa-chevron-right text-[9px]"></i>
-                                </button>
-                            </div>
-                            <div className="flex flex-col gap-2 flex-1">
-                                {stats?.recent_logs?.length > 0 ? stats.recent_logs.map((log, i) => (
-                                    <div key={i} className="flex items-start gap-2.5 py-2 border-b border-slate-50 last:border-0">
-                                        <div className="w-6 h-6 rounded-sm bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
-                                            <i className="fa-solid fa-bolt text-[9px] text-indigo-400"></i>
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-[11px] font-bold text-slate-700 truncate">{log.action_details}</p>
-                                            <p className="text-[10px] text-slate-400 mt-0.5">
-                                                {log.activity_type.replace(/_/g, ' ')} • {new Date(log.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <p className="text-[11px] text-slate-400 mt-2">No recent activity</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+
+                    {/* Action Cards Grid System directly alongside Notice Board */}
                     <div className="lg:col-span-1">
                         <DashboardTile 
-                            label="Designation Change Requests" 
-                            value={stats?.pending_designation_change_requests || 0} 
-                            icon="fa-id-badge" 
-                            onClickAction={() => navigate('/admin/role-change')}
+                            label="Reactivation Requests" 
+                            value={stats?.pending_deactivation_requests || 0} 
+                            icon="fa-user-minus"
+                            onClickAction={() => navigate('/admin/requests?type=deactivation')}
                             actionLabel="Review"
                         />
                     </div>
                     <div className="lg:col-span-1">
                         <DashboardTile 
-                            label="Reactivation Requests" 
-                            value={stats?.pending_reactivation_requests || 0} 
-                            icon="fa-envelope-open-text"
-                            onClickAction={() => navigate('/admin/reactivation-requests')}
-                            actionLabel="Review"
+                            label="New User Approvals" 
+                            value={stats?.pending_registration_approvals || 0} 
+                            icon="fa-user-plus" 
+                            onClickAction={() => navigate('/admin/requests?type=registration')}
+                            actionLabel="Approve"
+                        />
+                    </div>
+                    <div className="lg:col-span-1">
+                        <DashboardTile 
+                            label="New User Approvals" 
+                            value={stats?.pending_registration_approvals || 0} 
+                            icon="fa-user-plus" 
+                            onClickAction={() => navigate('/admin/requests?type=registration')}
+                            actionLabel="Approve"
                         />
                     </div>
                 </div>

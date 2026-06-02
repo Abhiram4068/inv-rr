@@ -6,40 +6,17 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
     try {
       await forgotPassword({ email });
-      setSubmitted(true);
-    } catch (err) {
-      const data = err.response?.data;
-      let errorMsg = "An error occurred. Please try again.";
-      if (data) {
-        if (typeof data === "string") {
-          errorMsg = data;
-        } else if (data.detail) {
-          errorMsg = data.detail;
-        } else if (data.error) {
-          errorMsg = data.error;
-        } else {
-          const firstKey = Object.keys(data)[0];
-          if (firstKey) {
-            const fieldError = data[firstKey];
-            if (Array.isArray(fieldError)) {
-              errorMsg = fieldError[0];
-            } else if (typeof fieldError === "string") {
-              errorMsg = fieldError;
-            }
-          }
-        }
-      }
-      setError(errorMsg);
+    } catch (_) {
+      // Always show success to prevent email enumeration
     } finally {
       setLoading(false);
+      setSubmitted(true);
     }
   };
 
@@ -51,18 +28,12 @@ const ForgotPassword = () => {
         <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-600/10 blur-[120px] rounded-full"></div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-24">
-            <i className="fa-solid fa-users text-white text-lg"></i>
-
-            <div className="text-xl font-bold tracking-tight text-white">
-              HiveDrive<span className="text-blue-500">.</span>
-            </div>
-          </div>
-          <h1 className="text-5xl font-semibold text-white leading-tight mb-6">
+          <div className="text-2xl font-bold tracking-tighter text-white mb-12">HiveDrive</div>
+          <h1 className="text-5xl font-extrabold text-white leading-tight mb-6">
             Reset your <br />
-            <span className="text-blue-400 font-bold italic">Password.</span>
+            <span className="text-blue-500">Password.</span>
           </h1>
-          <p className="text-[#a1a1aa] text-base max-w-md leading-relaxed font-light">
+          <p className="text-[#808080] text-lg max-w-md leading-relaxed">
             No worries. Enter your email and we'll send you a link to get back into your account.
           </p>
         </div>
@@ -83,12 +54,6 @@ const ForgotPassword = () => {
                 <p className="text-[#808080] text-sm">Enter your email and we'll send you a reset link.</p>
               </div>
 
-              {error && (
-                <div className="p-2 mb-2 rounded-md text-red-400 text-xs tracking-wide text-center">
-                  {error}
-                </div>
-              )}
-
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="flex flex-col">
                   <label className="text-[11px] uppercase tracking-widest text-[#808080] mb-2 font-medium">
@@ -98,11 +63,11 @@ const ForgotPassword = () => {
                     <i className="fa-solid fa-envelope absolute left-4 text-[#404040] text-sm"></i>
                     <input
                       type="email"
-                      placeholder="name@company.com"
+                      placeholder="name@example.com"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-[#0a0a0a] placeholder:italic placeholder:text-xs placeholder:text-[#4a4a4a] border border-[#1a1a1a] py-3 pl-[45px] pr-4 rounded-[10px] text-white text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="w-full bg-[#0a0a0a] border border-[#1a1a1a] py-3 pl-[45px] pr-4 rounded-[10px] text-white text-sm outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -112,7 +77,7 @@ const ForgotPassword = () => {
                   disabled={loading}
                   className="w-full py-3.5 bg-blue-600 text-white border-none rounded-[10px] font-semibold text-sm cursor-pointer mt-2 transition-all hover:bg-blue-700 hover:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Sending..." : "SEND RESET LINK"}
+                  {loading ? "Sending..." : "Send Reset Link"}
                 </button>
               </form>
             </>

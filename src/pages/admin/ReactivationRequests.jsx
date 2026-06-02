@@ -110,7 +110,7 @@ const ReactivationRequests = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-xl font-bold text-slate-800 tracking-tight">Reactivation Appeals</h1>
-                        <p className="text-xs text-slate-400 mt-0.5">Review, approve, or reject account reactivation requests.</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Evaluate structural statements and clear execution queues for suspended directories requesting reactivation.</p>
                     </div>
 
                     {/* Filter Inputs Box */}

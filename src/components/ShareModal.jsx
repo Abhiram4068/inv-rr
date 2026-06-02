@@ -3,180 +3,45 @@ import { shareFile, bulkShareFiles } from '../services/shareService';
 import useAuth from '../hooks/useAuth';
 
 const SELF_SHARE_MSG = 'You cannot share files with yourself.';
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const normalizeEmail = (email) => email.trim().toLowerCase();
-
-const isValidEmail = (email) => EMAIL_REGEX.test(String(email).trim());
-
-const formatFieldLabel = (field) => {
-  const labels = {
-    recipient_emails: 'Recipient',
-    expiration_datetime: 'Expiry',
-    title: 'Title',
-    message: 'Message',
-    permission: 'Permission',
-    download_limit: 'Download limit',
-    view_limit: 'View limit',
-    file_ids: 'Files',
-  };
-  return labels[field] || field.replace(/_/g, ' ');
-};
 
 const parseShareApiError = (err) => {
   const data = err.response?.data;
   if (!data) return 'Failed to share files';
-  if (typeof data === 'string') return data;
   if (typeof data.error === 'string') return data.error;
   if (typeof data.detail === 'string') return data.detail;
-
-  const messages = [];
-
-  Object.entries(data).forEach(([field, value]) => {
-    if (value == null) return;
-
-    if (field === 'recipient_emails' && typeof value === 'object' && !Array.isArray(value)) {
-      Object.entries(value).forEach(([idx, msgs]) => {
-        const text = Array.isArray(msgs) ? msgs.join(' ') : String(msgs);
-        messages.push(`Recipient ${Number(idx) + 1}: ${text}`);
-      });
-      return;
-    }
-
-    if (Array.isArray(value)) {
-      messages.push(`${formatFieldLabel(field)}: ${value.join(' ')}`);
-      return;
-    }
-
-    if (typeof value === 'object') {
-      Object.entries(value).forEach(([key, nested]) => {
-        const text = Array.isArray(nested) ? nested.join(' ') : String(nested);
-        messages.push(`${formatFieldLabel(field)} ${key}: ${text}`);
-      });
-      return;
-    }
-
-    messages.push(`${formatFieldLabel(field)}: ${String(value)}`);
-  });
-
-  return messages.length ? messages.join(' ') : 'Failed to share files';
+  if (data.recipient_emails) {
+    const field = data.recipient_emails;
+    if (Array.isArray(field)) return field.join(' ');
+    if (typeof field === 'string') return field;
+  }
+  const firstKey = Object.keys(data)[0];
+  if (firstKey) {
+    const val = data[firstKey];
+    if (Array.isArray(val)) return val.join(' ');
+    if (typeof val === 'string') return val;
+  }
+  return 'Failed to share files';
 };
 
-const validateRecipientEmails = (rawRecipients, ownerEmail) => {
-  const errors = [];
+const validateRecipientEmails = (emails, ownerEmail) => {
+  if (!emails.length) {
+    return { ok: false, message: 'Please add at least one recipient email' };
+  }
   const seen = new Set();
-  const validEmails = [];
-
-  rawRecipients.forEach((raw, index) => {
-    const trimmed = raw.trim();
-    if (!trimmed) return;
-
-    if (!isValidEmail(trimmed)) {
-      errors.push(`Recipient ${index + 1}: Enter a valid email address.`);
-      return;
-    }
-
-    const email = normalizeEmail(trimmed);
+  for (const raw of emails) {
+    const email = normalizeEmail(raw);
+    if (!email) continue;
     if (ownerEmail && email === normalizeEmail(ownerEmail)) {
-      errors.push(`Recipient ${index + 1}: ${SELF_SHARE_MSG}`);
-      return;
+      return { ok: false, message: SELF_SHARE_MSG };
     }
     if (seen.has(email)) {
-      errors.push(`Recipient ${index + 1}: Duplicate email address.`);
-      return;
+      return { ok: false, message: 'Duplicate recipient emails are not allowed.' };
     }
-
     seen.add(email);
-    validEmails.push(email);
-  });
-
-  if (!validEmails.length && !errors.length) {
-    return { ok: false, message: 'Please add at least one recipient email.' };
   }
-  if (errors.length) {
-    return { ok: false, message: errors.join(' ') };
-  }
-
-  return { ok: true, emails: validEmails };
-};
-
-const validateExpiration = (isCustomExpiry, customExpiry, presetExpiry) => {
-  if (isCustomExpiry) {
-    const raw = String(customExpiry ?? '').trim();
-    if (!raw) {
-      return { ok: false, message: 'Expiry: Enter link expiry in hours (1–168).' };
-    }
-    if (!/^\d+$/.test(raw)) {
-      return { ok: false, message: 'Expiry: A valid whole number of hours is required.' };
-    }
-    const hours = Number(raw);
-    if (hours < 1 || hours > 168) {
-      return { ok: false, message: 'Expiry: Must be between 1 and 168 hours.' };
-    }
-    return { ok: true, hours };
-  }
-
-  const hours = Number(presetExpiry);
-  if (!Number.isFinite(hours) || !Number.isInteger(hours) || hours < 1 || hours > 168) {
-    return { ok: false, message: 'Expiry: Please select a valid link expiry.' };
-  }
-  return { ok: true, hours };
-};
-
-const validateOptionalLimit = (value, label) => {
-  if (value == null || value === '') return null;
-  const num = Number(value);
-  if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1) {
-    return `${label} must be a whole number greater than 0.`;
-  }
-  return null;
-};
-
-const validateShareForm = ({
-  recipients,
-  ownerEmail,
-  title,
-  isCustomExpiry,
-  customExpiry,
-  presetExpiry,
-  permission,
-  downloadLimit,
-  viewLimit,
-  isBulk,
-}) => {
-  const errors = [];
-
-  const recipientCheck = validateRecipientEmails(recipients, ownerEmail);
-  if (!recipientCheck.ok) errors.push(recipientCheck.message);
-
-  if (!title?.trim()) {
-    errors.push('Title: Title is required.');
-  } else if (title.trim().length > 500) {
-    errors.push('Title: Must be 500 characters or fewer.');
-  }
-
-  const expiryCheck = validateExpiration(isCustomExpiry, customExpiry, presetExpiry);
-  if (!expiryCheck.ok) errors.push(expiryCheck.message);
-
-  if (!isBulk) {
-    const downloadErr = validateOptionalLimit(downloadLimit, 'Download limit');
-    if (downloadErr) errors.push(downloadErr);
-
-    if (permission === 'view_only' || permission === 'view_download') {
-      const viewErr = validateOptionalLimit(viewLimit, 'View limit');
-      if (viewErr) errors.push(viewErr);
-    }
-  }
-
-  if (errors.length) {
-    return { ok: false, message: errors.join(' ') };
-  }
-
-  return {
-    ok: true,
-    emails: recipientCheck.emails,
-    expirationHours: expiryCheck.hours,
-  };
+  return { ok: true, emails: [...seen] };
 };
 
 const FILE_ICON_MAP = (fileName = '', contentType = '') => {
@@ -200,13 +65,6 @@ const PERMISSION_META = {
 };
 
 const EXPIRY_LABELS = { 24: '24 Hours', 48: '48 Hours', 168: '7 Days' };
-
-const BULK_ZIP_META = {
-  icon: 'fa-file-zipper',
-  label: 'ZIP Download',
-  color: '#f59e0b',
-  desc: 'Recipients download the full package as a ZIP file.',
-};
 
 const ShareModal = ({
   isOpen,
@@ -239,13 +97,12 @@ const ShareModal = ({
 
   useEffect(() => {
     if (!toast.visible) return;
-    const duration = toast.type === 'error' ? 6000 : 3000;
     const out = setTimeout(() => {
       setToast(prev => ({ ...prev, animateOut: true }));
       setTimeout(() => setToast({ visible: false, message: '', type: 'success', animateOut: false }), 350);
-    }, duration);
+    }, 3000);
     return () => clearTimeout(out);
-  }, [toast.visible, toast.type]);
+  }, [toast.visible]);
 
   if (!isOpen) return null;
 
@@ -266,38 +123,29 @@ const ShareModal = ({
   };
 
   const handleShare = async () => {
-    const validation = validateShareForm({
-      recipients,
-      ownerEmail,
-      title: shareData.title,
-      isCustomExpiry,
-      customExpiry,
-      presetExpiry: shareData.expiration_datetime,
-      permission: shareData.permission,
-      downloadLimit: shareData.download_limit,
-      viewLimit: shareData.view_limit,
-      isBulk,
-    });
-
-    if (!validation.ok) {
-      showToast(validation.message, 'error');
+    const trimmed = recipients.map((r) => r.trim()).filter(Boolean);
+    const recipientCheck = validateRecipientEmails(trimmed, ownerEmail);
+    if (!recipientCheck.ok) {
+      showToast(recipientCheck.message, 'error');
+      return;
+    }
+    if (!shareData.title?.trim()) {
+      showToast('Title is required', 'error');
       return;
     }
 
     const payload = {
-      recipient_emails: validation.emails,
-      expiration_datetime: validation.expirationHours,
-      title: shareData.title.trim(),
+      recipient_emails: recipientCheck.emails,
+      expiration_datetime: isCustomExpiry ? Number(customExpiry) : Number(shareData.expiration_datetime),
+      title: shareData.title,
       message: shareData.message,
-      permission: isBulk ? 'view_download' : shareData.permission,
-      download_limit: isBulk
-        ? null
-        : shareData.permission === 'one_time_download' ? 1
+      permission: shareData.permission,
+      download_limit:
+        shareData.permission === 'one_time_download' ? 1
           : shareData.permission === 'view_download' ? shareData.download_limit
             : null,
-      view_limit: isBulk
-        ? null
-        : (shareData.permission === 'view_only' || shareData.permission === 'view_download')
+      view_limit:
+        (shareData.permission === 'view_only' || shareData.permission === 'view_download')
           ? shareData.view_limit : null,
     };
 
@@ -324,9 +172,7 @@ const ShareModal = ({
   // ── Derived preview data ──────────────────────────────────────
   const fileName = isBulk ? null : (fileNames?.[0] || 'Untitled File');
   const fileMeta = FILE_ICON_MAP(fileName || '');
-  const perm = isBulk
-    ? BULK_ZIP_META
-    : (PERMISSION_META[shareData.permission] || PERMISSION_META.view_only);
+  const perm = PERMISSION_META[shareData.permission] || PERMISSION_META.view_only;
   const validRecipients = recipients.filter(r => r.trim() !== '');
   const expiryLabel = isCustomExpiry
     ? (customExpiry ? `${customExpiry}h custom` : 'Custom')
@@ -334,16 +180,9 @@ const ShareModal = ({
 
   const s = isDark;
 
-  const inputNormal = s
-    ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]'
-    : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-400';
-  const inputSelf = s
-    ? 'bg-red-500/10 border-red-500/70 text-white focus:border-red-500 placeholder:text-[#555]'
-    : 'bg-red-50 border-red-400 text-slate-900 focus:border-red-500 placeholder:text-slate-400';
-
   return (
     <div
-      className="fixed inset-0 z-[10000] flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Toast */}
@@ -353,30 +192,30 @@ const ShareModal = ({
             ${toast.animateOut ? 'opacity-0 -translate-y-6 scale-95' : 'opacity-100 translate-y-0 scale-100'}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
-          <div className={`flex items-start gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto w-[min(calc(100vw-2rem),520px)]
+          <div className={`flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-sm font-medium shadow-[0_8px_30px_rgb(0,0,0,0.12)] border pointer-events-auto min-w-[300px] max-w-[450px]
             ${s ? 'bg-[#0d0d0d] border-[#1e1e1e] text-slate-200' : 'bg-white border-slate-100 text-slate-800'}`}>
-            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0
               ${toast.type === 'error'
                 ? (s ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-500')
                 : (s ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-500')}`}>
               <i className={`fa-solid text-xs ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}`} />
             </div>
-            <span className="flex-1 leading-relaxed tracking-wide text-[13px]">{toast.message}</span>
+            <span className="flex-1 leading-normal tracking-wide text-[13px]">{toast.message}</span>
           </div>
         </div>
       )}
 
       <div
-        className={`border w-full max-w-[960px] rounded-2xl shadow-2xl flex flex-col md:flex-row md:overflow-hidden overflow-y-auto overscroll-contain my-auto
+        className={`border w-full max-w-[960px] rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row
           ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}
-        style={{ maxHeight: 'min(92vh, calc(100vh - 1.5rem))' }}
+        style={{ maxHeight: '92vh' }}
         onClick={e => e.stopPropagation()}
       >
 
-        {/* ═══════════════ FORM (top on mobile, left on desktop) ═══════════════ */}
-        <div className={`order-1 flex-none md:flex-1 md:min-h-0 p-4 sm:p-6 lg:p-8 border-b md:border-b-0 md:border-r md:overflow-y-auto no-scrollbar
+        {/* ═══════════════ LEFT: FORM ═══════════════ */}
+        <div className={`flex-1 p-8 border-b md:border-b-0 md:border-r overflow-y-auto no-scrollbar
           ${s ? 'border-[#1a1a1a]' : 'border-slate-100'}`}>
-          <h2 className={`text-lg sm:text-xl font-bold mb-5 sm:mb-8 ${s ? 'text-white' : 'text-slate-900'}`}>
+          <h2 className={`text-xl font-bold mb-8 ${s ? 'text-white' : 'text-slate-900'}`}>
             {isBulk ? `Bulk Share ${fileIds.length} Files` : 'Share File'}
           </h2>
 
@@ -388,7 +227,9 @@ const ShareModal = ({
                 value={shareData.title}
                 onChange={e => setShareData({ ...shareData, title: e.target.value })}
                 placeholder="e.g. Important Project Updates"
-                className={`w-full border rounded-xl p-3 sm:p-4 text-sm outline-none transition-all ${inputNormal}`}
+                className={`w-full border rounded-xl p-4 text-sm outline-none transition-all
+                  ${s ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]'
+                    : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
               />
             </div>
 
@@ -400,22 +241,25 @@ const ShareModal = ({
                   const selfEmail = isSelfRecipient(email);
                   return (
                     <div key={i} className="space-y-1">
-                      <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
+                      <div className="flex gap-2">
                         <input
                           value={email}
                           onChange={(e) => handleEmailChange(i, e.target.value)}
                           placeholder="Enter email address..."
                           type="email"
-                          autoComplete="email"
-                          className={`flex-1 min-w-0 border rounded-xl p-3 sm:p-4 text-sm outline-none transition-all
-                            ${selfEmail ? inputSelf : inputNormal}`}
+                          className={`flex-1 border rounded-xl p-4 text-sm outline-none transition-all
+                            ${selfEmail
+                              ? 'border-red-500/70 focus:border-red-500'
+                              : s
+                                ? 'bg-[#050505] border-[#1a1a1a] text-white focus:border-blue-500/50 placeholder:text-[#333]'
+                                : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder:text-slate-300'}`}
                         />
                         {recipients.length > 1 && (
                           <button
                             type="button"
                             aria-label="Remove recipient"
                             onClick={() => removeRecipient(i)}
-                            className={`border w-full sm:w-11 md:w-[54px] h-11 sm:h-[54px] rounded-xl flex items-center justify-center transition-all flex-shrink-0
+                            className={`border w-[54px] h-[54px] rounded-xl flex items-center justify-center transition-all flex-shrink-0
                               ${s ? 'bg-[#111] border-[#1a1a1a] text-[#888] hover:text-red-400 hover:border-red-500/40' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-red-500'}`}
                           >
                             <i className="fa-solid fa-xmark text-sm" />
@@ -423,7 +267,7 @@ const ShareModal = ({
                         )}
                       </div>
                       {selfEmail && (
-                        <p className={`text-[11px] pl-1 font-medium ${s ? 'text-red-400' : 'text-red-600'}`}>{SELF_SHARE_MSG}</p>
+                        <p className="text-[11px] text-red-400 pl-1">{SELF_SHARE_MSG}</p>
                       )}
                     </div>
                   );
@@ -454,25 +298,10 @@ const ShareModal = ({
               />
             </div>
 
-            {/* Permission — single-file shares only; bulk is always ZIP download */}
-            {isBulk ? (
-              <div className={`p-4 rounded-xl border ${s ? 'bg-amber-500/5 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
-                <div className="flex items-start gap-3">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s ? 'bg-amber-500/10' : 'bg-amber-100'}`}>
-                    <i className="fa-solid fa-file-zipper text-amber-500 text-sm" />
-                  </div>
-                  <div>
-                    <p className={`text-xs font-bold mb-1 ${s ? 'text-amber-400' : 'text-amber-700'}`}>ZIP package share</p>
-                    <p className={`text-[11px] leading-relaxed ${s ? 'text-[#888]' : 'text-amber-800/80'}`}>
-                      {fileIds.length} files are bundled into one archive. Recipients download the ZIP to access everything — view/download permissions do not apply.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
+            {/* Permission */}
             <div>
               <label className={`block text-[11px] uppercase font-bold tracking-widest mb-2 ${s ? 'text-[#808080]' : 'text-slate-400'}`}>Access Permission</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {Object.entries(PERMISSION_META).map(([value, meta]) => (
                   <button
                     key={value}
@@ -509,7 +338,6 @@ const ShareModal = ({
                 )}
               </div>
             </div>
-            )}
 
             {/* Expiry */}
             <div>
@@ -539,15 +367,15 @@ const ShareModal = ({
           </div>
         </div>
 
-        {/* ═══════════════ DRAFT PREVIEW (bottom on mobile, right on desktop) ═══════════════ */}
-        <div className={`order-2 flex-none md:flex md:flex-col md:shrink-0 md:min-h-0 w-full md:w-[320px] md:max-w-[320px] ${s ? 'bg-black' : 'bg-slate-200'}`}>
+        {/* ═══════════════ RIGHT: LIVE PREVIEW ═══════════════ */}
+        <div className={`w-full md:w-[320px] flex flex-col ${s ? 'bg-black' : 'bg-slate-200'}`}>
           {/* Preview header */}
-          <div className={`px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b ${s ? 'bg-black border-[#1f1f1f]' : 'bg-slate-200 border-slate-200'}`}>
-            <p className={`text-[10px] uppercase font-bold tracking-[0.15em] ${s ? 'text-[#444]' : 'text-slate-400'}`}>Draft</p>
+          <div className={`px-6 pt-6 border-b ${s ? 'bg-black border-[#1f1f1f]' : 'bg-slate-200 border-slate-200'}`}>
+            <p className={`text-[10px] uppercase font-bold tracking-[0.15em] ${s ? 'text-[#444]' : 'text-slate-400'}`}>Live Preview</p>
           </div>
 
-          {/* Preview body — scrollable only on desktop sidebar */}
-          <div className="md:flex-1 md:min-h-0 md:overflow-y-auto no-scrollbar p-4 sm:p-5 space-y-3">
+          {/* Scrollable preview body */}
+          <div className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-3">
 
             {/* ── File chip ── */}
             <div className={`flex items-center gap-3 p-3 rounded   border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
@@ -561,9 +389,7 @@ const ShareModal = ({
                 <p className={`text-[12px] font-semibold truncate ${s ? 'text-white' : 'text-slate-800'}`}>
                   {isBulk ? `${fileIds.length} files selected` : (fileName || 'Untitled File')}
                 </p>
-                <p className={`text-[10px] ${s ? 'text-[#444]' : 'text-slate-400'}`}>
-                  {isBulk ? 'ZIP package · download only' : 'Secure shared link'}
-                </p>
+                <p className={`text-[10px] ${s ? 'text-[#444]' : 'text-slate-400'}`}>Secure shared link</p>
               </div>
             </div>
 
@@ -583,7 +409,7 @@ const ShareModal = ({
             ) : null}
 
             {/* ── Recipients ── */}
-            <div className={`p-3 rounded border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+            <div className={`p-3 rounded-xl border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
               <p className={`text-[10px] uppercase font-bold tracking-widest mb-2 ${s ? 'text-[#444]' : 'text-slate-400'}`}>
                 Recipients
                 {validRecipients.length > 0 && (
@@ -592,17 +418,13 @@ const ShareModal = ({
               </p>
               {validRecipients.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
-                  {validRecipients.slice(0, 4).map((email, i) => {
-                    const self = isSelfRecipient(email);
-                    return (
-                    <span key={i} className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md
-                     ${self
-                       ? (s ? 'text-red-400 bg-red-500/10' : 'text-red-700 bg-red-50')
-                       : (s ? 'text-blue-400' : 'text-blue-600')}`}>
+                  {validRecipients.slice(0, 4).map((email, i) => (
+                    <span key={i} className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg border
+                      ${s ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-600'}`}>
                       <i className="fa-solid fa-user text-[8px]" />
                       {email.length > 18 ? email.slice(0, 18) + '…' : email}
                     </span>
-                  );})}
+                  ))}
                   {validRecipients.length > 4 && (
                     <span className={`text-[10px] font-medium px-2 py-1 rounded-lg border ${s ? 'bg-[#111] border-[#222] text-[#666]' : 'bg-slate-100 border-slate-200 text-slate-500'}`}>
                       +{validRecipients.length - 4} more
@@ -614,12 +436,10 @@ const ShareModal = ({
               )}
             </div>
 
-            {/* ── Delivery / permission + expiry row ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div className={`p-3 rounded border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
-                <p className={`text-[10px] uppercase font-bold tracking-widest mb-1.5 ${s ? 'text-[#444]' : 'text-slate-400'}`}>
-                  {isBulk ? 'Delivery' : 'Access'}
-                </p>
+            {/* ── Permission + Expiry row ── */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className={`p-3 rounded-xl border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+                <p className={`text-[10px] uppercase font-bold tracking-widest mb-1.5 ${s ? 'text-[#444]' : 'text-slate-400'}`}>Access</p>
                 <div className="flex items-center gap-1.5">
                   <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: perm.color + '20' }}>
                     <i className={`fa-solid ${perm.icon} text-[9px]`} style={{ color: perm.color }} />
@@ -628,7 +448,7 @@ const ShareModal = ({
                 </div>
               </div>
 
-              <div className={`p-3 rounded border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+              <div className={`p-3 rounded-xl border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
                 <p className={`text-[10px] uppercase font-bold tracking-widest mb-1.5 ${s ? 'text-[#444]' : 'text-slate-400'}`}>Expires</p>
                 <div className="flex items-center gap-1.5">
                   <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${s ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
@@ -639,11 +459,11 @@ const ShareModal = ({
               </div>
             </div>
 
-            {/* ── Limits row (single-file shares only) ── */}
-            {!isBulk && (shareData.permission === 'view_download' || shareData.permission === 'view_only') && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {/* ── Limits row (only when relevant) ── */}
+            {(shareData.permission === 'view_download' || shareData.permission === 'view_only') && (
+              <div className="grid grid-cols-2 gap-2">
                 {(shareData.permission === 'view_only' || shareData.permission === 'view_download') && (
-                  <div className={`p-3 rounded border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+                  <div className={`p-3 rounded-xl border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
                     <p className={`text-[10px] uppercase font-bold tracking-widest mb-1 ${s ? 'text-[#444]' : 'text-slate-400'}`}>Views</p>
                     <p className={`text-[12px] font-bold ${s ? 'text-white' : 'text-slate-700'}`}>
                       {shareData.view_limit ? `Max ${shareData.view_limit}` : '∞'}
@@ -651,7 +471,7 @@ const ShareModal = ({
                   </div>
                 )}
                 {shareData.permission === 'view_download' && (
-                  <div className={`p-3 rounded border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+                  <div className={`p-3 rounded-xl border ${s ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
                     <p className={`text-[10px] uppercase font-bold tracking-widest mb-1 ${s ? 'text-[#444]' : 'text-slate-400'}`}>Downloads</p>
                     <p className={`text-[12px] font-bold ${s ? 'text-white' : 'text-slate-700'}`}>
                       {shareData.download_limit ? `Max ${shareData.download_limit}` : '∞'}
@@ -661,8 +481,8 @@ const ShareModal = ({
               </div>
             )}
 
-            {/* ── One-time chip (single-file only) ── */}
-            {!isBulk && shareData.permission === 'one_time_download' && (
+            {/* ── One-time chip ── */}
+            {shareData.permission === 'one_time_download' && (
               <div className={`p-3 rounded-xl border flex items-center gap-2 ${s ? 'bg-amber-500/5 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
                 <i className="fa-solid fa-triangle-exclamation text-amber-500 text-xs" />
                 <p className={`text-[11px] font-medium ${s ? 'text-amber-400' : 'text-amber-700'}`}>Link will self-destruct after first download</p>
@@ -692,8 +512,8 @@ const ShareModal = ({
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className={`p-4 sm:p-5 border-t space-y-2 sticky bottom-0 md:static ${s ? 'bg-black border-[#1f1f1f]' : 'bg-slate-200 border-slate-200'}`}>
+          {/* ── Action buttons ── */}
+          <div className={`p-5 border-t space-y-2 ${s ? 'bg-black border-[#1f1f1f]' : 'bg-slate-300 border-slate-200'}`}>
             <button
               onClick={handleShare}
               disabled={isSharing}

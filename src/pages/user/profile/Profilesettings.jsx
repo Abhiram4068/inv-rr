@@ -135,6 +135,7 @@ const validateProfileUpdate = () => {
 
   return null;
 };
+  // --- Handler: Update name only (PATCH /api/profile/) ---
 const handleUpdateProfile = async () => {
   const validationError = validateProfileUpdate();
   if (validationError) {
@@ -149,16 +150,9 @@ const handleUpdateProfile = async () => {
     setUserProfile(profileRes.data);
     updateUser({ first_name: profileRes.data.first_name, last_name: profileRes.data.last_name });
     showToast('Profile updated successfully.', 'success');
-    } catch (err) {
-      const data = err.response?.data;
-      const msg =
-        data?.first_name?.[0] || data?.first_name ||
-        data?.last_name?.[0] || data?.last_name ||
-        data?.date_of_birth?.[0] || data?.date_of_birth ||
-        data?.detail ||
-        'Failed to update profile.';
-      showToast(msg, 'error');
-    }finally {
+  } catch (err) {
+    showToast(err.response?.data?.current_password || 'Failed to update profile.', 'error');
+  } finally {
     setLoading(false);
   }
 };
@@ -218,17 +212,9 @@ const validatePasswordChange = () => {
       await changeCurrentPassword(passwordData);
       setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
       showToast('Password changed successfully.', 'success');
-      } catch (err) {
-        const data = err.response?.data;
-        const msg =
-          data?.current_password?.[0] || data?.current_password ||
-          data?.new_password?.[0] || data?.new_password ||
-          data?.confirm_password?.[0] || data?.confirm_password ||
-          data?.non_field_errors?.[0] || data?.non_field_errors ||
-          data?.detail ||
-          'Failed to change password.';
-        showToast(msg, 'error');
-      } finally {
+    } catch (err) {
+      showToast(err.response?.data?.current_password || 'Failed to change password.', 'error');
+    } finally {
       setLoading(false);
     }
   };

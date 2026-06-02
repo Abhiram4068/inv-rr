@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { getStorageFiles, permanentDeleteFiles } from "../../../services/storageService";
 import { sizeFormatter } from '../../../utils/sizeFormatter';
-import { useNavigate } from "react-router-dom";
 
 const OldFilesManager = () => {
-  const navigate = useNavigate();
   // --- THEME STATE SYNC ---
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -141,6 +139,7 @@ const OldFilesManager = () => {
               <th className="p-6 font-bold">File Name</th>
               <th className="p-6 font-bold">Last Accessed</th>
               <th className="p-6 font-bold">Size</th>
+              <th className="p-6 font-bold text-center">View</th>
               <th className="p-6 font-bold text-right">Manage</th>
             </tr>
           </thead>
@@ -150,7 +149,6 @@ const OldFilesManager = () => {
             ) : files.map((file) => (
               <tr 
                 key={file.id} 
-                onClick={() => navigate(`/file/${file.id}`)}
                 className={`group transition-all duration-200 ${isDark ? 'hover:bg-[#111]' : 'hover:bg-white/50'}`}
               >
                 <td className="p-4 text-sm font-bold">
@@ -175,6 +173,11 @@ const OldFilesManager = () => {
                 </td>
                 <td className={`p-4 text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{sizeFormatter(file.file_size)}</td>
                 <td className="p-4 text-sm text-center">
+                  <button className={`p-2 rounded-lg transition-colors ${isDark ? 'text-[#808080] hover:text-white bg-[#111] hover:bg-[#1a1a1a]' : 'text-slate-400 hover:text-blue-600 bg-white shadow-sm hover:shadow-md'}`}>
+                    <i className="fa-solid fa-eye text-xs"></i>
+                  </button>
+                </td>
+                <td className="p-4 text-sm text-right">
                   <button 
                     onClick={() => handleDeleteClick(file)}
                     className="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm"
@@ -224,7 +227,7 @@ const OldFilesManager = () => {
       {/* DELETE CONFIRMATION MODAL */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
-          <div className={`p-8 rounded-lg w-full max-w-sm text-center shadow-2xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+          <div className={`p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl border transition-all ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
             <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-500/10 text-red-500`}>
                <i className="fa-solid fa-trash-can text-xl"></i>
             </div>

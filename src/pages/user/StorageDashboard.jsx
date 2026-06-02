@@ -263,11 +263,12 @@ const ActivityItem = ({ icon, title, type, size, isDark }) => (
       <div className="text-right hidden sm:block">
         <span className={`text-sm font-bold ${isDark ? 'text-white/80' : 'text-slate-600'}`}>{size}</span>
       </div>
-<div className="text-right hidden sm:block">
-  <span className={`text-sm font-bold ${isDark ? 'text-white/80' : 'text-slate-600'}`}>
-    {size}
-  </span>
-</div>
+      <div className="flex items-center gap-2">
+         <button className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-[#808080] hover:text-red-500">
+           <i className="fa-solid fa-trash-can text-xs"></i>
+         </button>
+         <i className={`fa-solid fa-ellipsis-vertical text-xs ${isDark ? 'text-[#222]' : 'text-slate-200'}`}></i>
+      </div>
     </div>
   </div>
 );

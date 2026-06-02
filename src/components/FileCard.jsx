@@ -194,19 +194,12 @@ const FileCard = ({
       </div>
 
       {/* Footer */}
-{/* Footer */}
-<div className="p-4">
+      <div className="p-4">
         <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="min-w-0 flex-1">
-            <span className={`block text-[12px] font-medium truncate ${isDark ? 'text-[#aaa]' : 'text-slate-500'}`}>
-              {title}
-            </span>
-            {display_name && display_name !== title && (
-              <span className={`block text-[11px] truncate mt-0.5 ${isDark ? 'text-[#555]' : 'text-slate-400'}`}>
-                {display_name}
-              </span>
-            )}
-          </div>
+          <span className={`block text-[12px] font-medium truncate ${isDark ? 'text-[#aaa]' : 'text-slate-500'}`}>
+            {title}
+          </span>
+
 
           {/* Action icons */}
           {!showSelection && (

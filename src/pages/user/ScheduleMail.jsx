@@ -3,16 +3,8 @@ import { getFiles } from '../../services/fileService';
 import { scheduleShareFile } from '../../services/shareService';
 import { Link } from 'react-router-dom';
 import { sizeFormatter } from '../../utils/sizeFormatter';
-import { getFileMeta } from '../../utils/fileIcons';
-import useAuth from '../../hooks/useAuth';
-
-const SELF_EMAIL_MSG = 'You cannot send mail to yourself.';
-const normalizeEmail = (email) => email.trim().toLowerCase();
 
 const ScheduleMail = () => {
-  const { user } = useAuth();
-  const ownerEmail = user?.email || '';
-
   // 1. Theme State Sync Logic
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [activeModal, setActiveModal] = useState(null);
@@ -44,6 +36,15 @@ const ScheduleMail = () => {
 
 
 
+  const iconClassForFile = (file) => {
+    const name = String(file?.original_name || "").toLowerCase();
+    if (name.endsWith(".pdf")) return "fa-file-pdf text-red-500";
+    if (name.endsWith(".doc") || name.endsWith(".docx")) return "fa-file-word text-blue-500";
+    if (name.endsWith(".xls") || name.endsWith(".xlsx")) return "fa-file-excel text-emerald-500";
+    if (name.endsWith(".zip") || name.endsWith(".rar")) return "fa-file-zipper text-yellow-500";
+    if (/\.(mp4|mov|mkv|webm)$/.test(name)) return "fa-file-video text-purple-500";
+    return "fa-file text-blue-500";
+  };
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -54,14 +55,14 @@ const ScheduleMail = () => {
         const results = Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : data?.items || []);
 
         const mapped = results.map(f => {
-          const meta = getFileMeta(f.content_type || "");
+          const iconColorClass = iconClassForFile(f);
+          const parts = iconColorClass.split(' ');
           return {
             id: f.id,
             name: f.original_name || "Untitled",
-            display_name: f.display_name || null,
             size: sizeFormatter(f.file_size),
-            icon: meta.icon,
-            color: meta.color,
+            icon: parts[0],
+            color: parts[1] || "text-blue-500",
             rawFile: f
           };
         });
@@ -145,12 +146,6 @@ const ScheduleMail = () => {
     showToast(`File updated`);
   };
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  const isSelfRecipient = (email) => {
-    if (!ownerEmail || !email.trim()) return false;
-    return normalizeEmail(email) === normalizeEmail(ownerEmail);
-  };
-
   const handleScheduleSubmit = async () => {
     if (!attachedFile) {
       setActiveModal(null);
@@ -166,11 +161,6 @@ const ScheduleMail = () => {
     if (validRecipients.some(email => !isValidEmail(email))) {
       setActiveModal(null);
       showToast("Enter valid email addresses", "error");
-      return;
-    }
-    if (validRecipients.some(email => isSelfRecipient(email))) {
-      setActiveModal(null);
-      showToast(SELF_EMAIL_MSG, "error");
       return;
     }
     const selectedDateTime = new Date(`${scheduleDate}T${scheduleTime}:00`);
@@ -314,9 +304,9 @@ const ScheduleMail = () => {
                 <div className="grid grid-cols-1 gap-4">
                   <div className={`group border p-5 rounded-lg flex items-center justify-between transition-all ${isDark ? 'bg-[#0a0a0a] border-blue-500/30 hover:border-blue-500' : 'bg-blue-50/30 border-blue-100 hover:border-blue-400'}`}>
                     <div className="flex items-center gap-4 overflow-hidden">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl `}>
-                      <i className={`fa-solid ${attachedFile.icon}`} style={{ color: attachedFile.color }}></i>
-                    </div>
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl ${isDark ? 'bg-[#111]' : 'bg-white shadow-sm'} ${attachedFile.color}`}>
+                        <i className={`fa-solid ${attachedFile.icon}`}></i>
+                      </div>
                       <div className="overflow-hidden">
                         <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{attachedFile.name}</p>
                         <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{attachedFile.size}</p>
@@ -342,53 +332,33 @@ const ScheduleMail = () => {
             <div>
               <div className={`text-[11px] uppercase font-bold tracking-widest mb-4 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>Deliver To</div>
               <div className="flex flex-col gap-3">
-                {recipients.map((email, i) => {
-                  const selfEmail = isSelfRecipient(email);
-                  const invalidEmail = email.trim() !== '' && !isValidEmail(email);
-                  return (
-                  <div key={i} className="space-y-1">
-                    <div className={`border px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs group transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'} ${selfEmail || invalidEmail ? (isDark ? 'border-red-500/40' : 'border-red-300') : ''}`}>
-                      <div className="w-5 h-5 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center text-[8px] font-bold shrink-0">
-                        {email ? email[0].toUpperCase() : '?'}
-                      </div>
-                      <input
-                        value={email}
-                        onChange={(e) => handleEmailChange(i, e.target.value)}
-                        onBlur={(e) => {
-                          const val = e.target.value.trim();
-                          if (val && isValidEmail(val) && isSelfRecipient(val)) {
-                            showToast(SELF_EMAIL_MSG, 'error');
-                          }
-                        }}
-                        placeholder="Recipient email"
-                        type="email"
-                        autoComplete="email"
-                        className={`bg-transparent outline-none flex-1 min-w-0 ${
-                          selfEmail || invalidEmail
-                            ? 'text-red-500'
-                            : (isDark ? 'text-[#808080]' : 'text-slate-600')
-                        }`}
-                      />
-                      {email.trim() !== "" && (
-                        <i
-                          onClick={() => removeRecipient(i)}
-                          className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors ml-auto"
-                        />
-                      )}
+                {recipients.map((email, i) => (
+                  <div key={i} className={`border px-4 py-2.5 rounded-xl flex items-center gap-3 text-xs group transition-colors shadow-sm ${isDark ? 'bg-[#0a0a0a] border-[#1a1a1a]' : 'bg-white border-slate-200'}`}>
+                    <div className="w-5 h-5 bg-blue-600/20 text-blue-500 rounded-lg flex items-center justify-center text-[8px] font-bold shrink-0">
+                      {email ? email[0].toUpperCase() : '?'}
                     </div>
-                    {selfEmail && (
-                      <p className={`text-[11px] pl-1 font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-                        {SELF_EMAIL_MSG}
+                    <input
+                      value={email}
+                      onChange={(e) => handleEmailChange(i, e.target.value)}
+                      placeholder="Recipient email"
+                      className={`bg-transparent outline-none flex-1 min-w-0 ${email === "" || isValidEmail(email)
+                        ? (isDark ? 'text-[#808080]' : 'text-slate-600')
+                        : 'text-red-500'
+                        }`}
+                    />
+                    {email && !isValidEmail(email) && (
+                      <p className="text-[10px] text-red-500 mt-1">
+                        Invalid email
                       </p>
                     )}
-                    {!selfEmail && invalidEmail && (
-                      <p className={`text-[11px] pl-1 font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-                        Enter a valid email address.
-                      </p>
-                    )}
+
+                    {email.trim() !== "" && (<i
+                      onClick={() => removeRecipient(i)}
+                      className="fa-solid fa-xmark text-[#444] cursor-pointer hover:text-red-500 transition-colors ml-auto"
+                    ></i>)}
+
                   </div>
-                  );
-                })}
+                ))}
                 <button onClick={addRecipient} className={`border border-dashed p-2.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${isDark ? 'border-[#333] text-[#808080] hover:text-white hover:border-white' : 'border-slate-300 text-slate-400 hover:text-slate-600 hover:border-slate-600'}`}>
                   <i className="fa-solid fa-plus"></i> Add Recipient
                 </button>
@@ -461,27 +431,24 @@ const ScheduleMail = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 no-scrollbar auto-rows-min content-start">
+            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 no-scrollbar">
               {filteredFiles.map((file) => {
 
                 const isSelected = selectedInPicker?.id === file.id;
                 return (
                   <div key={file.id} onClick={() => setSelectedInPicker(file)} className={`p-4 rounded-xl border transition-all cursor-pointer group flex flex-col gap-3 ${isSelected ? 'bg-blue-600/10 border-blue-500 shadow-sm' : (isDark ? 'bg-[#050505] border-[#1a1a1a] hover:border-[#333]' : 'bg-white border-slate-100 hover:border-blue-300 shadow-sm')}`}>
                     <div className="flex justify-between items-start">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg `}>
-                      <i className={`fa-solid ${file.icon}`} style={{ color: file.color }}></i>
-                    </div>
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${isDark ? 'bg-[#111]' : 'bg-slate-50'} ${file.color}`}>
+                        <i className={`fa-solid ${file.icon}`}></i>
+                      </div>
                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'bg-blue-600 border-blue-600' : (isDark ? 'border-[#333]' : 'border-slate-200')}`}>
                         {isSelected && <i className="fa-solid fa-check text-[10px] text-white"></i>}
                       </div>
                     </div>
-<div>
-  <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.name}</p>
-  {file.display_name && (
-    <p className={`text-[11px] font-medium truncate mt-0.5 ${isDark ? 'text-[#606060]' : 'text-slate-400'}`}>{file.display_name}</p>
-  )}
-  <p className={`text-[10px] font-bold ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{file.size}</p>
-</div>
+                    <div>
+                      <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{file.name}</p>
+                      <p className={`text-[10px] font-bold ${isDark ? 'text-[#444]' : 'text-slate-400'}`}>{file.size}</p>
+                    </div>
                   </div>
                 );
               })}
