@@ -1,7 +1,21 @@
 import api from "../api/axios";
 
-export const getCollections = (search = "", sortBy = "created_at", sortOrder = "desc") => 
-  api.get("/api/collections/", { params: { search, sort_by: sortBy, sort_order: sortOrder } });
+export const getCollections = (
+  search = "",
+  sortBy = "created_at",
+  sortOrder = "desc",
+  page = 1,
+  pageSize = null
+) =>
+  api.get("/api/collections/", {
+    params: {
+      search,
+      sort_by: sortBy,
+      sort_order: sortOrder,
+      page,
+      ...(pageSize ? { page_size: pageSize } : {}),
+    },
+  });
 
 // GET /api/collections/:id/
 export const getCollectionById = (collectionId) =>
