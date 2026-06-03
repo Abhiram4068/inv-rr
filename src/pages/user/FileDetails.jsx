@@ -60,19 +60,12 @@ useEffect(() => {
   setPreviewLoading(true);
   setPreviewError(false);
 
-  fetch(file.file_url, {
-    credentials: 'include'
-  })
-    .then(r => { if (!r.ok) throw new Error(); return r.blob(); })
-    .then(blob => setPreviewUrl(URL.createObjectURL(blob)))
-    .catch(() => setPreviewError(true))
-    .finally(() => setPreviewLoading(false));
+  // The file_url is now a Supabase Signed URL, so we can use it directly
+  setPreviewUrl(file.file_url);
+  setPreviewLoading(false);
 
   return () => {
-    setPreviewUrl(prev => {
-      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
-      return null;
-    });
+    setPreviewUrl(null);
   };
 }, [file?.file_url]);
   // Theme State Sync
@@ -237,17 +230,29 @@ const saveDetails = async () => {
 const handleOpenFile = (e) => {
   e.preventDefault();
 
-  showToast("Opening file...", 2000);
+  if (!file?.file_url) {
+    showToast("File URL not available", 2000, "error");
+    return;
+  }
 
-  const url = getFileViewUrl(id);
-  window.open(url, '_blank');
+  showToast("Opening file...", 2000);
+  window.open(file.file_url, '_blank');
 };
 
 const handleDownload = async () => {
   try {
+    if (!file?.file_url) {
+      showToast("File URL not available", 1000, "error");
+      return;
+    }
     showToast("Preparing download...", 2000);
-    const res = await downloadFile(id);
-    const url = window.URL.createObjectURL(new Blob([res.data]));
+    
+    // Fetch directly from the Supabase signed URL to avoid hitting the backend
+    const res = await fetch(file.file_url);
+    if (!res.ok) throw new Error("Network response was not ok");
+    
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", file?.original_name || "downloaded_file");
@@ -257,7 +262,7 @@ const handleDownload = async () => {
     window.URL.revokeObjectURL(url);
     showToast("Download started", 1000);
   } catch (error) {
-    showToast("Download failed", 1000);
+    showToast("Download failed", 1000, "error");
   }
 };
 
